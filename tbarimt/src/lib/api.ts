@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.e-invoice.mn/api';
 
 export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -205,5 +205,79 @@ export async function getMyProducts(params?: {
 
 export async function getMyStatistics() {
   return fetchAPI('/products/my-statistics');
+}
+
+// Create product
+export async function createProduct(productData: {
+  title: string;
+  description: string;
+  categoryId: number;
+  price: number;
+  pages?: number;
+  size?: string;
+  status?: 'new' | 'cancelled' | 'deleted';
+}) {
+  return fetchAPI('/products', {
+    method: 'POST',
+    body: JSON.stringify(productData),
+  });
+}
+
+// Create product with file upload (FormData)
+// Note: Backend currently expects JSON. Files will need to be uploaded separately or backend needs multer setup
+export async function createProductWithFiles(formData: FormData) {
+  const url = `${API_BASE_URL}/products`;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  // Extract data from FormData and convert to JSON
+  // For now, we'll send JSON without files until backend supports file uploads
+  const productData: any = {
+    title: formData.get('title') as string,
+    description: formData.get('description') as string,
+    categoryId: parseInt(formData.get('categoryId') as string),
+    price: parseFloat(formData.get('price') as string),
+    status: formData.get('status') as string || 'new',
+  };
+
+  if (formData.get('pages')) {
+    productData.pages = parseInt(formData.get('pages') as string);
+  }
+  if (formData.get('size')) {
+    productData.size = formData.get('size') as string;
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(productData),
+  });
+
+  if (!response.ok) {
+    let errorMessage = `API error: ${response.statusText || response.status}`;
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const error = await response.json();
+        errorMessage = error.message || error.error || errorMessage;
+      } else {
+        const text = await response.text();
+        if (text) {
+          errorMessage = text;
+        }
+      }
+    } catch (parseError) {
+      errorMessage = `API error: ${response.status} ${response.statusText}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
 }
 

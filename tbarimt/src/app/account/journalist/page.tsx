@@ -2,17 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics } from '@/lib/api'
-
-// Categories matching the home page
-const categories = [
-  { id: 1, name: 'Реферат' },
-  { id: 2, name: 'Дипломын ажил' },
-  { id: 3, name: 'Тоглоом (EXE)' },
-  { id: 4, name: 'Программ хангамж' },
-  { id: 5, name: 'Курсын ажил' },
-  { id: 6, name: 'Бусад' }
-]
+import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles } from '@/lib/api'
 
 // Interface for product data
 interface ProductData {
@@ -50,7 +40,7 @@ export default function JournalistAccount() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
+    categoryId: '',
     price: '',
     pages: '',
     size: '',
@@ -70,6 +60,8 @@ export default function JournalistAccount() {
     notes: ''
   })
   const [withdrawalLoading, setWithdrawalLoading] = useState(false)
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; icon?: string }>>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
 
   useEffect(() => {
     // Get user from localStorage
@@ -87,6 +79,26 @@ export default function JournalistAccount() {
       router.push('/login')
     }
   }, [router])
+
+  // Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true)
+        const response = await getCategories()
+        if (response.categories && Array.isArray(response.categories)) {
+          setCategories(response.categories)
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+        // Fallback to empty array if fetch fails
+        setCategories([])
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+    fetchCategories()
+  }, [])
 
   const fetchData = async (userData: any) => {
     try {
@@ -271,8 +283,8 @@ export default function JournalistAccount() {
       newErrors.description = 'Тайлбар оруулах шаардлагатай'
     }
 
-    if (!formData.category) {
-      newErrors.category = 'Ангилал сонгох шаардлагатай'
+    if (!formData.categoryId) {
+      newErrors.categoryId = 'Ангилал сонгох шаардлагатай'
     }
 
     if (!formData.price || parseFloat(formData.price) <= 0) {
@@ -297,32 +309,27 @@ export default function JournalistAccount() {
     setIsLoading(true)
 
     try {
-      // Simulate API call - in real app, this would upload to server
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
       // Create form data for file upload
       const uploadData = new FormData()
       uploadData.append('title', formData.title)
       uploadData.append('description', formData.description)
-      uploadData.append('category', formData.category)
+      uploadData.append('categoryId', formData.categoryId)
       uploadData.append('price', formData.price)
       if (formData.pages) uploadData.append('pages', formData.pages)
       if (formData.size) uploadData.append('size', formData.size)
       if (formData.image) uploadData.append('image', formData.image)
       if (formData.file) uploadData.append('file', formData.file)
-      uploadData.append('status', formData.status)
+      // Map status: 'draft' -> 'new', 'published' -> 'new' (both create new products)
+      uploadData.append('status', 'new')
 
-      // In real app, you would send this to your API
-      // const response = await fetch('/api/publish', {
-      //   method: 'POST',
-      //   body: uploadData
-      // })
+      // Call the API to create product
+      await createProductWithFiles(uploadData)
 
       // Reset form
       setFormData({
         title: '',
         description: '',
-        category: '',
+        categoryId: '',
         price: '',
         pages: '',
         size: '',
@@ -341,9 +348,11 @@ export default function JournalistAccount() {
       if (user) {
         fetchData(user)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error publishing content:', error)
-      alert('Алдаа гарлаа. Дахин оролдоно уу.')
+      const errorMessage = error.message || 'Алдаа гарлаа. Дахин оролдоно уу.'
+      alert(errorMessage)
+      setErrors({ submit: errorMessage })
     } finally {
       setIsLoading(false)
     }
@@ -357,7 +366,7 @@ export default function JournalistAccount() {
       setFormData({
         title: '',
         description: '',
-        category: '',
+        categoryId: '',
         price: '',
         pages: '',
         size: '',
@@ -859,6 +868,13 @@ export default function JournalistAccount() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Error message */}
+              {errors.submit && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-700 dark:text-red-400">{errors.submit}</p>
+                </div>
+              )}
+              
               {/* Title */}
               <div>
                 <label htmlFor="title" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -909,29 +925,32 @@ export default function JournalistAccount() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Category */}
                 <div>
-                  <label htmlFor="category" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="categoryId" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Ангилал <span className="text-red-500">*</span>
                   </label>
                   <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
+                    id="categoryId"
+                    name="categoryId"
+                    value={formData.categoryId}
                     onChange={handleInputChange}
+                    disabled={isLoadingCategories}
                     className={`w-full px-4 py-3 rounded-lg border-2 ${
-                      errors.category
+                      errors.categoryId
                         ? 'border-red-500 focus:border-red-500'
                         : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
-                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors`}
+                    } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    <option value="">Ангилал сонгох</option>
+                    <option value="">
+                      {isLoadingCategories ? 'Ангилал ачааллаж байна...' : 'Ангилал сонгох'}
+                    </option>
                     {categories.map(cat => (
-                      <option key={cat.id} value={cat.name}>
+                      <option key={cat.id} value={cat.id.toString()}>
                         {cat.name}
                       </option>
                     ))}
                   </select>
-                  {errors.category && (
-                    <p className="mt-1 text-sm text-red-500">{errors.category}</p>
+                  {errors.categoryId && (
+                    <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
                   )}
                 </div>
 
