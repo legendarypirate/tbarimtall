@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getProductById, getBanners } from '@/lib/api'
+import { QRCodeSVG } from 'qrcode.react'
+import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,6 +108,14 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true)
   const [banners, setBanners] = useState<any[]>([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const [qrText, setQrText] = useState<string | null>(null)
+  const [qrImageError, setQrImageError] = useState(false)
+  const [invoiceId, setInvoiceId] = useState<string | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed' | null>(null)
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const paymentCheckInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -158,11 +167,83 @@ export default function ProductDetail() {
     setIsPaymentModalOpen(true)
   }
 
-  const handleQPayPayment = () => {
-    setPaymentMethod('qpay')
-    // In real app, this would integrate with QPay API
-    alert('QPay төлбөрийн системд шилжиж байна...')
+  const handleQPayPayment = async () => {
+    try {
+      setIsCreatingInvoice(true)
+      setPaymentError(null)
+      setPaymentMethod('qpay')
+
+      const response = await createQPayInvoice({
+        productId: product.id || productId,
+        amount: parseFloat(product.price) || 0,
+        description: `Tbarimt.mn - ${product.title}`
+      })
+
+      if (response.success && response.invoice) {
+        setInvoiceId(response.invoice.invoice_id)
+        setQrCode(response.invoice.qr_image || response.invoice.qr_code)
+        setQrText(response.invoice.qr_text)
+        setQrImageError(false) // Reset error state for new QR code
+        setPaymentStatus('pending')
+        
+        // Start polling for payment status
+        startPaymentPolling(response.invoice.invoice_id)
+      } else {
+        throw new Error('Failed to create invoice')
+      }
+    } catch (error: any) {
+      console.error('QPay payment error:', error)
+      setPaymentError(error.message || 'QPay төлбөр үүсгэхэд алдаа гарлаа')
+      setPaymentMethod(null)
+    } finally {
+      setIsCreatingInvoice(false)
+    }
   }
+
+  const startPaymentPolling = (invoiceId: string) => {
+    // Clear any existing interval
+    if (paymentCheckInterval.current) {
+      clearInterval(paymentCheckInterval.current)
+    }
+
+    // Check payment status every 3 seconds
+    paymentCheckInterval.current = setInterval(async () => {
+      try {
+        const response = await checkQPayPaymentStatus(invoiceId)
+        if (response.success && response.payment) {
+          if (response.payment.isPaid) {
+            setPaymentStatus('paid')
+            if (paymentCheckInterval.current) {
+              clearInterval(paymentCheckInterval.current)
+              paymentCheckInterval.current = null
+            }
+            // Close modal after 2 seconds and show success
+            setTimeout(() => {
+              setIsPaymentModalOpen(false)
+              setPaymentMethod(null)
+              setQrCode(null)
+              setQrText(null)
+              setQrImageError(false)
+              setInvoiceId(null)
+              setPaymentStatus(null)
+              alert('Төлбөр амжилттай төлөгдлөө!')
+            }, 2000)
+          }
+        }
+      } catch (error) {
+        console.error('Payment check error:', error)
+      }
+    }, 3000)
+  }
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (paymentCheckInterval.current) {
+        clearInterval(paymentCheckInterval.current)
+      }
+    }
+  }, [])
 
   const formatNumber = (num: number) => {
     return num.toLocaleString('mn-MN')
@@ -590,40 +671,156 @@ export default function ProductDetail() {
             </div>
 
             <div className="mb-6">
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Бүтээгдэхүүн:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {product.title}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-gray-600 dark:text-gray-400">Нийт дүн:</span>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {formatNumber(parseFloat(product.price) || 0)}₮
-                  </span>
-                </div>
-              </div>
+              {!paymentMethod && (
+                <>
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">Бүтээгдэхүүн:</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {product.title}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-gray-600 dark:text-gray-400">Нийт дүн:</span>
+                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {formatNumber(parseFloat(product.price) || 0)}₮
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="space-y-3">
-                <button
-                  onClick={handleQPayPayment}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg flex items-center justify-center space-x-3"
-                >
-                  <span className="text-2xl">💳</span>
-                  <span>QPay төлбөр төлөх</span>
-                </button>
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleQPayPayment}
+                      disabled={isCreatingInvoice}
+                      className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isCreatingInvoice ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Бэлдэж байна...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-2xl">💳</span>
+                          <span>QPay төлбөр төлөх</span>
+                        </>
+                      )}
+                    </button>
 
-                <button
-                  onClick={() => {
-                    setPaymentMethod('bank')
-                    alert('Банкны шилжүүлэгт шилжиж байна...')
-                  }}
-                  className="w-full border-2 border-blue-600 text-blue-600 dark:text-blue-400 py-3 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-gray-700 transition-all"
-                >
-                  🏦 Банкны шилжүүлэг
-                </button>
-              </div>
+                    <button
+                      onClick={() => {
+                        setPaymentMethod('bank')
+                        alert('Банкны шилжүүлэгт шилжиж байна...')
+                      }}
+                      className="w-full border-2 border-blue-600 text-blue-600 dark:text-blue-400 py-3 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-gray-700 transition-all"
+                    >
+                      🏦 Банкны шилжүүлэг
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {paymentMethod === 'qpay' && (
+                <div className="space-y-4">
+                  {paymentError && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                      <p className="text-red-800 dark:text-red-200 text-sm">{paymentError}</p>
+                      <button
+                        onClick={() => {
+                          setPaymentError(null)
+                          setPaymentMethod(null)
+                          setQrCode(null)
+                          setQrText(null)
+                          setQrImageError(false)
+                          setInvoiceId(null)
+                        }}
+                        className="mt-2 text-red-600 dark:text-red-400 text-sm underline"
+                      >
+                        Буцах
+                      </button>
+                    </div>
+                  )}
+
+                  {(qrCode || qrText) && !paymentError && (
+                    <>
+                      <div className="text-center">
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          QPay QR код уншуулах
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                          QPay апп-аар QR кодыг уншуулж төлбөрөө төлнө үү
+                        </p>
+                        <div className="bg-white dark:bg-gray-700 p-4 rounded-lg inline-block">
+                          {qrCode && !qrImageError ? (
+                            <img
+                              src={qrCode}
+                              alt="QPay QR Code"
+                              className="w-64 h-64 mx-auto"
+                              onError={() => {
+                                setQrImageError(true)
+                              }}
+                            />
+                          ) : qrText ? (
+                            <div className="w-64 h-64 mx-auto flex items-center justify-center">
+                              <QRCodeSVG
+                                value={qrText}
+                                size={256}
+                                level="M"
+                                includeMargin={true}
+                                className="w-full h-full"
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+                      
+                      </div>
+
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            {paymentStatus === 'paid' ? (
+                              <span className="text-2xl">✅</span>
+                            ) : (
+                              <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                              {paymentStatus === 'paid' 
+                                ? 'Төлбөр амжилттай төлөгдлөө!' 
+                                : 'Төлбөрийн статусыг шалгаж байна...'}
+                            </p>
+                            {paymentStatus === 'pending' && (
+                              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                Төлбөр төлсний дараа автоматаар шинэчлэгдэнэ
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (paymentCheckInterval.current) {
+                            clearInterval(paymentCheckInterval.current)
+                            paymentCheckInterval.current = null
+                          }
+                          setIsPaymentModalOpen(false)
+                          setPaymentMethod(null)
+                          setQrCode(null)
+                          setQrText(null)
+                          setQrImageError(false)
+                          setInvoiceId(null)
+                          setPaymentStatus(null)
+                        }}
+                        className="w-full border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                      >
+                        Цуцлах
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="text-xs text-gray-500 dark:text-gray-400 text-center">

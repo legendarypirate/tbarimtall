@@ -12,13 +12,34 @@ const hasGoogleCredentials =
   typeof process.env.GOOGLE_CLIENT_SECRET === 'string' &&
   process.env.GOOGLE_CLIENT_SECRET.trim() !== '';
 
+// Construct callback URL dynamically
+const getCallbackURL = () => {
+  // If explicitly set, use it
+  if (process.env.GOOGLE_CALLBACK_URL) {
+    return process.env.GOOGLE_CALLBACK_URL;
+  }
+  
+  // Otherwise, construct from API_URL or BACKEND_URL
+  const baseUrl = process.env.API_URL || process.env.BACKEND_URL;
+  if (baseUrl) {
+    return `${baseUrl}/api/auth/google/callback`;
+  }
+  
+  // Fallback to localhost for development
+  const port = process.env.PORT || 3001;
+  return `http://localhost:${port}/api/auth/google/callback`;
+};
+
 if (hasGoogleCredentials) {
+  const callbackURL = getCallbackURL();
+  console.log('Google OAuth callback URL:', callbackURL);
+  
   passport.use(
     new GoogleStrategy(
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || `http://localhost:3001/api/auth/google/callback`,
+        callbackURL: callbackURL,
       },
       async (accessToken, refreshToken, profile, done) => {
         try {

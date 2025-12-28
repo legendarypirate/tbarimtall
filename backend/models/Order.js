@@ -9,7 +9,7 @@ const Order = sequelize.define('Order', {
   },
   userId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true, // Allow null for guest orders
     references: {
       model: 'users',
       key: 'id'
@@ -38,6 +38,21 @@ const Order = sequelize.define('Order', {
   transactionId: {
     type: DataTypes.STRING(255),
     allowNull: true
+  },
+  invoiceId: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: 'QPay invoice ID'
+  },
+  qrImage: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'QPay QR code image URL or base64'
+  },
+  qrText: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'QPay QR code text for manual scanning'
   }
 }, {
   tableName: 'orders',

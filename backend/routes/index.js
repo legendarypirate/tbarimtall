@@ -10,6 +10,7 @@ const adminRoutes = require('./admin');
 const withdrawalRoutes = require('./withdrawals');
 const bannerRoutes = require('./banners');
 const membershipRoutes = require('./memberships');
+const qpayRoutes = require('./qpay');
 
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
@@ -20,6 +21,7 @@ router.use('/admin', adminRoutes);
 router.use('/withdrawals', withdrawalRoutes);
 router.use('/banners', bannerRoutes);
 router.use('/memberships', membershipRoutes);
+router.use('/qpay', qpayRoutes);
 
 module.exports = router;
 

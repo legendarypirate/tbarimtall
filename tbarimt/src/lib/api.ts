@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.e-invoice.mn/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -279,5 +279,25 @@ export async function createProductWithFiles(formData: FormData) {
   }
 
   return response.json();
+}
+
+// QPay Payment API
+export async function createQPayInvoice(data: {
+  productId: string;
+  amount: number;
+  description?: string;
+}) {
+  return fetchAPI('/qpay/invoice', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function checkQPayPaymentStatus(invoiceId: string) {
+  return fetchAPI(`/qpay/check/${invoiceId}`);
+}
+
+export async function getOrderByInvoice(invoiceId: string) {
+  return fetchAPI(`/qpay/order/${invoiceId}`);
 }
 
