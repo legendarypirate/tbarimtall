@@ -115,6 +115,8 @@ export default function ProductDetail() {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed' | null>(null)
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [bankUrls, setBankUrls] = useState<any[]>([])
+  const [isMobile, setIsMobile] = useState(false)
   const paymentCheckInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -136,6 +138,20 @@ export default function ProductDetail() {
       fetchProduct()
     }
   }, [productId])
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
+      const isSmallScreen = window.innerWidth <= 768
+      setIsMobile(isMobileDevice || isSmallScreen)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -185,6 +201,8 @@ export default function ProductDetail() {
         setQrText(response.invoice.qr_text)
         setQrImageError(false) // Reset error state for new QR code
         setPaymentStatus('pending')
+        // Store bank URLs for mobile display
+        setBankUrls(response.invoice.urls || [])
         
         // Start polling for payment status
         startPaymentPolling(response.invoice.invoice_id)
@@ -221,12 +239,13 @@ export default function ProductDetail() {
             setTimeout(() => {
               setIsPaymentModalOpen(false)
               setPaymentMethod(null)
-              setQrCode(null)
-              setQrText(null)
-              setQrImageError(false)
-              setInvoiceId(null)
-              setPaymentStatus(null)
-              alert('Төлбөр амжилттай төлөгдлөө!')
+                          setQrCode(null)
+                          setQrText(null)
+                          setQrImageError(false)
+                          setInvoiceId(null)
+                          setPaymentStatus(null)
+                          setBankUrls([])
+                          alert('Төлбөр амжилттай төлөгдлөө!')
             }, 2000)
           }
         }
@@ -733,6 +752,7 @@ export default function ProductDetail() {
                           setQrText(null)
                           setQrImageError(false)
                           setInvoiceId(null)
+                          setBankUrls([])
                         }}
                         className="mt-2 text-red-600 dark:text-red-400 text-sm underline"
                       >
@@ -772,6 +792,53 @@ export default function ProductDetail() {
                             </div>
                           ) : null}
                         </div>
+
+                        {/* Bank App Icons - Only show on mobile */}
+                        {isMobile && bankUrls && bankUrls.length > 0 && (
+                          <div className="mt-6">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">
+                              Банкны апп-аар төлөх:
+                            </p>
+                            <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto">
+                              {bankUrls.map((bank, index) => {
+                                const handleBankClick = () => {
+                                  // Try to open deep link - this will open the app if installed
+                                  // For mobile browsers, this is the standard way to open deep links
+                                  try {
+                                    // Use window.location for better compatibility
+                                    window.location.href = bank.link
+                                  } catch (error) {
+                                    console.error('Failed to open bank app:', error)
+                                    // Fallback: try opening in new window/tab
+                                    window.open(bank.link, '_blank')
+                                  }
+                                }
+
+                                return (
+                                  <button
+                                    key={index}
+                                    onClick={handleBankClick}
+                                    className="flex flex-col items-center justify-center p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md transition-all active:scale-95"
+                                    title={bank.description || bank.name}
+                                  >
+                                  <img
+                                    src={bank.logo}
+                                    alt={bank.name}
+                                    className="w-12 h-12 object-contain mb-2"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.style.display = 'none'
+                                    }}
+                                  />
+                                  <span className="text-xs text-gray-600 dark:text-gray-400 text-center line-clamp-2">
+                                    {bank.name}
+                                  </span>
+                                </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
                       
                       </div>
 
@@ -812,6 +879,7 @@ export default function ProductDetail() {
                           setQrImageError(false)
                           setInvoiceId(null)
                           setPaymentStatus(null)
+                          setBankUrls([])
                         }}
                         className="w-full border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
                       >
