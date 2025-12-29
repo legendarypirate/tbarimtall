@@ -416,7 +416,11 @@ export default function Home() {
                 <button 
                   onClick={() => {
                     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-                    window.location.href = `${API_URL}/api/auth/google`
+                    // Remove trailing /api if present to avoid double /api/api/
+                    const baseUrl = API_URL.trim().endsWith('/api') 
+                      ? API_URL.trim().slice(0, -4) 
+                      : API_URL.trim()
+                    window.location.href = `${baseUrl}/api/auth/google`
                   }}
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-all shadow-md hover:shadow-lg font-semibold flex items-center space-x-2"
                 >

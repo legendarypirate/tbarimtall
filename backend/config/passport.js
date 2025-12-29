@@ -22,7 +22,11 @@ const getCallbackURL = () => {
   // Otherwise, construct from API_URL or BACKEND_URL
   const baseUrl = process.env.API_URL || process.env.BACKEND_URL;
   if (baseUrl) {
-    return `${baseUrl}/api/auth/google/callback`;
+    // Remove trailing /api if present to avoid double /api/api/
+    const normalizedUrl = baseUrl.trim().endsWith('/api') 
+      ? baseUrl.trim().slice(0, -4) 
+      : baseUrl.trim();
+    return `${normalizedUrl}/api/auth/google/callback`;
   }
   
   // Fallback to localhost for development

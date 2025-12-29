@@ -7,6 +7,16 @@ export const dynamic = 'force-dynamic'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
+// Helper function to get the base API URL without /api suffix
+const getBaseApiUrl = () => {
+  const url = API_URL.trim()
+  // Remove trailing /api if present
+  if (url.endsWith('/api')) {
+    return url.slice(0, -4)
+  }
+  return url
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -24,7 +34,9 @@ export default function LoginPage() {
     setIsLoading(true)
     setError(null)
     // Redirect to backend Google OAuth endpoint
-    window.location.href = `${API_URL}/api/auth/google`
+    // Ensure we don't double up on /api
+    const baseUrl = getBaseApiUrl()
+    window.location.href = `${baseUrl}/api/auth/google`
   }
 
   return (
