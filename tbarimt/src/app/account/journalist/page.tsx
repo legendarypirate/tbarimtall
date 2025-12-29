@@ -7,6 +7,7 @@ import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyS
 // Interface for product data
 interface ProductData {
   id: number;
+  uuid?: string; // UUID for navigation
   title: string;
   category?: { id: number; name: string; icon?: string } | string;
   price: number;
@@ -114,6 +115,7 @@ export default function JournalistAccount() {
         // Map products to include earnings calculation
         const mappedProducts = productsResponse.products.map((product: any) => ({
           id: product.id,
+          uuid: product.uuid, // Include UUID for navigation
           title: product.title,
           category: product.category || 'Бусад',
           price: product.price,
@@ -613,7 +615,14 @@ export default function JournalistAccount() {
                       </div>
                       <div className="flex flex-col space-y-2">
                         <button
-                          onClick={() => router.push(`/products/${product.id}`)}
+                          onClick={() => {
+                            if (!product.uuid) {
+                              console.error('Product missing UUID:', product.id);
+                              alert('Алдаа: Бүтээгдэхүүнд UUID байхгүй байна. Админд хандана уу.');
+                              return;
+                            }
+                            router.push(`/products/${product.uuid}`)
+                          }}
                           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all text-sm font-semibold"
                         >
                           Үзэх

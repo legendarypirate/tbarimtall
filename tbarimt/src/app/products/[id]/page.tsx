@@ -118,6 +118,9 @@ export default function ProductDetail() {
   const [bankUrls, setBankUrls] = useState<any[]>([])
   const [isMobile, setIsMobile] = useState(false)
   const paymentCheckInterval = useRef<NodeJS.Timeout | null>(null)
+  const [downloadToken, setDownloadToken] = useState<{ token: string; expiresAt: string } | null>(null)
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false)
+  const [isDownloaded, setIsDownloaded] = useState(false)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -190,7 +193,7 @@ export default function ProductDetail() {
       setPaymentMethod('qpay')
 
       const response = await createQPayInvoice({
-        productId: product.id || productId,
+        productId: product.uuid || product.id || productId,
         amount: parseFloat(product.price) || 0,
         description: `Tbarimt.mn - ${product.title}`
       })
@@ -235,17 +238,56 @@ export default function ProductDetail() {
               clearInterval(paymentCheckInterval.current)
               paymentCheckInterval.current = null
             }
-            // Close modal after 2 seconds and show success
+            
+            // Capture download token if available
+            if (response.downloadToken && response.downloadToken.token) {
+              setDownloadToken({
+                token: response.downloadToken.token,
+                expiresAt: response.downloadToken.expiresAt
+              })
+            } else {
+              // If token not available, try to get it from order
+              // Retry a few times to get the token
+              let retries = 0
+              const maxRetries = 5
+              const tokenCheckInterval = setInterval(async () => {
+                try {
+                  const orderResponse = await checkQPayPaymentStatus(invoiceId)
+                  if (orderResponse.downloadToken && orderResponse.downloadToken.token) {
+                    setDownloadToken({
+                      token: orderResponse.downloadToken.token,
+                      expiresAt: orderResponse.downloadToken.expiresAt
+                    })
+                    clearInterval(tokenCheckInterval)
+                  } else {
+                    retries++
+                    if (retries >= maxRetries) {
+                      clearInterval(tokenCheckInterval)
+                    }
+                  }
+                } catch (error) {
+                  console.error('Token check error:', error)
+                  retries++
+                  if (retries >= maxRetries) {
+                    clearInterval(tokenCheckInterval)
+                  }
+                }
+              }, 1000)
+            }
+            
+            // Close payment modal after 2 seconds and show download modal
             setTimeout(() => {
               setIsPaymentModalOpen(false)
               setPaymentMethod(null)
-                          setQrCode(null)
-                          setQrText(null)
-                          setQrImageError(false)
-                          setInvoiceId(null)
-                          setPaymentStatus(null)
-                          setBankUrls([])
-                          alert('Төлбөр амжилттай төлөгдлөө!')
+              setQrCode(null)
+              setQrText(null)
+              setQrImageError(false)
+              setInvoiceId(null)
+              setPaymentStatus(null)
+              setBankUrls([])
+              
+              // Always show download modal - token will be available soon
+              setIsDownloadModalOpen(true)
             }, 2000)
           }
         }
@@ -266,6 +308,53 @@ export default function ProductDetail() {
 
   const formatNumber = (num: number) => {
     return num.toLocaleString('mn-MN')
+  }
+
+  const getDownloadUrl = (token: string) => {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+    return `${apiBaseUrl}/products/download/${token}`
+  }
+
+  const handleDownload = () => {
+    if (downloadToken) {
+      const downloadUrl = getDownloadUrl(downloadToken.token)
+      // Open download in new tab/window
+      const downloadWindow = window.open(downloadUrl, '_blank')
+      
+      // Mark as downloaded and show thank you message
+      setIsDownloaded(true)
+      
+      // Close modal after 3 seconds to show thank you
+      setTimeout(() => {
+        setIsDownloadModalOpen(false)
+        setIsDownloaded(false)
+        setDownloadToken(null)
+      }, 3000)
+    }
+  }
+
+  const copyDownloadLink = () => {
+    if (downloadToken) {
+      const downloadUrl = getDownloadUrl(downloadToken.token)
+      navigator.clipboard.writeText(downloadUrl).then(() => {
+        alert('Холбоос хуулагдлаа!')
+      }).catch(() => {
+        alert('Холбоос хуулахад алдаа гарлаа')
+      })
+    }
+  }
+
+  const getTimeRemaining = (expiresAt: string) => {
+    const now = new Date()
+    const expiry = new Date(expiresAt)
+    const diff = expiry.getTime() - now.getTime()
+    
+    if (diff <= 0) return 'Хугацаа дууссан'
+    
+    const minutes = Math.floor(diff / 60000)
+    const seconds = Math.floor((diff % 60000) / 1000)
+    
+    return `${minutes} минут ${seconds} секунд`
   }
 
   if (loading) {
@@ -894,6 +983,118 @@ export default function ProductDetail() {
             <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
               Төлбөр төлсний дараа файлыг татаж авах боломжтой болно
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Download Modal */}
+      {isDownloadModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            if (!isDownloaded) {
+              setIsDownloadModalOpen(false)
+              setIsDownloaded(false)
+              setDownloadToken(null)
+            }
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isDownloaded ? (
+              // Thank you message after download
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">🙏</div>
+                <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                  Баярлалаа!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Татаж авалт амжилттай боллоо. Амжилт хүсье!
+                </p>
+                <button
+                  onClick={() => {
+                    setIsDownloadModalOpen(false)
+                    setIsDownloaded(false)
+                    setDownloadToken(null)
+                  }}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all"
+                >
+                  Хаах
+                </button>
+              </div>
+            ) : downloadToken ? (
+              // Download modal with token
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    ✅ Төлбөр амжилттай!
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setIsDownloadModalOpen(false)
+                      setDownloadToken(null)
+                    }}
+                    className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <p className="text-green-800 dark:text-green-200 font-semibold mb-2">
+                      🎉 Төлбөр амжилттай төлөгдлөө!
+                    </p>
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      Одоо та файлыг татаж авах боломжтой.
+                    </p>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
+                      ⏰ Хугацаа дуусах хугацаа:
+                    </p>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      {getTimeRemaining(downloadToken.expiresAt)}
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                      Энэ холбоос нь 10 минутын дараа эсвэл нэг удаа татаж авсны дараа хүчингүй болно.
+                    </p>
+                  </div>
+
+                  
+
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleDownload}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg flex items-center justify-center space-x-3"
+                    >
+                      <span className="text-2xl">⬇️</span>
+                      <span>Файл татаж авах</span>
+                    </button>
+                  </div>
+
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                    <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                      ⚠️ Анхаар: Энэ холбоос нь зөвхөн нэг удаа ашиглах боломжтой. Хугацаа дуусахаас өмнө татаж авахыг зөвлөж байна.
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              // Loading state while waiting for token
+              <div className="text-center py-8">
+                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  ✅ Төлбөр амжилттай!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Татаж авах холбоос бэлдэж байна...
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

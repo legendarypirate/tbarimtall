@@ -299,7 +299,7 @@ export default function JournalistProfile() {
                 {journalist.products.map((product: any) => (
                   <div
                     key={product.id}
-                    onClick={() => router.push(`/products/${product.id}`)}
+                    onClick={() => router.push(`/products/${product.uuid || product.id}`)}
                     className="bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all cursor-pointer transform hover:-translate-y-1"
                   >
                     <div className="relative h-48 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">

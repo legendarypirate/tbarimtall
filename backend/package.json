@@ -10,6 +10,10 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "migrate": "node scripts/migrate.js",
+    "migrate:products-id": "node scripts/add-integer-id-to-products.js",
+    "migrate:orders-productid": "node scripts/migrate-orders-productid.js",
+    "migrate:reviews-productid": "node scripts/migrate-reviews-productid.js",
+    "migrate:all": "npm run migrate:products-id && npm run migrate:orders-productid && npm run migrate:reviews-productid",
     "seed": "node scripts/seed.js"
   },
   "keywords": [],

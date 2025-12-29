@@ -358,7 +358,7 @@ function SearchContent() {
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                onClick={() => router.push(`/products/${(product as any).id}`)}
+                onClick={() => router.push(`/products/${(product as any).uuid || (product as any).id}`)}
                 className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 transform hover:-translate-y-2 group cursor-pointer ${
                   viewMode === 'list' ? 'flex' : ''
                 }`}
@@ -415,7 +415,7 @@ function SearchContent() {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation()
-                        router.push(`/products/${(product as any).id}`)
+                        router.push(`/products/${(product as any).uuid || (product as any).id}`)
                       }}
                       className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
                     >

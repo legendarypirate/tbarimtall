@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createProductWithFiles } from '@/lib/api'
 
 // Categories matching the home page
 const categories = [
@@ -134,33 +135,29 @@ export default function PublishPage() {
     setIsLoading(true)
 
     try {
-      // Simulate API call - in real app, this would upload to server
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
       // Create form data for file upload
       const uploadData = new FormData()
       uploadData.append('title', formData.title)
       uploadData.append('description', formData.description)
-      uploadData.append('category', formData.category)
+      uploadData.append('categoryId', formData.category) // Use categoryId instead of category
       uploadData.append('price', formData.price)
       if (formData.pages) uploadData.append('pages', formData.pages)
       if (formData.size) uploadData.append('size', formData.size)
       if (formData.image) uploadData.append('image', formData.image)
       if (formData.file) uploadData.append('file', formData.file)
-      uploadData.append('status', formData.status)
+      // Map status: 'draft' -> 'new', 'published' -> 'new' (both create new products)
+      uploadData.append('status', 'new')
 
-      // In real app, you would send this to your API
-      // const response = await fetch('/api/publish', {
-      //   method: 'POST',
-      //   body: uploadData
-      // })
+      // Call the API to create product
+      await createProductWithFiles(uploadData)
 
-      // For demo, just show success and redirect
+      // Show success and redirect
       alert('Контент амжилттай нийтлэгдлээ!')
       router.push('/account/journalist')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error publishing content:', error)
-      alert('Алдаа гарлаа. Дахин оролдоно уу.')
+      const errorMessage = error.message || 'Алдаа гарлаа. Дахин оролдоно уу.'
+      alert(errorMessage)
     } finally {
       setIsLoading(false)
     }

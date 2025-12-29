@@ -10,6 +10,7 @@ const WithdrawalRequest = require('./WithdrawalRequest');
 const Banner = require('./Banner');
 const RolePermission = require('./RolePermission');
 const Membership = require('./Membership');
+const DownloadToken = require('./DownloadToken');
 
 // Define associations
 User.hasMany(Product, { foreignKey: 'authorId', as: 'products' });
@@ -39,6 +40,11 @@ User.hasMany(WithdrawalRequest, { foreignKey: 'userId', as: 'withdrawalRequests'
 WithdrawalRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 WithdrawalRequest.belongsTo(User, { foreignKey: 'processedBy', as: 'processedByUser' });
 
+Order.hasMany(DownloadToken, { foreignKey: 'orderId', as: 'downloadTokens' });
+DownloadToken.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
+DownloadToken.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+DownloadToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 module.exports = {
   sequelize,
   User,
@@ -51,6 +57,7 @@ module.exports = {
   WithdrawalRequest,
   Banner,
   RolePermission,
-  Membership
+  Membership,
+  DownloadToken
 };
 

@@ -347,7 +347,7 @@ async function seed() {
       
       orders.push({
         userId: randomViewer.id,
-        productId: randomProduct.id,
+        productId: randomProduct.id, // Use integer id
         amount: randomProduct.price,
         paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
         status: statuses[Math.floor(Math.random() * statuses.length)],
@@ -388,7 +388,7 @@ async function seed() {
         const comment = reviewComments[Math.floor(Math.random() * reviewComments.length)];
         
         reviews.push({
-          productId: product.id,
+          productId: product.id, // Use integer id
           userId: randomViewer.id,
           rating: rating,
           comment: comment

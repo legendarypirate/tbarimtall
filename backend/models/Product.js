@@ -3,8 +3,14 @@ const sequelize = require('../config/database');
 
 const Product = sequelize.define('Product', {
   id: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
     primaryKey: true,
+    autoIncrement: true
+  },
+  uuid: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    unique: true,
     defaultValue: DataTypes.UUIDV4
   },
   title: {
@@ -55,10 +61,16 @@ const Product = sequelize.define('Product', {
   },
   fileUrl: {
     type: DataTypes.STRING(500),
-    allowNull: true
+    allowNull: true,
+    comment: 'Deprecated: Use filePath instead. Kept for backward compatibility.'
+  },
+  filePath: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: 'Server-side file path (not publicly accessible)'
   },
   fileType: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.STRING(255),
     allowNull: true
   },
   fileSize: {
@@ -70,7 +82,7 @@ const Product = sequelize.define('Product', {
     allowNull: true
   },
   size: {
-    type: DataTypes.STRING(50),
+    type: DataTypes.STRING(255),
     allowNull: true
   },
   tags: {

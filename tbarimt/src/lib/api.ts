@@ -224,31 +224,46 @@ export async function createProduct(productData: {
 }
 
 // Create product with file upload (FormData)
-// Note: Backend currently expects JSON. Files will need to be uploaded separately or backend needs multer setup
+// Backend expects multipart/form-data with 'file' and 'image' fields
 export async function createProductWithFiles(formData: FormData) {
   const url = `${API_BASE_URL}/products`;
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
-  // Extract data from FormData and convert to JSON
-  // For now, we'll send JSON without files until backend supports file uploads
-  const productData: any = {
-    title: formData.get('title') as string,
-    description: formData.get('description') as string,
-    categoryId: parseInt(formData.get('categoryId') as string),
-    price: parseFloat(formData.get('price') as string),
-    status: formData.get('status') as string || 'new',
-  };
+  // Ensure all required fields are strings (FormData handles files automatically)
+  // Convert numeric fields to strings if needed
+  const title = formData.get('title');
+  const description = formData.get('description');
+  const categoryId = formData.get('categoryId');
+  const price = formData.get('price');
+  const status = formData.get('status') || 'new';
 
-  if (formData.get('pages')) {
-    productData.pages = parseInt(formData.get('pages') as string);
+  // Create a new FormData to ensure proper formatting
+  const uploadData = new FormData();
+  
+  if (title) uploadData.append('title', title as string);
+  if (description) uploadData.append('description', description as string);
+  if (categoryId) uploadData.append('categoryId', categoryId as string);
+  if (price) uploadData.append('price', price as string);
+  uploadData.append('status', status as string);
+
+  // Add optional fields
+  const pages = formData.get('pages');
+  const size = formData.get('size');
+  if (pages) uploadData.append('pages', pages as string);
+  if (size) uploadData.append('size', size as string);
+
+  // Add files if they exist
+  const file = formData.get('file');
+  const image = formData.get('image');
+  if (file instanceof File) {
+    uploadData.append('file', file);
   }
-  if (formData.get('size')) {
-    productData.size = formData.get('size') as string;
+  if (image instanceof File) {
+    uploadData.append('image', image);
   }
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
+  // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -256,7 +271,7 @@ export async function createProductWithFiles(formData: FormData) {
   const response = await fetch(url, {
     method: 'POST',
     headers,
-    body: JSON.stringify(productData),
+    body: uploadData,
   });
 
   if (!response.ok) {

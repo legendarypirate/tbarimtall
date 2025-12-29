@@ -720,7 +720,7 @@ export default function Home() {
           {displayedProducts.map((product) => (
             <div
               key={product.id}
-              onClick={() => router.push(`/products/${product.id}`)}
+              onClick={() => router.push(`/products/${product.uuid || product.id}`)}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 transform hover:-translate-y-2 group cursor-pointer"
             >
               {/* Product Image */}

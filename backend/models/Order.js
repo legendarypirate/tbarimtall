@@ -16,7 +16,7 @@ const Order = sequelize.define('Order', {
     }
   },
   productId: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'products',

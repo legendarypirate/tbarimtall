@@ -329,7 +329,7 @@ export default function CategoryPage() {
               {categoryProducts.map((product) => (
                 <div
                   key={product.id}
-                  onClick={() => router.push(`/products/${(product as any).id}`)}
+                  onClick={() => router.push(`/products/${(product as any).uuid || (product as any).id}`)}
                   className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 transform hover:-translate-y-2 group cursor-pointer"
                 >
                   {/* Product Image */}
