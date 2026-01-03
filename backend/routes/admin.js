@@ -5,6 +5,7 @@ const bannerController = require('../controllers/bannerController');
 const rolePermissionController = require('../controllers/rolePermissionController');
 const membershipController = require('../controllers/membershipController');
 const { authenticate, authorize, requireSuperAdmin } = require('../middleware/auth');
+const { uploadProduct } = require('../config/multer');
 
 // All admin routes require authentication and admin role
 router.use(authenticate);
@@ -18,11 +19,16 @@ router.get('/users', adminController.getAllUsers);
 router.get('/users/:id', adminController.getUserById);
 router.post('/users', adminController.createUser);
 router.put('/users/:id', adminController.updateUser);
+router.post('/users/:id/charge-income', adminController.chargeUserIncome);
 router.delete('/users/:id', adminController.deleteUser);
 
 // Products CRUD
 router.get('/products', adminController.getAllProductsAdmin);
-router.put('/products/:id', adminController.updateProductAdmin);
+router.get('/products/:productId/download', adminController.downloadProductFile);
+router.get('/products/:productId/purchases', adminController.getProductPurchaseHistory);
+router.put('/products/:id', uploadProduct.fields([
+  { name: 'previewImages', maxCount: 10 } // Allow up to 10 preview images
+]), adminController.updateProductAdmin);
 router.delete('/products/:id', adminController.deleteProductAdmin);
 
 // Categories CRUD

@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Eye, ShoppingCart, Calendar, MapPin, UserPlus, Search, Filter, Edit, Trash2, Loader2 } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Pagination } from "@/components/ui/pagination";
+import { Eye, ShoppingCart, Calendar, MapPin, UserPlus, Search, Filter, Edit, Trash2, Loader2, Plus } from "lucide-react";
 import { membershipsApi } from "@/lib/api";
 
 // API base URL
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/admin/users`;
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`;
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
@@ -55,6 +57,10 @@ export interface UserData {
   total_orders?: number;
   total_spent?: number;
   device?: "mobile" | "desktop" | "tablet";
+  // New fields
+  wallet?: string;
+  income?: number;
+  publishedFileCount?: number;
 }
 
 // Membership type
@@ -97,8 +103,47 @@ function UserForm({
     total_orders: user?.total_orders || 0,
     total_spent: user?.total_spent || 0,
     device: user?.device || "mobile",
+    wallet: user?.wallet || "",
     password: ""
   });
+
+  // Update form when user prop changes (for edit mode)
+  useEffect(() => {
+    if (user) {
+      setForm({
+        full_name: user.full_name || "",
+        phone: user.phone || "",
+        role: user.role || "user",
+        supervisor_id: user.supervisor_id || null,
+        is_active: user.is_active ?? true,
+        membership_type: user.membership_type || null,
+        email: user.email || "",
+        location: user.location || "Улаанбаатар",
+        total_orders: user.total_orders || 0,
+        total_spent: user.total_spent || 0,
+        device: user.device || "mobile",
+        wallet: user.wallet || "",
+        password: "" // Don't populate password when editing
+      });
+    } else {
+      // Reset form for new user
+      setForm({
+        full_name: "",
+        phone: "",
+        role: "user",
+        supervisor_id: null,
+        is_active: true,
+        membership_type: null,
+        email: "",
+        location: "Улаанбаатар",
+        total_orders: 0,
+        total_spent: 0,
+        device: "mobile",
+        wallet: "",
+        password: ""
+      });
+    }
+  }, [user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,16 +151,17 @@ function UserForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <Label htmlFor="full_name">Бүтэн нэр</Label>
+          <Label htmlFor="full_name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Бүтэн нэр</Label>
           <Input
             id="full_name"
             value={form.full_name}
             onChange={(e) => setForm({...form, full_name: e.target.value})}
             placeholder="Бүтэн нэр"
             required
+            className="mt-1.5 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 
@@ -138,6 +184,16 @@ function UserForm({
             value={form.email}
             onChange={(e) => setForm({...form, email: e.target.value})}
             placeholder="имэйл хаяг"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="wallet">Хэтэвчийн дугаар</Label>
+          <Input
+            id="wallet"
+            value={form.wallet || ""}
+            onChange={(e) => setForm({...form, wallet: e.target.value})}
+            placeholder="QPay, банкны данс гэх мэт"
           />
         </div>
 
@@ -283,11 +339,11 @@ function UserForm({
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+      <div className="flex justify-end gap-3 pt-6 border-t">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading} className="min-w-[100px]">
           Цуцлах
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading} className="min-w-[120px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -307,6 +363,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [memberships, setMemberships] = useState<MembershipData[]>([]);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [viewingUser, setViewingUser] = useState<UserData | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -314,17 +371,40 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{open: boolean, userId?: number}>({open: false});
+  const [chargeIncomeDialog, setChargeIncomeDialog] = useState<{open: boolean, user?: UserData}>({open: false});
+  const [chargeAmount, setChargeAmount] = useState<string>("");
+  const [confirmCharge, setConfirmCharge] = useState(false);
+  const [isCharging, setIsCharging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const [pagination, setPagination] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  } | null>(null);
 
   // Fetch users from API
-  const fetchUsers = async () => {
+  const fetchUsers = async (page: number = currentPage) => {
     try {
       setIsLoading(true);
       setError(null);
       setSuccess(null);
       
-      const response = await fetch(API_URL, {
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', itemsPerPage.toString());
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      if (roleFilter !== 'all') {
+        params.append('role', roleFilter);
+      }
+      
+      const response = await fetch(`${API_URL}?${params.toString()}`, {
         headers: getAuthHeaders(),
       });
       
@@ -372,11 +452,20 @@ export default function UsersPage() {
             location: user.location || "Улаанбаатар",
             total_orders: 0,
             total_spent: 0,
-            device: "mobile" as "mobile" | "desktop" | "tablet"
+            device: "mobile" as "mobile" | "desktop" | "tablet",
+            // New fields
+            wallet: user.wallet || undefined,
+            income: user.income !== undefined ? parseFloat(user.income) : 0,
+            publishedFileCount: user.publishedFileCount !== undefined ? parseInt(user.publishedFileCount) : 0
           };
         });
         
         setUsers(mappedUsers);
+        
+        // Store pagination info
+        if (result.pagination) {
+          setPagination(result.pagination);
+        }
       } else {
         throw new Error('Invalid API response format');
       }
@@ -400,10 +489,26 @@ export default function UsersPage() {
     }
   };
 
-  // Fetch users on component mount
+  // Fetch users when page changes
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // Reset to page 1 when filters change (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, roleFilter]);
+
+  // Initial load
+  useEffect(() => {
+    fetchUsers(1);
     fetchMemberships();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Create user via API
@@ -419,12 +524,14 @@ export default function UsersPage() {
       
       const apiData: any = {
         fullName: userData.full_name,
+        phone: userData.phone || undefined,
         username: userData.phone || userData.email || `user_${Date.now()}`,
         email: userData.email || undefined,
         password: userData.password || "default123",
         role: backendRole,
         isActive: userData.is_active !== undefined ? userData.is_active : true,
-        membership_type: userData.membership_type !== undefined ? userData.membership_type : null
+        membership_type: userData.membership_type !== undefined ? userData.membership_type : null,
+        wallet: userData.wallet || undefined
       };
       
       const response = await fetch(API_URL, {
@@ -469,7 +576,10 @@ export default function UsersPage() {
           location: userData.location,
           total_orders: userData.total_orders,
           total_spent: userData.total_spent,
-          device: userData.device
+          device: userData.device,
+          wallet: apiUser.wallet || userData.wallet,
+          income: apiUser.income !== undefined ? parseFloat(apiUser.income) : 0,
+          publishedFileCount: apiUser.publishedFileCount !== undefined ? parseInt(apiUser.publishedFileCount) : 0
         };
         
         setUsers([...users, newUser]);
@@ -503,10 +613,12 @@ export default function UsersPage() {
       
       const apiData: any = {
         fullName: userData.full_name,
+        phone: userData.phone || undefined,
         email: userData.email || undefined,
         role: backendRole,
         isActive: userData.is_active !== undefined ? userData.is_active : true,
-        membership_type: userData.membership_type !== undefined ? userData.membership_type : null
+        membership_type: userData.membership_type !== undefined ? userData.membership_type : null,
+        wallet: userData.wallet || undefined
       };
       
       // Only update password if provided
@@ -561,6 +673,9 @@ export default function UsersPage() {
                 total_orders: userData.total_orders,
                 total_spent: userData.total_spent,
                 device: userData.device,
+                wallet: apiUser.wallet !== undefined ? apiUser.wallet : userData.wallet,
+                income: apiUser.income !== undefined ? parseFloat(apiUser.income) : (userData.income || 0),
+                publishedFileCount: apiUser.publishedFileCount !== undefined ? parseInt(apiUser.publishedFileCount) : (userData.publishedFileCount || 0),
                 updatedAt: apiUser.updatedAt || new Date().toISOString()
               }
             : user
@@ -583,6 +698,170 @@ export default function UsersPage() {
     }
   };
 
+  // Charge user income
+  const chargeUserIncome = async (userId: number, amount: number) => {
+    try {
+      // Validate inputs
+      if (!userId || userId <= 0) {
+        throw new Error('Хэрэглэгчийн ID буруу байна');
+      }
+  
+      if (!amount || amount <= 0 || isNaN(amount)) {
+        throw new Error('Мөнгөн дүн буруу байна');
+      }
+  
+      // Format amount to 2 decimal places
+      const formattedAmount = parseFloat(amount.toFixed(2));
+      
+      setIsCharging(true);
+      setError(null);
+      setSuccess(null);
+      
+      console.log(`🔄 Орлого нэмэх: Хэрэглэгч ${userId}, Дүн: ${formattedAmount}`);
+  
+      // Find the current user before update for comparison
+      const currentUser = users.find(u => u.id === userId);
+      const currentIncome = currentUser?.income || 0;
+      console.log(`📊 Одоогийн орлого: ${currentIncome}`);
+  
+      const response = await fetch(`${API_URL}/${userId}/charge-income`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ amount: formattedAmount }),
+      });
+  
+      // Handle HTTP errors
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        
+        // Handle authentication errors
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          router.push('/');
+          throw new Error('Нэвтрэх эрх хүчингүй боллоо. Дахин нэвтэрнэ үү.');
+        }
+        
+        // Handle specific error statuses
+        if (response.status === 400) {
+          throw new Error(errorData?.error || errorData?.message || 'Мэдээлэл буруу байна');
+        }
+        
+        if (response.status === 404) {
+          throw new Error('Хэрэглэгч олдсонгүй');
+        }
+        
+        throw new Error(errorData?.error || errorData?.message || `Алдаа гарлаа. Статус код: ${response.status}`);
+      }
+  
+      const result = await response.json();
+      
+      console.log('📨 Серверээс ирсэн хариу:', result);
+  
+      // Validate response structure
+      if (!result || typeof result !== 'object') {
+        throw new Error('Серверээс буруу хариу ирлээ');
+      }
+  
+      // Extract new income with multiple fallbacks
+      let newIncome: number;
+      
+      if (result.newIncome !== undefined) {
+        newIncome = typeof result.newIncome === 'number' 
+          ? result.newIncome 
+          : parseFloat(result.newIncome);
+      } else if (result.user?.income !== undefined) {
+        newIncome = typeof result.user.income === 'number' 
+          ? result.user.income 
+          : parseFloat(result.user.income);
+      } else if (result.data?.transaction?.newIncome !== undefined) {
+        newIncome = typeof result.data.transaction.newIncome === 'number'
+          ? result.data.transaction.newIncome
+          : parseFloat(result.data.transaction.newIncome);
+      } else {
+        // Calculate from current if no server value
+        newIncome = currentIncome + formattedAmount;
+      }
+  
+      // Validate the calculated newIncome
+      if (isNaN(newIncome)) {
+        console.warn('❌ Орлогын утга тоо биш байна:', newIncome);
+        newIncome = currentIncome + formattedAmount; // Use calculated value
+      }
+  
+      console.log(`✅ Шинэ орлого: ${newIncome} (${typeof newIncome})`);
+  
+      // Update the user in state - use functional update for reliability
+      setUsers(prevUsers => {
+        const updatedUsers = prevUsers.map(user => {
+          if (user.id === userId) {
+            const updatedUser = {
+              ...user,
+              income: newIncome,
+              updatedAt: new Date().toISOString() // Update timestamp
+            };
+            console.log(`🔄 Хэрэглэгч шинэчлэгдлээ:`, updatedUser);
+            return updatedUser;
+          }
+          return user;
+        });
+        
+        // Verify the update
+        const updatedUser = updatedUsers.find(u => u.id === userId);
+        console.log(`🔍 Шинэчлэгдсэн хэрэглэгчийн орлого:`, updatedUser?.income);
+        
+        return updatedUsers;
+      });
+  
+      // Close dialog and reset
+      setChargeIncomeDialog({ open: false });
+      setChargeAmount("");
+      setConfirmCharge(false);
+      
+      // Show success message
+      const successMsg = result.message || 
+        `Амжилттай ${formatPrice(formattedAmount)}₮ нэмлээ. Шинэ орлого: ${formatPrice(newIncome)}₮`;
+      
+      setSuccess(successMsg);
+      
+      // Optional: Log to analytics or send notification
+      console.log(`🎉 Орлого амжилттай нэмэгдлээ! Хэрэглэгч: ${userId}, Хуучин: ${currentIncome}₮, Шинэ: ${newIncome}₮`);
+      
+      // Refresh the users list from server to get the latest data
+      setTimeout(() => fetchUsers(currentPage), 500);
+  
+    } catch (err) {
+      console.error('❌ Орлого нэмэхэд алдаа гарлаа:', err);
+      
+      let errorMessage = 'Орлого нэмэхэд алдаа гарлаа';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      // Show user-friendly error messages
+      const userFriendlyErrors: Record<string, string> = {
+        'NetworkError': 'Сүлжээний алдаа гарлаа. Интернэт холболтоо шалгана уу.',
+        'Failed to fetch': 'Серверт холбогдоход алдаа гарлаа.',
+        'Хэрэглэгч олдсонгүй': 'Хэрэглэгчийн мэдээлэл олдсонгүй.',
+        'Мөнгөн дүн буруу байна': 'Мөнгөн дүн буруу байна. Зөв дүнг оруулна уу.',
+      };
+      
+      if (userFriendlyErrors[errorMessage]) {
+        errorMessage = userFriendlyErrors[errorMessage];
+      }
+      
+      setError(errorMessage);
+      
+      // Keep dialog open on error for user to retry
+      // setChargeIncomeDialog({ open: true });
+      
+    } finally {
+      setIsCharging(false);
+    }
+  };
   // Delete user via API
   const deleteUser = async (userId: number) => {
     try {
@@ -619,20 +898,13 @@ export default function UsersPage() {
     }
   };
 
-  // Filter users based on search and filters
+  // Filter users based on status filter (search and role are handled by API)
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone.includes(searchTerm) ||
-      (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (user.location && user.location.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
     const matchesStatus = statusFilter === "all" || 
       (statusFilter === "active" && user.is_active) ||
       (statusFilter === "inactive" && !user.is_active);
 
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesStatus;
   });
 
   // Calculate statistics
@@ -826,23 +1098,38 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* User Form */}
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingUser ? "Хэрэглэгч засах" : "Шинэ хэрэглэгч үүсгэх"}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
+      {/* User Form - Drawer from Right */}
+      <Sheet open={showForm} onOpenChange={(open) => { 
+        if (!open) { 
+          setShowForm(false); 
+          setEditingUser(null); 
+        } 
+      }}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0">
+          <SheetHeader className="px-0 pt-6 pb-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+            <div className="px-6">
+              <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                {editingUser ? "Хэрэглэгч засах" : "Шинэ хэрэглэгч үүсгэх"}
+              </SheetTitle>
+            </div>
+          </SheetHeader>
+          <div className="px-6 py-6">
             <UserForm
               user={editingUser || undefined}
-              onSubmit={editingUser ? updateUser : createUser}
+              onSubmit={async (userData) => {
+                if (editingUser) {
+                  await updateUser(userData);
+                } else {
+                  await createUser(userData);
+                }
+              }}
               onCancel={() => { setShowForm(false); setEditingUser(null); }}
               isLoading={isFormLoading}
               memberships={memberships}
             />
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* User Table */}
       <Card>
@@ -861,9 +1148,12 @@ export default function UsersPage() {
                 <tr className="border-b">
                   <th className="text-left p-3">Хэрэглэгч</th>
                   <th className="text-left p-3">Холбоо барих</th>
+                  <th className="text-left p-3">Хэтэвч</th>
                   <th className="text-left p-3">Үүрэг</th>
                   <th className="text-left p-3">Гишүүнчлэл</th>
                   <th className="text-left p-3">Төлөв</th>
+                  <th className="text-left p-3">Орлого</th>
+                  <th className="text-left p-3">Нийтлэл</th>
                   <th className="text-left p-3">Захиалга</th>
                   <th className="text-left p-3">Зарцуулалт</th>
                   <th className="text-left p-3">Байршил</th>
@@ -891,6 +1181,15 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="p-3">
+                      <div className="text-sm">
+                        {user.wallet ? (
+                          <span className="font-medium text-blue-600">{user.wallet}</span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3">
                       <Badge className={getRoleColor(user.role)}>
                         {user.role === 'admin' ? 'Админ' : 'Хэрэглэгч'}
                       </Badge>
@@ -908,6 +1207,16 @@ export default function UsersPage() {
                       <Badge className={getStatusColor(user.is_active)}>
                         {user.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
                       </Badge>
+                    </td>
+                    <td className="p-3">
+                      <div className="font-medium text-green-600">
+                        {formatPrice(user.income || 0)}
+                      </div>
+                      <div className="text-xs text-gray-500">нийт орлого</div>
+                    </td>
+                    <td className="p-3">
+                      <div className="font-medium">{user.publishedFileCount || 0}</div>
+                      <div className="text-xs text-gray-500">нийтлэгдсэн</div>
                     </td>
                     <td className="p-3">
                       <div className="font-medium">{user.total_orders || 0}</div>
@@ -932,17 +1241,41 @@ export default function UsersPage() {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="outline"
-                          onClick={() => { setEditingUser(user); setShowForm(true); setError(null); }}
+                          variant="ghost"
+                          onClick={() => setViewingUser(user)}
+                          title="Харах"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Eye className="h-4 w-4 text-blue-500" />
                         </Button>
                         <Button
                           size="sm"
-                          variant="destructive"
-                          onClick={() => setDeleteDialog({open: true, userId: user.id})}
+                          variant="ghost"
+                          onClick={() => { setEditingUser(user); setShowForm(true); setError(null); }}
+                          title="Засах"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Edit className="h-4 w-4 text-green-500" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setChargeIncomeDialog({open: true, user});
+                            setChargeAmount("");
+                            setConfirmCharge(false);
+                            setError(null);
+                          }}
+                          title="Орлого нэмэх"
+                          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setDeleteDialog({open: true, userId: user.id})}
+                          title="Устгах"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
                     </td>
@@ -951,7 +1284,7 @@ export default function UsersPage() {
 
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="p-8 text-center text-gray-500">
+                    <td colSpan={13} className="p-8 text-center text-gray-500">
                       Хэрэглэгч олдсонгүй
                     </td>
                   </tr>
@@ -959,8 +1292,283 @@ export default function UsersPage() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination Controls */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-4 border-t">
+              <div className="text-sm text-gray-600">
+                Нийт {pagination.total} хэрэглэгч, {pagination.page}/{pagination.totalPages} хуудас
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={setCurrentPage}
+                disabled={isLoading}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* View User Dialog */}
+      <Dialog open={!!viewingUser} onOpenChange={(open) => !open && setViewingUser(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Хэрэглэгчийн мэдээлэл</DialogTitle>
+          </DialogHeader>
+          {viewingUser && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Бүтэн нэр</Label>
+                  <div className="mt-1 text-sm">{viewingUser.full_name}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">ID</Label>
+                  <div className="mt-1 text-sm">{viewingUser.id}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Утасны дугаар</Label>
+                  <div className="mt-1 text-sm">{viewingUser.phone || "-"}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Имэйл</Label>
+                  <div className="mt-1 text-sm">{viewingUser.email || "-"}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Үүрэг</Label>
+                  <div className="mt-1">
+                    <Badge className={getRoleColor(viewingUser.role)}>
+                      {viewingUser.role === 'admin' ? 'Админ' : 'Хэрэглэгч'}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Төлөв</Label>
+                  <div className="mt-1">
+                    <Badge className={getStatusColor(viewingUser.is_active)}>
+                      {viewingUser.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Гишүүнчлэл</Label>
+                  <div className="mt-1">
+                    {viewingUser.membership_type ? (
+                      <Badge className="bg-yellow-100 text-yellow-800">
+                        {memberships.find(m => m.id === viewingUser.membership_type)?.name || 'Unknown'}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-gray-400">Гишүүнчлэлгүй</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Байршил</Label>
+                  <div className="mt-1 text-sm">{viewingUser.location || "-"}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Төхөөрөмж</Label>
+                  <div className="mt-1 text-sm">
+                    {viewingUser.device === 'mobile' ? 'Утас' : 
+                     viewingUser.device === 'desktop' ? 'Компьютер' : 
+                     viewingUser.device === 'tablet' ? 'Таблет' : '-'}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Захиалгын тоо</Label>
+                  <div className="mt-1 text-sm">{viewingUser.total_orders || 0}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Зарцуулалт</Label>
+                  <div className="mt-1 text-sm text-green-600 font-medium">
+                    {formatPrice(viewingUser.total_spent || 0)}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Бүртгүүлсэн огноо</Label>
+                  <div className="mt-1 text-sm">{formatDate(viewingUser.createdAt)}</div>
+                  <div className="text-xs text-gray-500">
+                    {new Date(viewingUser.createdAt).toLocaleTimeString('mn-MN', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Сүүлд шинэчлэгдсэн</Label>
+                  <div className="mt-1 text-sm">{formatDate(viewingUser.updatedAt)}</div>
+                  <div className="text-xs text-gray-500">
+                    {new Date(viewingUser.updatedAt).toLocaleTimeString('mn-MN', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingUser(null)}>
+              Хаах
+            </Button>
+            {viewingUser && (
+              <Button 
+                onClick={() => {
+                  setEditingUser(viewingUser);
+                  setViewingUser(null);
+                  setShowForm(true);
+                  setError(null);
+                }}
+              >
+                Засах
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Charge Income Dialog */}
+      <Dialog open={chargeIncomeDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setChargeIncomeDialog({open: false});
+          setChargeAmount("");
+          setConfirmCharge(false);
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Plus className="h-5 w-5 text-purple-600" />
+              </div>
+              Орлого нэмэх
+            </DialogTitle>
+          </DialogHeader>
+          {chargeIncomeDialog.user && (
+            <div className="space-y-4 py-4">
+              {!confirmCharge ? (
+                <>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-2">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Хэрэглэгч</div>
+                    <div className="font-semibold text-lg">{chargeIncomeDialog.user.full_name}</div>
+                    <div className="text-sm text-gray-500">Одоогийн орлого: <span className="font-semibold text-green-600">{formatPrice(chargeIncomeDialog.user.income || 0)}</span></div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="chargeAmount" className="text-sm font-semibold">
+                      Нэмэх дүн (₮)
+                    </Label>
+                    <Input
+                      id="chargeAmount"
+                      type="number"
+                      value={chargeAmount}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || (!isNaN(parseFloat(value)) && parseFloat(value) >= 0)) {
+                          setChargeAmount(value);
+                        }
+                      }}
+                      placeholder="0"
+                      min="0"
+                      step="0.01"
+                      className="mt-2 text-lg"
+                      autoFocus
+                    />
+                    {chargeAmount && !isNaN(parseFloat(chargeAmount)) && parseFloat(chargeAmount) > 0 && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        Шинэ орлого: <span className="font-bold text-green-600">
+                          {formatPrice((chargeIncomeDialog.user.income || 0) + parseFloat(chargeAmount))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-yellow-100 dark:bg-yellow-900/40 rounded-lg">
+                        <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">Та итгэлтэй байна уу?</div>
+                        <div className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                          <div>Хэрэглэгч: <span className="font-semibold">{chargeIncomeDialog.user.full_name}</span></div>
+                          <div>Одоогийн орлого: <span className="font-semibold">{formatPrice(chargeIncomeDialog.user.income || 0)}</span></div>
+                          <div>Нэмэх дүн: <span className="font-semibold text-green-600">{formatPrice(parseFloat(chargeAmount))}</span></div>
+                          <div className="pt-2 border-t border-yellow-200 dark:border-yellow-800">
+                            Шинэ орлого: <span className="font-bold text-lg text-green-600">
+                              {formatPrice((chargeIncomeDialog.user.income || 0) + parseFloat(chargeAmount))}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <div className="flex gap-2 w-full">
+              {!confirmCharge ? (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setChargeIncomeDialog({open: false});
+                      setChargeAmount("");
+                    }}
+                    className="flex-1"
+                  >
+                    Цуцлах
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      const amount = parseFloat(chargeAmount);
+                      if (amount && amount > 0) {
+                        setConfirmCharge(true);
+                      } else {
+                        setError('Хүчинтэй дүн оруулна уу');
+                      }
+                    }}
+                    disabled={!chargeAmount || isNaN(parseFloat(chargeAmount)) || parseFloat(chargeAmount) <= 0}
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                  >
+                    Үргэлжлүүлэх
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setConfirmCharge(false)}
+                    className="flex-1"
+                    disabled={isCharging}
+                  >
+                    Буцах
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (chargeIncomeDialog.user) {
+                        chargeUserIncome(chargeIncomeDialog.user.id, parseFloat(chargeAmount));
+                      }
+                    }}
+                    disabled={isCharging}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  >
+                    {isCharging ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Нэмж байна...
+                      </>
+                    ) : (
+                      'Тийм, нэмэх'
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({open})}>

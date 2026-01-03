@@ -1,11 +1,14 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const token = searchParams.get('token')
@@ -23,16 +26,48 @@ export default function AuthCallbackPage() {
       try {
         const user = JSON.parse(decodeURIComponent(userParam))
         
-        // Store token and user data
+        // Store token first
         localStorage.setItem('token', token)
-        localStorage.setItem('user', JSON.stringify(user))
         
-        // Redirect based on user role
-        if (user.role === 'journalist') {
-          router.push('/account/journalist')
-        } else {
-          router.push('/')
-        }
+        // Fetch latest user profile from server to ensure role is up to date
+        fetch(`${API_BASE_URL}/auth/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.user) {
+              // Use server data which has the latest role
+              localStorage.setItem('user', JSON.stringify(data.user))
+              
+              // Redirect based on user role
+              if (data.user.role === 'journalist') {
+                router.push('/account/journalist')
+              } else {
+                router.push('/')
+              }
+            } else {
+              // Fallback to user data from callback if profile fetch fails
+              localStorage.setItem('user', JSON.stringify(user))
+              if (user.role === 'journalist') {
+                router.push('/account/journalist')
+              } else {
+                router.push('/')
+              }
+            }
+          })
+          .catch(err => {
+            console.error('Error fetching user profile:', err)
+            // Fallback to user data from callback
+            localStorage.setItem('user', JSON.stringify(user))
+            if (user.role === 'journalist') {
+              router.push('/account/journalist')
+            } else {
+              router.push('/')
+            }
+          })
       } catch (err) {
         console.error('Error parsing user data:', err)
         router.push('/login?error=parse_error')

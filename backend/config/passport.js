@@ -59,13 +59,29 @@ if (hasGoogleCredentials) {
           });
 
           if (user) {
-            // Update user with Google ID if not set
+            // Update user with Google ID and ensure they have journalist role
+            const updateData = {};
+            
             if (!user.username.includes('google_')) {
-              await user.update({
-                username: `google_${profile.id}`,
-                avatar: profile.photos[0]?.value || user.avatar,
-              });
+              updateData.username = `google_${profile.id}`;
             }
+            
+            if (profile.photos[0]?.value) {
+              updateData.avatar = profile.photos[0].value;
+            }
+            
+            // Update role to journalist if user doesn't already have admin role
+            // This ensures Google OAuth users get journalist role, but preserves admin role
+            if (user.role !== 'admin' && user.role !== 'journalist') {
+              updateData.role = 'journalist';
+            }
+            
+            if (Object.keys(updateData).length > 0) {
+              await user.update(updateData);
+              // Reload user from database to get fresh data
+              await user.reload();
+            }
+            
             return done(null, user);
           }
 

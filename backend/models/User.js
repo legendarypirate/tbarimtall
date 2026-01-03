@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../config/database');
 const bcrypt = require('bcryptjs');
 
@@ -29,6 +29,10 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(255),
     allowNull: true
   },
+  phone: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
   role: {
     type: DataTypes.ENUM('viewer', 'journalist', 'admin'),
     defaultValue: 'viewer'
@@ -50,6 +54,30 @@ const User = sequelize.define('User', {
     allowNull: true,
     defaultValue: null,
     comment: 'Reference to membership id (gold, silver, bronze)'
+  },
+  wallet: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: 'Wallet account number (e.g., QPay wallet number, bank account)'
+  },
+  income: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: 'Total wallet balance - sum of all completed orders for user\'s products',
+    get() {
+      const value = this.getDataValue('income');
+      return value !== null && value !== undefined 
+        ? parseFloat(value) 
+        : 0;
+    },
+    set(value) {
+      this.setDataValue('income', parseFloat(value) || 0);
+    }
+  },
+  publishedFileCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    comment: 'Count of published products (status=published and isActive=true)'
   }
 }, {
   tableName: 'users',
@@ -58,6 +86,39 @@ const User = sequelize.define('User', {
     beforeCreate: async (user) => {
       if (user.password) {
         user.password = await bcrypt.hash(user.password, 10);
+      }
+      
+      // Auto-assign wallet number if not provided
+      if (!user.wallet) {
+        try {
+          // Use raw SQL query to find max wallet number (PostgreSQL compatible)
+          // Try to cast wallet to integer, ignore non-numeric values
+          const [results] = await sequelize.query(
+            `SELECT MAX(
+              CASE 
+                WHEN wallet ~ '^[0-9]+$' THEN wallet::INTEGER 
+                ELSE 0 
+              END
+            ) as maxWallet 
+             FROM users 
+             WHERE wallet IS NOT NULL 
+             AND wallet != ''`,
+            { type: sequelize.QueryTypes.SELECT }
+          );
+          
+          const maxWallet = results?.maxWallet || 0;
+          
+          // Start from 514826 if max is less than that, otherwise increment
+          const nextWallet = maxWallet >= 514826 ? maxWallet + 1 : 514826;
+          
+          user.wallet = nextWallet.toString();
+          console.log(`✅ Auto-assigned wallet number: ${user.wallet} for new user`);
+        } catch (error) {
+          console.error('Error auto-assigning wallet number:', error);
+          // If there's an error, start from 514826 as fallback
+          user.wallet = '514826';
+          console.log(`⚠️  Using fallback wallet number: ${user.wallet}`);
+        }
       }
     },
     beforeUpdate: async (user) => {

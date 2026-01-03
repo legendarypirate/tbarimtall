@@ -269,7 +269,17 @@ export default function Home() {
         ])
 
         if (categoriesRes.categories) {
-          setCategories(categoriesRes.categories)
+          // Filter to only show parent categories (those with subcategories)
+          // This excludes subcategories that might be returned as separate items
+          const filteredCategories = categoriesRes.categories.filter((cat: any) => {
+            // Only show categories that have subcategories (parent categories)
+            // OR are in the defaultCategories list (known parent categories)
+            const parentCategoryIds = defaultCategories.map(c => c.id)
+            const hasSubcategories = cat.subcategories && Array.isArray(cat.subcategories) && cat.subcategories.length > 0
+            const isDefaultParent = parentCategoryIds.includes(cat.id)
+            return hasSubcategories || isDefaultParent
+          })
+          setCategories(filteredCategories.length > 0 ? filteredCategories : defaultCategories)
         }
         if (productsRes.products) {
           setFeaturedProducts(productsRes.products)

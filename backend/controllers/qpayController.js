@@ -33,9 +33,36 @@ async function getQPayToken() {
 // Create QPay invoice
 exports.createInvoice = async (req, res) => {
   try {
-    const { productId, amount, description, userId } = req.body;
-    // userId comes from request body (optional)
-    const finalUserId = userId;
+    const { productId, amount, description, userId: bodyUserId } = req.body;
+    
+    // Priority: 1) Auth token (if user is authenticated), 2) null (guest order)
+    // We don't use body userId to prevent unauthorized user ID injection
+    // If user is authenticated, their userId from token will be used
+    // If not authenticated, userId will be null (guest order)
+    let finalUserId = null;
+    
+    try {
+      // Check if there's an auth token in the header
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+        // JWT token may have userId or id field
+        if (decoded && (decoded.userId || decoded.id)) {
+          finalUserId = decoded.userId || decoded.id;
+          console.log(`Extracted userId ${finalUserId} from auth token`);
+        }
+      }
+    } catch (tokenError) {
+      // If token verification fails, userId remains null (guest order)
+      console.log('No valid auth token, creating guest order (userId will be null)');
+    }
+    
+    // Note: We ignore bodyUserId for security - only use authenticated userId from token
+    // This ensures that:
+    // - Guest purchases (no auth) → userId = null ✓
+    // - Authenticated purchases → userId = authenticated user's ID from token ✓
 
     if (!productId || !amount) {
       return res.status(400).json({ error: 'Product ID and amount are required' });
@@ -254,6 +281,51 @@ exports.checkPaymentStatus = async (req, res) => {
       await order.update({ status: 'completed' });
       order.status = 'completed';
       
+      // Update product income and user income
+      if (order.productId) {
+        try {
+          const product = await Product.findByPk(order.productId);
+          if (product) {
+            const currentIncome = parseFloat(product.income || 0);
+            const orderAmount = parseFloat(order.amount);
+            await product.update({ 
+              income: currentIncome + orderAmount 
+            });
+            console.log(`Product ${product.id} income updated: ${currentIncome} + ${orderAmount} = ${currentIncome + orderAmount}`);
+            
+            // Update user (author) income
+            if (product.authorId) {
+              const { User } = require('../models');
+              const author = await User.findByPk(product.authorId);
+              if (author) {
+                const currentUserIncome = parseFloat(author.income || 0);
+                await author.update({
+                  income: currentUserIncome + orderAmount
+                });
+                console.log(`User ${author.id} income updated: ${currentUserIncome} + ${orderAmount} = ${currentUserIncome + orderAmount}`);
+              }
+            }
+          }
+        } catch (incomeError) {
+          console.error(`Error updating product/user income:`, incomeError);
+          // Continue - don't fail the payment check if income update fails
+        }
+      }
+      
+      // Check if this is a unique product payment (2000₮)
+      if (parseFloat(order.amount) === 2000 && order.productId) {
+        try {
+          const product = await Product.findByPk(order.productId);
+          if (product && !product.isUnique) {
+            await product.update({ isUnique: true });
+            console.log(`Product ${product.id} marked as unique after payment`);
+          }
+        } catch (productError) {
+          console.error(`Error updating product to unique:`, productError);
+          // Continue - don't fail the payment check if product update fails
+        }
+      }
+      
       // Generate secure download token and get it immediately
       try {
         const generatedToken = await generateDownloadToken(order);
@@ -339,11 +411,12 @@ exports.paymentWebhook = async (req, res) => {
     }
 
     // Find order by invoice ID
+    // Note: Product include is optional since wallet recharge orders have null productId
     const order = await Order.findOne({
       where: { invoiceId: object_id },
       include: [
-        { model: User, as: 'user' },
-        { model: Product, as: 'product' }
+        { model: User, as: 'user', required: false },
+        { model: Product, as: 'product', required: false } // Optional for wallet recharge orders
       ]
     });
 
@@ -357,8 +430,65 @@ exports.paymentWebhook = async (req, res) => {
       await order.update({ status: 'completed' });
       console.log(`Order ${order.id} marked as completed via webhook`);
       
-      // Generate secure download token
-      await generateDownloadToken(order);
+      // Handle wallet recharge (productId is null)
+      if (!order.productId && order.userId) {
+        try {
+          const user = await User.findByPk(order.userId);
+          if (user) {
+            const currentIncome = parseFloat(user.income || 0);
+            const rechargeAmount = parseFloat(order.amount);
+            await user.update({
+              income: currentIncome + rechargeAmount
+            });
+            console.log(`User ${user.id} income updated via webhook (wallet recharge): ${currentIncome} + ${rechargeAmount} = ${currentIncome + rechargeAmount}`);
+          }
+        } catch (incomeError) {
+          console.error(`Error updating user income via webhook (wallet recharge):`, incomeError);
+        }
+      } else if (order.productId) {
+        // Update product income
+        try {
+          const product = await Product.findByPk(order.productId);
+          if (product) {
+            const currentIncome = parseFloat(product.income || 0);
+            const orderAmount = parseFloat(order.amount);
+            await product.update({ 
+              income: currentIncome + orderAmount 
+            });
+            console.log(`Product ${product.id} income updated via webhook: ${currentIncome} + ${orderAmount} = ${currentIncome + orderAmount}`);
+            
+            // Update user (author) income
+            if (product.authorId) {
+              const author = await User.findByPk(product.authorId);
+              if (author) {
+                const currentUserIncome = parseFloat(author.income || 0);
+                await author.update({
+                  income: currentUserIncome + orderAmount
+                });
+                console.log(`User ${author.id} income updated via webhook: ${currentUserIncome} + ${orderAmount} = ${currentUserIncome + orderAmount}`);
+              }
+            }
+          }
+        } catch (incomeError) {
+          console.error(`Error updating product/user income via webhook:`, incomeError);
+        }
+        
+        // Check if this is a unique product payment (2000₮)
+        if (parseFloat(order.amount) === 2000) {
+          try {
+            const product = await Product.findByPk(order.productId);
+            if (product && !product.isUnique) {
+              await product.update({ isUnique: true });
+              console.log(`Product ${product.id} marked as unique after payment via webhook`);
+            }
+          } catch (productError) {
+            console.error(`Error updating product to unique via webhook:`, productError);
+          }
+        }
+        
+        // Generate secure download token for product purchases
+        await generateDownloadToken(order);
+      }
     } else if (payment_status === 'CANCELLED' && order.status !== 'cancelled') {
       await order.update({ status: 'cancelled' });
       console.log(`Order ${order.id} marked as cancelled via webhook`);
@@ -456,6 +586,302 @@ async function generateDownloadToken(order) {
     throw error;
   }
 }
+
+// Create wallet recharge invoice
+exports.createWalletRechargeInvoice = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      return res.status(400).json({ error: 'Valid amount is required' });
+    }
+
+    // Get QPay token
+    const token = await getQPayToken();
+
+    // Generate unique invoice number for wallet recharge
+    const senderInvoiceNo = `WALLET_${Date.now()}_${userId}`;
+    const invoiceCode = process.env.QPAY_INVOICE_CODE || 'KONO_INVOICE';
+    const invoiceReceiverCode = process.env.QPAY_RECEIVER_CODE || 'DEFAULT_COM_ID';
+
+    // Create invoice in QPay
+    const invoiceResponse = await axios.post(
+      `${QPAY_BASE_URL}/invoice`,
+      {
+        invoice_code: invoiceCode,
+        sender_invoice_no: senderInvoiceNo,
+        invoice_receiver_code: invoiceReceiverCode,
+        invoice_description: `Данс цэнэглэх - ${parseFloat(amount).toLocaleString()}₮`,
+        amount: parseFloat(amount)
+      },
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!invoiceResponse.data || !invoiceResponse.data.invoice_id) {
+      throw new Error('Failed to create QPay invoice');
+    }
+
+    const invoiceData = invoiceResponse.data;
+
+    // Create a special order for wallet recharge (productId = null)
+    const order = await Order.create({
+      userId: parseInt(userId),
+      productId: null, // Wallet recharge has no product
+      amount: parseFloat(amount),
+      paymentMethod: 'qpay',
+      status: 'pending',
+      invoiceId: invoiceData.invoice_id,
+      qrImage: invoiceData.qr_image || null,
+      qrText: invoiceData.qr_text || null
+    });
+
+    res.json({
+      success: true,
+      order: order.toJSON(),
+      invoice: {
+        invoice_id: invoiceData.invoice_id,
+        qr_image: invoiceData.qr_image,
+        qr_text: invoiceData.qr_text,
+        qr_code: invoiceData.qr_code,
+        urls: invoiceData.urls
+      }
+    });
+  } catch (error) {
+    console.error('Create wallet recharge invoice error:', error);
+    res.status(500).json({
+      error: 'Failed to create wallet recharge invoice',
+      message: error.response?.data?.message || error.message
+    });
+  }
+};
+
+// Wallet payment - purchase product using wallet balance
+exports.payWithWallet = async (req, res) => {
+  try {
+    const { productId, amount } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!productId || !amount) {
+      return res.status(400).json({ error: 'Product ID and amount are required' });
+    }
+
+    const { User, Product, Order, DownloadToken } = require('../models');
+    const sequelize = require('sequelize');
+
+    // Get user with current income balance
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user has enough balance
+    const currentBalance = parseFloat(user.income || 0);
+    const purchaseAmount = parseFloat(amount);
+
+    if (currentBalance < purchaseAmount) {
+      return res.status(400).json({ 
+        error: 'Insufficient balance',
+        message: `Таны үлдэгдэл хангалтгүй байна. Одоогийн үлдэгдэл: ${currentBalance.toLocaleString()}₮, Шаардлагатай: ${purchaseAmount.toLocaleString()}₮`
+      });
+    }
+
+    // Validate product exists and get it
+    let product;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (uuidRegex.test(productId)) {
+      product = await Product.findOne({ where: { uuid: productId } });
+    } else {
+      product = await Product.findByPk(productId);
+    }
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Get integer product ID
+    const validProductId = product.id;
+
+    // Use transaction to ensure atomicity
+    const transaction = await require('../config/database').transaction();
+
+    try {
+      // Deduct amount from user's income
+      await user.update(
+        { 
+          income: sequelize.literal(`income - ${purchaseAmount}`)
+        },
+        { transaction }
+      );
+
+      // Create order with wallet payment method
+      const order = await Order.create({
+        userId: parseInt(userId),
+        productId: validProductId,
+        amount: purchaseAmount,
+        paymentMethod: 'wallet',
+        status: 'completed', // Wallet payments are immediately completed
+        transactionId: `WALLET_${Date.now()}_${userId}`
+      }, { transaction });
+
+      // Generate download token
+      const token = DownloadToken.generateToken();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // Token expires in 7 days
+
+      const downloadToken = await DownloadToken.create({
+        token,
+        orderId: order.id,
+        productId: validProductId,
+        userId: parseInt(userId),
+        expiresAt
+      }, { transaction });
+
+      // Increment product downloads
+      await product.increment('downloads', { transaction });
+
+      // Commit transaction
+      await transaction.commit();
+
+      // Get updated user to return new balance
+      const updatedUser = await User.findByPk(userId, {
+        attributes: ['id', 'income']
+      });
+
+      res.json({
+        success: true,
+        order: order.toJSON(),
+        downloadToken: {
+          token: downloadToken.token,
+          expiresAt: downloadToken.expiresAt
+        },
+        newBalance: parseFloat(updatedUser.income || 0),
+        message: 'Төлбөр амжилттай'
+      });
+    } catch (transactionError) {
+      // Rollback transaction on error
+      await transaction.rollback();
+      throw transactionError;
+    }
+  } catch (error) {
+    console.error('Wallet payment error:', error);
+    res.status(500).json({
+      error: 'Failed to process wallet payment',
+      message: error.message
+    });
+  }
+};
+
+// Check wallet recharge payment status and update user income
+exports.checkWalletRechargeStatus = async (req, res) => {
+  try {
+    const { invoiceId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Find order by invoice ID (must belong to the authenticated user)
+    const order = await Order.findOne({
+      where: { 
+        invoiceId,
+        userId: parseInt(userId),
+        productId: null // Wallet recharge orders have null productId
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Wallet recharge order not found' });
+    }
+
+    // Get QPay token
+    const token = await getQPayToken();
+
+    // Check payment status in QPay
+    const checkResponse = await axios.post(
+      `${QPAY_BASE_URL}/payment/check`,
+      {
+        object_type: 'INVOICE',
+        object_id: invoiceId,
+        offset: {
+          page_number: 1,
+          page_limit: 100
+        }
+      },
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const paymentData = checkResponse.data;
+    let paymentStatus = 'PENDING';
+    let isPaid = false;
+
+    if (paymentData.rows && paymentData.rows.length > 0) {
+      const payment = paymentData.rows[0];
+      paymentStatus = payment.payment_status || 'PENDING';
+      isPaid = paymentStatus === 'PAID';
+    }
+
+    // Update order status and user income if paid
+    if (isPaid && order.status !== 'completed') {
+      await order.update({ status: 'completed' });
+      order.status = 'completed';
+      
+      // Update user income
+      try {
+        const user = await User.findByPk(userId);
+        if (user) {
+          const currentIncome = parseFloat(user.income || 0);
+          const rechargeAmount = parseFloat(order.amount);
+          await user.update({
+            income: currentIncome + rechargeAmount
+          });
+          console.log(`User ${userId} income updated: ${currentIncome} + ${rechargeAmount} = ${currentIncome + rechargeAmount}`);
+        }
+      } catch (incomeError) {
+        console.error(`Error updating user income:`, incomeError);
+        // Continue - don't fail the payment check if income update fails
+      }
+    }
+
+    res.json({
+      success: true,
+      order: order.toJSON(),
+      payment: {
+        status: paymentStatus,
+        isPaid,
+        data: paymentData
+      }
+    });
+  } catch (error) {
+    console.error('Check wallet recharge status error:', error);
+    res.status(500).json({
+      error: 'Failed to check wallet recharge status',
+      message: error.response?.data?.message || error.message
+    });
+  }
+};
 
 // Get order by invoice ID (for frontend polling)
 exports.getOrderByInvoice = async (req, res) => {

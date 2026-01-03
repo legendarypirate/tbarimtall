@@ -12,16 +12,34 @@ exports.createWithdrawalRequest = async (req, res) => {
       return res.status(400).json({ error: 'Дүн зөв оруулна уу' });
     }
 
-    // Check if user has pending request
-    const pendingRequest = await WithdrawalRequest.findOne({
+    // Get user to check wallet balance
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Хэрэглэгч олдсонгүй' });
+    }
+
+    const requestedAmount = parseFloat(amount);
+    const currentIncome = parseFloat(user.income || 0);
+
+    // Calculate total amount in pending and approved requests
+    const existingRequests = await WithdrawalRequest.findAll({
       where: {
         userId,
         status: { [Op.in]: ['pending', 'approved'] }
       }
     });
 
-    if (pendingRequest) {
-      return res.status(400).json({ error: 'Та хүлээгдэж буй эсвэл зөвшөөрөгдсөн хүсэлттэй байна' });
+    const totalPendingAmount = existingRequests.reduce((sum, req) => {
+      return sum + parseFloat(req.amount || 0);
+    }, 0);
+
+    // Check if user has enough balance (current income - pending requests - new request amount)
+    const availableBalance = currentIncome - totalPendingAmount;
+    
+    if (requestedAmount > availableBalance) {
+      return res.status(400).json({ 
+        error: `Үлдэгдэл хүрэлцэхгүй байна. Боломжтой үлдэгдэл: ${availableBalance.toFixed(2)}₮, Хүсэлтийн дүн: ${requestedAmount.toFixed(2)}₮` 
+      });
     }
 
     const withdrawalRequest = await WithdrawalRequest.create({
@@ -181,6 +199,42 @@ exports.updateWithdrawalRequestStatus = async (req, res) => {
       return res.status(404).json({ error: 'Хүсэлт олдсонгүй' });
     }
 
+    // Get the user to check/update their amount
+    const user = await User.findByPk(request.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Хэрэглэгч олдсонгүй' });
+    }
+
+    const withdrawalAmount = parseFloat(request.amount);
+
+    // If status is 'approved', deduct amount from user's amount
+    if (status === 'approved') {
+      // Reload user to get latest amount value
+      await user.reload();
+      
+      // Use income field as the amount field (since User model has 'income' not 'amount')
+      const currentAmount = parseFloat(user.income || 0);
+      
+      console.log(`💰 Processing withdrawal deduction: User ${user.id} (${user.username}), Current amount: ${currentAmount}₮, Withdrawal amount: ${withdrawalAmount}₮`);
+      
+      // Check if user has sufficient balance
+      if (currentAmount < withdrawalAmount) {
+        console.error(`❌ Insufficient balance: User ${user.id} has ${currentAmount}₮ but needs ${withdrawalAmount}₮`);
+        return res.status(400).json({ 
+          error: `Хэрэглэгчийн үлдэгдэл хүрэлцэхгүй байна. Одоогийн үлдэгдэл: ${currentAmount.toFixed(2)}₮, Хүсэлтийн дүн: ${withdrawalAmount.toFixed(2)}₮` 
+        });
+      }
+
+      // Use Sequelize's decrement method for atomic operation
+      await user.decrement('income', { by: withdrawalAmount });
+      
+      // Reload to verify the update
+      await user.reload();
+      const newAmount = parseFloat(user.income || 0);
+      
+      console.log(`✅ Deducted ${withdrawalAmount}₮ from user ${user.id} (${user.username}). Previous amount: ${currentAmount}₮, New amount: ${newAmount}₮`);
+    }
+
     // Update request
     request.status = status;
     request.adminNotes = adminNotes || request.adminNotes;
@@ -188,11 +242,14 @@ exports.updateWithdrawalRequestStatus = async (req, res) => {
     request.processedAt = new Date();
     await request.save();
 
+    // Reload user to get updated amount
+    await user.reload();
+
     const updatedRequest = await WithdrawalRequest.findByPk(id, {
       include: [{
         model: User,
         as: 'user',
-        attributes: ['id', 'username', 'email', 'fullName']
+        attributes: ['id', 'username', 'email', 'fullName', 'income']
       }, {
         model: User,
         as: 'processedByUser',

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
-import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice } from '@/lib/api'
+import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice, payWithWallet, getCurrentUser } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
@@ -121,6 +121,9 @@ export default function ProductDetail() {
   const [downloadToken, setDownloadToken] = useState<{ token: string; expiresAt: string } | null>(null)
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false)
   const [isDownloaded, setIsDownloaded] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userBalance, setUserBalance] = useState<number>(0)
+  const [isProcessingWalletPayment, setIsProcessingWalletPayment] = useState(false)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -141,6 +144,27 @@ export default function ProductDetail() {
       fetchProduct()
     }
   }, [productId])
+
+  // Check authentication and get user balance
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        if (token) {
+          const userResponse = await getCurrentUser()
+          if (userResponse.user) {
+            setIsAuthenticated(true)
+            setUserBalance(parseFloat(userResponse.user.income || 0))
+          }
+        }
+      } catch (error) {
+        // User not authenticated or error
+        setIsAuthenticated(false)
+        setUserBalance(0)
+      }
+    }
+    checkAuth()
+  }, [])
 
   // Detect mobile device
   useEffect(() => {
@@ -182,8 +206,19 @@ export default function ProductDetail() {
     }
   }, [banners.length])
 
-  const handlePurchase = () => {
+  const handlePurchase = async () => {
     setIsPaymentModalOpen(true)
+    // Refresh user balance when opening payment modal
+    if (isAuthenticated) {
+      try {
+        const userResponse = await getCurrentUser()
+        if (userResponse.user) {
+          setUserBalance(parseFloat(userResponse.user.income || 0))
+        }
+      } catch (error) {
+        console.error('Error fetching user balance:', error)
+      }
+    }
   }
 
   const handleQPayPayment = async () => {
@@ -218,6 +253,44 @@ export default function ProductDetail() {
       setPaymentMethod(null)
     } finally {
       setIsCreatingInvoice(false)
+    }
+  }
+
+  const handleWalletPayment = async () => {
+    try {
+      setIsProcessingWalletPayment(true)
+      setPaymentError(null)
+      setPaymentMethod(null) // Clear any previous payment method
+
+      const response = await payWithWallet({
+        productId: product.uuid || product.id || productId,
+        amount: parseFloat(product.price) || 0
+      })
+
+      if (response.success && response.downloadToken) {
+        // Payment successful
+        setDownloadToken({
+          token: response.downloadToken.token,
+          expiresAt: response.downloadToken.expiresAt
+        })
+        
+        // Update user balance
+        if (response.newBalance !== undefined) {
+          setUserBalance(response.newBalance)
+        }
+
+        // Close payment modal and show download modal
+        setIsPaymentModalOpen(false)
+        setPaymentMethod(null)
+        setIsDownloadModalOpen(true)
+      } else {
+        throw new Error('Wallet payment failed')
+      }
+    } catch (error: any) {
+      console.error('Wallet payment error:', error)
+      setPaymentError(error.message || 'Хэтэвчээр төлбөр төлөхөд алдаа гарлаа')
+    } finally {
+      setIsProcessingWalletPayment(false)
     }
   }
 
@@ -297,6 +370,19 @@ export default function ProductDetail() {
     }, 3000)
   }
 
+  const formatDate = (dateString: string | number) => {
+    if (!dateString) return '--';
+  
+    const date = new Date(dateString);
+  
+    return date.toLocaleDateString('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
+  
+
   // Cleanup interval on unmount
   useEffect(() => {
     return () => {
@@ -308,6 +394,90 @@ export default function ProductDetail() {
 
   const formatNumber = (num: number) => {
     return num.toLocaleString('mn-MN')
+  }
+
+  const formatFileType = (fileType: string | null | undefined): string => {
+    if (!fileType) return 'N/A'
+    
+    // If it's already a simple extension like "PDF", "DOCX", etc., return as is
+    if (/^[A-Z0-9]+$/i.test(fileType) && fileType.length <= 5) {
+      return fileType.toUpperCase()
+    }
+    
+    // Map common MIME types to file extensions
+    const mimeToExtension: { [key: string]: string } = {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+      'application/vnd.ms-excel': 'xls',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+      'application/msword': 'doc',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+      'application/vnd.ms-powerpoint': 'ppt',
+      'application/pdf': 'pdf',
+      'application/zip': 'zip',
+      'application/x-rar-compressed': 'rar',
+      'application/x-7z-compressed': '7z',
+      'text/plain': 'txt',
+      'text/csv': 'csv',
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'application/x-msdownload': 'exe',
+      'application/x-executable': 'exe',
+    }
+    
+    // Check if it's a MIME type and convert it
+    const lowerFileType = fileType.toLowerCase()
+    if (mimeToExtension[lowerFileType]) {
+      return mimeToExtension[lowerFileType].toUpperCase()
+    }
+    
+    // If it contains a slash (likely a MIME type), try to extract extension
+    if (fileType.includes('/')) {
+      // Try to extract from common patterns
+      const patterns = [
+        /spreadsheetml\.sheet/i,
+        /wordprocessingml\.document/i,
+        /presentationml\.presentation/i,
+        /ms-excel/i,
+        /msword/i,
+        /ms-powerpoint/i,
+      ]
+      
+      if (patterns.some(p => p.test(fileType))) {
+        if (/spreadsheetml|ms-excel/i.test(fileType)) {
+          return fileType.includes('openxml') ? 'XLSX' : 'XLS'
+        }
+        if (/wordprocessingml|msword/i.test(fileType)) {
+          return fileType.includes('openxml') ? 'DOCX' : 'DOC'
+        }
+        if (/presentationml|ms-powerpoint/i.test(fileType)) {
+          return fileType.includes('openxml') ? 'PPTX' : 'PPT'
+        }
+      }
+      
+      // Extract from MIME type (e.g., "application/pdf" -> "pdf")
+      const parts = fileType.split('/')
+      if (parts.length === 2) {
+        const subtype = parts[1]
+        // Remove common prefixes
+        const cleanSubtype = subtype
+          .replace(/^vnd\./, '')
+          .replace(/^x-/, '')
+          .replace(/^officedocument\./, '')
+          .replace(/^openxmlformats-officedocument\./, '')
+          .replace(/spreadsheetml\.sheet/, 'xlsx')
+          .replace(/wordprocessingml\.document/, 'docx')
+          .replace(/presentationml\.presentation/, 'pptx')
+        
+        // If it's a simple extension-like string, return it
+        if (/^[a-z0-9]+$/i.test(cleanSubtype) && cleanSubtype.length <= 5) {
+          return cleanSubtype.toUpperCase()
+        }
+      }
+    }
+    
+    // Return as is if we can't determine
+    return fileType
   }
 
   const getDownloadUrl = (token: string) => {
@@ -386,7 +556,34 @@ export default function ProductDetail() {
     )
   }
 
-  const previewImages = product.previewImages || [product.image].filter(Boolean)
+  // Ensure previewImages is always an array
+  const getPreviewImages = () => {
+    if (!product.previewImages) {
+      return product.image ? [product.image] : [];
+    }
+    
+    // If it's already an array, return it
+    if (Array.isArray(product.previewImages)) {
+      return product.previewImages.filter(Boolean);
+    }
+    
+    // If it's a string, try to parse it
+    if (typeof product.previewImages === 'string') {
+      try {
+        const parsed = JSON.parse(product.previewImages);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(Boolean);
+        }
+      } catch (e) {
+        console.error('Error parsing previewImages:', e);
+      }
+    }
+    
+    // Fallback to main image
+    return product.image ? [product.image] : [];
+  };
+  
+  const previewImages = getPreviewImages();
   const author = product.author || {}
 
   return (
@@ -560,11 +757,11 @@ export default function ProductDetail() {
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <span className="text-xl">⬇️</span>
-                  <span className="text-sm font-medium">Татсан тоо</span>
+                <span className="text-xl">🕒</span>
+                <span className="text-sm font-medium">Үүссэн огноо</span>
                 </div>
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatNumber(product.downloads || 0)}
+                  {formatDate(product.createdAt)}
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
@@ -669,7 +866,7 @@ export default function ProductDetail() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">Хэмжээ:</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
-                      {product.size}
+                      {product.fileSize}
                     </span>
                   </div>
                 )}
@@ -677,7 +874,7 @@ export default function ProductDetail() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">Файлын төрөл:</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
-                      {product.fileType}
+                      {formatFileType(product.fileType)}
                     </span>
                   </div>
                 )}
@@ -779,6 +976,11 @@ export default function ProductDetail() {
             </div>
 
             <div className="mb-6">
+              {paymentError && !paymentMethod && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                  <p className="text-red-800 dark:text-red-200 text-sm">{paymentError}</p>
+                </div>
+              )}
               {!paymentMethod && (
                 <>
                   <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
@@ -797,6 +999,36 @@ export default function ProductDetail() {
                   </div>
 
                   <div className="space-y-3">
+                    {isAuthenticated && (
+                      <button
+                        onClick={handleWalletPayment}
+                        disabled={isProcessingWalletPayment || userBalance < parseFloat(product.price || 0)}
+                        className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          userBalance < parseFloat(product.price || 0) 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : 'hover:from-purple-700 hover:to-indigo-700'
+                        }`}
+                      >
+                        {isProcessingWalletPayment ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Төлбөр төлж байна...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-2xl">👛</span>
+                            <span>Хэтэвчээр худалдаж авах</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {isAuthenticated && userBalance < parseFloat(product.price || 0) && (
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-sm text-yellow-800 dark:text-yellow-200">
+                        <p>⚠️ Таны үлдэгдэл хангалтгүй байна. Одоогийн үлдэгдэл: <span className="font-semibold">{formatNumber(userBalance)}₮</span></p>
+                      </div>
+                    )}
+
                     <button
                       onClick={handleQPayPayment}
                       disabled={isCreatingInvoice}

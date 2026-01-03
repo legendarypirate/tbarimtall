@@ -1,9 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const qpayController = require('../controllers/qpayController');
+const { authenticate } = require('../middleware/auth');
 
 // Create QPay invoice (no authentication required - userId can be passed in body)
 router.post('/invoice', qpayController.createInvoice);
+
+// Wallet payment endpoint (require authentication)
+router.post('/wallet/pay', authenticate, qpayController.payWithWallet);
+
+// Wallet recharge endpoints (require authentication)
+router.post('/wallet/recharge', authenticate, qpayController.createWalletRechargeInvoice);
+router.get('/wallet/check/:invoiceId', authenticate, qpayController.checkWalletRechargeStatus);
 
 // Check payment status (no authentication required)
 router.get('/check/:invoiceId', qpayController.checkPaymentStatus);

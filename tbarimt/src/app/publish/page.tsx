@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { createProductWithFiles } from '@/lib/api'
+import { QRCodeSVG } from 'qrcode.react'
+import { createProductWithFiles, createQPayInvoice, checkQPayPaymentStatus } from '@/lib/api'
 
 // Categories matching the home page
 const categories = [
@@ -27,10 +28,21 @@ export default function PublishPage() {
     size: '',
     image: null as File | null,
     file: null as File | null,
-    status: 'draft' as 'draft' | 'published'
+    isUnique: false
   })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const [qrText, setQrText] = useState<string | null>(null)
+  const [qrImageError, setQrImageError] = useState(false)
+  const [invoiceId, setInvoiceId] = useState<string | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'failed' | null>(null)
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [createdProductId, setCreatedProductId] = useState<string | null>(null)
+  const paymentCheckInterval = useRef<NodeJS.Timeout | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     // Check if user is logged in as journalist
@@ -49,7 +61,24 @@ export default function PublishPage() {
     } else {
       router.push('/login')
     }
+
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
   }, [router])
+
+  // Cleanup payment polling on unmount
+  useEffect(() => {
+    return () => {
+      if (paymentCheckInterval.current) {
+        clearInterval(paymentCheckInterval.current)
+      }
+    }
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -125,6 +154,81 @@ export default function PublishPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const startPaymentPolling = (invoiceId: string) => {
+    // Clear any existing interval
+    if (paymentCheckInterval.current) {
+      clearInterval(paymentCheckInterval.current)
+    }
+
+    // Check payment status every 3 seconds
+    paymentCheckInterval.current = setInterval(async () => {
+      try {
+        const response = await checkQPayPaymentStatus(invoiceId)
+        if (response.success && response.payment) {
+          if (response.payment.isPaid) {
+            setPaymentStatus('paid')
+            if (paymentCheckInterval.current) {
+              clearInterval(paymentCheckInterval.current)
+              paymentCheckInterval.current = null
+            }
+            
+            // Close payment modal after 2 seconds and redirect
+            setTimeout(() => {
+              setIsPaymentModalOpen(false)
+              setQrCode(null)
+              setQrText(null)
+              setQrImageError(false)
+              setInvoiceId(null)
+              setPaymentStatus(null)
+              
+              // Show success and redirect
+              alert('Төлбөр амжилттай төлөгдлөө! Контент онцгой болголоо.')
+              router.push('/account/journalist')
+            }, 2000)
+          }
+        }
+      } catch (error) {
+        console.error('Payment check error:', error)
+      }
+    }, 3000)
+  }
+
+  const handleUniquePayment = async () => {
+    if (!createdProductId) {
+      setPaymentError('Бүтээгдэхүүн үүсээгүй байна')
+      return
+    }
+
+    try {
+      setIsCreatingInvoice(true)
+      setPaymentError(null)
+
+      const response = await createQPayInvoice({
+        productId: createdProductId,
+        amount: 2000,
+        description: 'Онцгой бүтээгдэхүүн болгох төлбөр'
+      })
+
+      if (response.success && response.invoice) {
+        setInvoiceId(response.invoice.invoice_id)
+        setQrCode(response.invoice.qr_image || response.invoice.qr_code)
+        setQrText(response.invoice.qr_text)
+        setQrImageError(false)
+        setPaymentStatus('pending')
+        
+        // Start polling for payment status
+        startPaymentPolling(response.invoice.invoice_id)
+      } else {
+        throw new Error('Failed to create invoice')
+      }
+    } catch (error: any) {
+      console.error('QPay payment error:', error)
+      setPaymentError(error.message || 'QPay төлбөр үүсгэхэд алдаа гарлаа')
+    } finally {
+      setIsCreatingInvoice(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -139,21 +243,32 @@ export default function PublishPage() {
       const uploadData = new FormData()
       uploadData.append('title', formData.title)
       uploadData.append('description', formData.description)
-      uploadData.append('categoryId', formData.category) // Use categoryId instead of category
+      uploadData.append('categoryId', formData.category)
       uploadData.append('price', formData.price)
       if (formData.pages) uploadData.append('pages', formData.pages)
       if (formData.size) uploadData.append('size', formData.size)
       if (formData.image) uploadData.append('image', formData.image)
       if (formData.file) uploadData.append('file', formData.file)
-      // Map status: 'draft' -> 'new', 'published' -> 'new' (both create new products)
+      // Default status is always 'new' for journalist products
       uploadData.append('status', 'new')
+      // Don't set isUnique yet - will be set after payment
+      uploadData.append('isUnique', 'false')
 
       // Call the API to create product
-      await createProductWithFiles(uploadData)
+      const response = await createProductWithFiles(uploadData)
 
-      // Show success and redirect
-      alert('Контент амжилттай нийтлэгдлээ!')
-      router.push('/account/journalist')
+      // If user wants unique product, show payment modal
+      if (formData.isUnique && response.product) {
+        setCreatedProductId(response.product.uuid || response.product.id)
+        setIsLoading(false)
+        setIsPaymentModalOpen(true)
+        // Start payment flow
+        await handleUniquePayment()
+      } else {
+        // Show success and redirect
+        alert('Контент амжилттай нийтлэгдлээ!')
+        router.push('/account/journalist')
+      }
     } catch (error: any) {
       console.error('Error publishing content:', error)
       const errorMessage = error.message || 'Алдаа гарлаа. Дахин оролдоно уу.'
@@ -433,21 +548,26 @@ export default function PublishPage() {
               )}
             </div>
 
-            {/* Status */}
+            {/* Unique Product Checkbox */}
             <div>
-              <label htmlFor="status" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Төлөв
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
-              >
-                <option value="draft">Ноорог</option>
-                <option value="published">Нийтлэх</option>
-              </select>
+              <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                <input
+                  type="checkbox"
+                  id="isUnique"
+                  name="isUnique"
+                  checked={formData.isUnique}
+                  onChange={(e) => setFormData(prev => ({ ...prev, isUnique: e.target.checked }))}
+                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="isUnique" className="text-sm font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+                  Онцгой болгох (2000₮ төлбөртэй)
+                </label>
+              </div>
+              {formData.isUnique && (
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  ⚠️ Онцгой болгох үед та 2000₮ төлбөр төлөх шаардлагатай. Бүтээгдэхүүн үүсгэсний дараа QPay төлбөрийн QR код гарч ирнэ.
+                </p>
+              )}
             </div>
 
             {/* Submit Buttons */}
@@ -480,6 +600,124 @@ export default function PublishPage() {
           </form>
         </div>
       </div>
+
+      {/* QPay Payment Modal */}
+      {isPaymentModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            if (paymentStatus !== 'pending') {
+              setIsPaymentModalOpen(false)
+            }
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Онцгой болгох төлбөр
+              </h3>
+              {paymentStatus !== 'pending' && (
+                <button
+                  onClick={() => setIsPaymentModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 dark:text-gray-400">Төлбөрийн дүн:</span>
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    2,000₮
+                  </span>
+                </div>
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Онцгой бүтээгдэхүүн болгох төлбөр
+                </div>
+              </div>
+
+              {paymentError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                  <p className="text-red-800 dark:text-red-200 text-sm">{paymentError}</p>
+                  <button
+                    onClick={() => {
+                      setPaymentError(null)
+                      setIsPaymentModalOpen(false)
+                    }}
+                    className="mt-2 text-red-600 dark:text-red-400 text-sm underline"
+                  >
+                    Буцах
+                  </button>
+                </div>
+              )}
+
+              {isCreatingInvoice && (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600 dark:text-gray-400">Төлбөрийн QR код бэлдэж байна...</p>
+                </div>
+              )}
+
+              {(qrCode || qrText) && !paymentError && !isCreatingInvoice && (
+                <>
+                  <div className="text-center">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      QPay QR код уншуулах
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      QPay апп-аар QR кодыг уншуулж төлбөрөө төлнө үү
+                    </p>
+                    <div className="bg-white dark:bg-gray-700 p-4 rounded-lg inline-block">
+                      {qrCode && !qrImageError ? (
+                        <img
+                          src={qrCode}
+                          alt="QPay QR Code"
+                          className="w-64 h-64 mx-auto"
+                          onError={() => {
+                            setQrImageError(true)
+                          }}
+                        />
+                      ) : qrText ? (
+                        <div className="w-64 h-64 mx-auto flex items-center justify-center">
+                          <QRCodeSVG
+                            value={qrText}
+                            size={256}
+                            level="M"
+                            includeMargin={true}
+                            className="w-full h-full"
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {paymentStatus === 'paid' && (
+                      <div className="mt-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                        <p className="text-green-800 dark:text-green-200 text-center font-semibold">
+                          ✅ Төлбөр амжилттай төлөгдлөө!
+                        </p>
+                      </div>
+                    )}
+
+                    {paymentStatus === 'pending' && (
+                      <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <p className="text-blue-800 dark:text-blue-200 text-center text-sm">
+                          Төлбөрийн статус шалгаж байна...
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

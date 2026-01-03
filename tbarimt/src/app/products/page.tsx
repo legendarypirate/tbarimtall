@@ -533,18 +533,34 @@ export default function ProductsPage() {
               ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'
               : 'space-y-4'
           }>
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product) => {
+              const isUnique = (product as any).isUnique === true;
+              return (
               <div
                 key={product.id}
-                onClick={() => router.push(`/products/${(product as any).uuid || (product as any).id}`)}
-                className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 transform hover:-translate-y-2 group cursor-pointer ${
-                  viewMode === 'list' ? 'flex' : ''
+                className={`rounded-xl transition-all duration-300 transform hover:-translate-y-2 ${
+                  isUnique 
+                    ? 'p-0.5 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 shadow-lg hover:shadow-2xl' 
+                    : ''
                 }`}
+              >
+              <div
+                onClick={() => router.push(`/products/${(product as any).uuid || (product as any).id}`)}
+                className={`rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer ${
+                  viewMode === 'list' ? 'flex' : ''
+                } ${
+                  isUnique 
+                    ? 'bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/30 dark:to-emerald-900/30' 
+                    : 'border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+                }`}
+                style={isUnique ? {
+                  boxShadow: '0 10px 25px -5px rgba(34, 197, 94, 0.2), 0 10px 10px -5px rgba(34, 197, 94, 0.05)'
+                } : {}}
               >
                 {/* Product Image */}
                 <div className={`relative overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 ${
                   viewMode === 'list' ? 'w-48 h-48 flex-shrink-0' : 'h-48'
-                }`}>
+                } ${isUnique ? 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20' : ''}`}>
                   <img
                     src={(product as any).image || '/placeholder.png'}
                     alt={(product as any).title}
@@ -554,13 +570,24 @@ export default function ProductsPage() {
                       target.style.display = 'none';
                     }}
                   />
+                  {/* Unique Badge */}
+                  {isUnique && (
+                    <div className="absolute top-3 left-3 z-10">
+                      <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span className="text-xs font-bold">UNIQUE</span>
+                      </div>
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3 flex items-center space-x-1 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded-full">
                     <span className="text-yellow-400 text-sm">⭐</span>
                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                       {parseFloat((product as any).rating) || 0}
                     </span>
                   </div>
-                  <div className="absolute top-3 left-3">
+                  <div className={`absolute ${isUnique ? 'top-12 left-3' : 'top-3 left-3'}`}>
                     <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-md">
                       {typeof (product as any).category === 'object' && (product as any).category?.name
                         ? (product as any).category.name
@@ -573,7 +600,11 @@ export default function ProductsPage() {
 
                 {/* Product Info */}
                 <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <h4 className={`text-lg font-semibold mb-3 line-clamp-2 transition-colors ${
+                    isUnique 
+                      ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400' 
+                      : 'text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                  }`}>
                     {(product as any).title}
                   </h4>
                   <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -587,7 +618,11 @@ export default function ProductsPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700 gap-3">
-                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                    <span className={`text-lg font-bold ${
+                      isUnique 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : 'text-blue-600 dark:text-blue-400'
+                    }`}>
                       {formatNumber(parseFloat((product as any).price) || 0)}₮
                     </span>
                     <button 
@@ -595,14 +630,20 @@ export default function ProductsPage() {
                         e.stopPropagation()
                         router.push(`/products/${product.id}`)
                       }}
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
+                      className={`px-3 py-1.5 rounded-lg transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 ${
+                        isUnique
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+                          : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+                      }`}
                     >
                       Дэлгэрэнгүй
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
+              </div>
+            );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">

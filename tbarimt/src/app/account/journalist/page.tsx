@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles } from '@/lib/api'
+import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus } from '@/lib/api'
 
 // Interface for product data
 interface ProductData {
@@ -18,6 +18,7 @@ interface ProductData {
   createdAt: string;
   image?: string;
   description?: string;
+  isUnique?: boolean;
 }
 
 export default function JournalistAccount() {
@@ -46,10 +47,11 @@ export default function JournalistAccount() {
     pages: '',
     size: '',
     image: null as File | null,
-    file: null as File | null,
-    status: 'draft' as 'draft' | 'published'
+    files: [] as File[],
   })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null)
+  const [existingFileInfo, setExistingFileInfo] = useState<{ url: string; name: string; type: string } | null>(null)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false)
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([])
@@ -63,6 +65,23 @@ export default function JournalistAccount() {
   const [withdrawalLoading, setWithdrawalLoading] = useState(false)
   const [categories, setCategories] = useState<Array<{ id: number; name: string; icon?: string }>>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<ProductData | null>(null)
+  const [showUniqueModal, setShowUniqueModal] = useState(false)
+  const [uniqueProduct, setUniqueProduct] = useState<ProductData | null>(null)
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const [qrText, setQrText] = useState<string | null>(null)
+  const [invoiceId, setInvoiceId] = useState<string | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed'>('pending')
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
+  const [paymentPollingInterval, setPaymentPollingInterval] = useState<NodeJS.Timeout | null>(null)
+  const [showWalletRechargeModal, setShowWalletRechargeModal] = useState(false)
+  const [walletRechargeAmount, setWalletRechargeAmount] = useState('')
+  const [walletRechargeQrCode, setWalletRechargeQrCode] = useState<string | null>(null)
+  const [walletRechargeQrText, setWalletRechargeQrText] = useState<string | null>(null)
+  const [walletRechargeInvoiceId, setWalletRechargeInvoiceId] = useState<string | null>(null)
+  const [walletRechargeStatus, setWalletRechargeStatus] = useState<'pending' | 'completed' | 'failed'>('pending')
+  const [isCreatingWalletInvoice, setIsCreatingWalletInvoice] = useState(false)
+  const [walletRechargePollingInterval, setWalletRechargePollingInterval] = useState<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     // Get user from localStorage
@@ -105,33 +124,55 @@ export default function JournalistAccount() {
     try {
       setIsLoadingData(true)
       
-      // Fetch products and statistics in parallel
-      const [productsResponse, statsResponse] = await Promise.all([
+      // Fetch products, statistics, and latest user profile in parallel
+      // Construct API URL properly to avoid double /api/api/
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      // Remove trailing /api if present to avoid double /api/api/
+      const baseUrl = apiBaseUrl.trim().endsWith('/api') 
+        ? apiBaseUrl.trim().slice(0, -4) 
+        : apiBaseUrl.trim()
+      const profileUrl = `${baseUrl}/api/auth/profile`
+      
+      const [productsResponse, statsResponse, userProfileResponse] = await Promise.all([
         getMyProducts({ limit: 100 }),
-        getMyStatistics()
+        getMyStatistics(),
+        fetch(profileUrl, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        }).then(res => res.json()).catch(() => null)
       ])
 
       if (productsResponse.products) {
         // Map products to include earnings calculation
-        const mappedProducts = productsResponse.products.map((product: any) => ({
-          id: product.id,
-          uuid: product.uuid, // Include UUID for navigation
-          title: product.title,
-          category: product.category || 'Бусад',
-          price: product.price,
-          views: product.views || 0,
-          downloads: product.downloads || 0,
-          earnings: (product.price || 0) * (product.downloads || 0),
-          status: product.status || 'draft',
-          createdAt: product.createdAt,
-          image: product.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${product.title}`,
-          description: product.description
-        }))
+      const mappedProducts = productsResponse.products.map((product: any) => ({
+        id: product.id,
+        uuid: product.uuid, // Include UUID for navigation
+        title: product.title,
+        category: product.category || 'Бусад',
+        price: product.price,
+        views: product.views || 0,
+        downloads: product.downloads || 0,
+        earnings: (product.price || 0) * (product.downloads || 0),
+        status: product.status || 'draft',
+        createdAt: product.createdAt,
+        image: product.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${product.title}`,
+        description: product.description,
+        isUnique: product.isUnique || false
+      }))
         setProducts(mappedProducts)
       }
 
       if (statsResponse.stats) {
         setStats(statsResponse.stats)
+      }
+
+      // Update user with latest profile data including income
+      if (userProfileResponse && userProfileResponse.user) {
+        setUser(userProfileResponse.user)
+        // Update localStorage with latest user data
+        localStorage.setItem('user', JSON.stringify(userProfileResponse.user))
       }
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -224,6 +265,7 @@ export default function JournalistAccount() {
 
   const handleLogout = () => {
     localStorage.removeItem('user')
+    localStorage.removeItem('token')
     router.push('/')
   }
 
@@ -244,25 +286,43 @@ export default function JournalistAccount() {
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        setFormData(prev => ({ ...prev, image: file }))
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setImagePreview(reader.result as string)
-        }
-        reader.readAsDataURL(file)
-      } else {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const imageFile = files[0]
+      if (!imageFile.type.startsWith('image/')) {
         setErrors(prev => ({ ...prev, image: 'Зөвхөн зураг файл оруулна уу' }))
+        return
+      }
+      setFormData(prev => ({ ...prev, image: imageFile }))
+      // Create preview for the image
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+        setExistingImageUrl(null) // Clear existing image URL when new image is selected
+      }
+      reader.readAsDataURL(imageFile)
+      // Clear error
+      if (errors.image) {
+        setErrors(prev => {
+          const newErrors = { ...prev }
+          delete newErrors.image
+          return newErrors
+        })
       }
     }
   }
 
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, image: null }))
+    setImagePreview(null)
+    setExistingImageUrl(null)
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setFormData(prev => ({ ...prev, file }))
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files)
+      setFormData(prev => ({ ...prev, files: fileArray }))
       // Clear error
       if (errors.file) {
         setErrors(prev => {
@@ -272,6 +332,13 @@ export default function JournalistAccount() {
         })
       }
     }
+  }
+
+  const removeFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index)
+    }))
   }
 
   const validateForm = () => {
@@ -293,7 +360,7 @@ export default function JournalistAccount() {
       newErrors.price = 'Зөв үнэ оруулах шаардлагатай'
     }
 
-    if (!formData.file) {
+    if (!editingProduct && formData.files.length === 0 && !existingFileInfo) {
       newErrors.file = 'Файл оруулах шаардлагатай'
     }
 
@@ -311,21 +378,41 @@ export default function JournalistAccount() {
     setIsLoading(true)
 
     try {
-      // Create form data for file upload
-      const uploadData = new FormData()
-      uploadData.append('title', formData.title)
-      uploadData.append('description', formData.description)
-      uploadData.append('categoryId', formData.categoryId)
-      uploadData.append('price', formData.price)
-      if (formData.pages) uploadData.append('pages', formData.pages)
-      if (formData.size) uploadData.append('size', formData.size)
-      if (formData.image) uploadData.append('image', formData.image)
-      if (formData.file) uploadData.append('file', formData.file)
-      // Map status: 'draft' -> 'new', 'published' -> 'new' (both create new products)
-      uploadData.append('status', 'new')
+      if (editingProduct) {
+        // Update existing product
+        await updateProduct(editingProduct.id, {
+          title: formData.title,
+          description: formData.description,
+          categoryId: parseInt(formData.categoryId),
+          price: parseFloat(formData.price),
+          pages: formData.pages ? parseInt(formData.pages) : null,
+          size: formData.size || null,
+          status: 'new'
+        })
 
-      // Call the API to create product
-      await createProductWithFiles(uploadData)
+        alert('Контент амжилттай шинэчлэгдлээ!')
+      } else {
+        // Create new product
+        const uploadData = new FormData()
+        uploadData.append('title', formData.title)
+        uploadData.append('description', formData.description)
+        uploadData.append('categoryId', formData.categoryId)
+        uploadData.append('price', formData.price)
+        if (formData.pages) uploadData.append('pages', formData.pages)
+        if (formData.size) uploadData.append('size', formData.size)
+        // Append single image
+        if (formData.image) {
+          uploadData.append('image', formData.image)
+        }
+        // Append all files
+        formData.files.forEach((file) => {
+          uploadData.append('files', file)
+        })
+        uploadData.append('status', 'new')
+
+        await createProductWithFiles(uploadData)
+        alert('Контент амжилттай нийтлэгдлээ!')
+      }
 
       // Reset form
       setFormData({
@@ -336,22 +423,21 @@ export default function JournalistAccount() {
         pages: '',
         size: '',
         image: null,
-        file: null,
-        status: 'draft'
+        files: []
       })
       setImagePreview(null)
+      setExistingImageUrl(null)
+      setExistingFileInfo(null)
       setErrors({})
+      setEditingProduct(null)
       setShowAddProduct(false)
 
-      // Show success message
-      alert('Контент амжилттай нийтлэгдлээ!')
-      
       // Refresh products list
       if (user) {
         fetchData(user)
       }
     } catch (error: any) {
-      console.error('Error publishing content:', error)
+      console.error('Error saving content:', error)
       const errorMessage = error.message || 'Алдаа гарлаа. Дахин оролдоно уу.'
       alert(errorMessage)
       setErrors({ submit: errorMessage })
@@ -365,6 +451,7 @@ export default function JournalistAccount() {
     // Wait for animation to complete before hiding
     setTimeout(() => {
       setShowAddProduct(false)
+      setEditingProduct(null)
       setFormData({
         title: '',
         description: '',
@@ -373,12 +460,250 @@ export default function JournalistAccount() {
         pages: '',
         size: '',
         image: null,
-        file: null,
-        status: 'draft'
+        files: []
       })
       setImagePreview(null)
+      setExistingImageUrl(null)
+      setExistingFileInfo(null)
       setErrors({})
     }, 300)
+  }
+
+  const handleEditProduct = async (product: ProductData) => {
+    setEditingProduct(product)
+    setFormData({
+      title: product.title,
+      description: product.description || '',
+      categoryId: typeof product.category === 'object' ? product.category.id.toString() : '',
+      price: product.price.toString(),
+      pages: '',
+      size: '',
+      image: null,
+      files: []
+    })
+    
+    // Set existing image URL for preview
+    if (product.image) {
+      setExistingImageUrl(product.image)
+      setImagePreview(null)
+    } else {
+      setExistingImageUrl(null)
+      setImagePreview(null)
+    }
+    
+    // Fetch full product details to get file information
+    try {
+      const fullProduct = await getProductById(product.id)
+      if (fullProduct.product) {
+        const prod = fullProduct.product
+        // Set existing file info if available
+        if (prod.fileUrl || prod.cloudinaryFileUrl) {
+          setExistingFileInfo({
+            url: prod.fileUrl || prod.cloudinaryFileUrl,
+            name: prod.fileType === 'zip' ? 'product_files.zip' : 'product_file',
+            type: prod.fileType || 'unknown'
+          })
+        } else {
+          setExistingFileInfo(null)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error)
+      setExistingFileInfo(null)
+    }
+    
+    setShowAddProduct(true)
+  }
+
+  const handleMakeUnique = async (product: ProductData) => {
+    try {
+      setIsCreatingInvoice(true)
+      setUniqueProduct(product)
+      setPaymentStatus('pending')
+      
+      const response = await createUniqueProductInvoice(product.id)
+      
+      if (response.success && response.invoice) {
+        setInvoiceId(response.invoice.invoice_id)
+        
+        // Fix QR code: if it's a base64 string without prefix, add it
+        let qrImage = response.invoice.qr_image || response.invoice.qr_code
+        if (qrImage) {
+          // Check if it's a base64 string without data URL prefix
+          if (qrImage.startsWith('iVBORw0KGgo') || qrImage.startsWith('/9j/')) {
+            // It's a base64 PNG or JPEG without prefix
+            const prefix = qrImage.startsWith('iVBORw0KGgo') ? 'data:image/png;base64,' : 'data:image/jpeg;base64,'
+            qrImage = prefix + qrImage
+          } else if (!qrImage.startsWith('data:') && !qrImage.startsWith('http://') && !qrImage.startsWith('https://') && !qrImage.startsWith('/')) {
+            // If it doesn't start with data:, http://, https://, or /, assume it's base64
+            qrImage = 'data:image/png;base64,' + qrImage
+          }
+        }
+        
+        // Only set QR code if it's a valid data URL or HTTP URL
+        if (qrImage && (qrImage.startsWith('data:') || qrImage.startsWith('http://') || qrImage.startsWith('https://'))) {
+          setQrCode(qrImage)
+        } else {
+          setQrCode(null)
+          console.error('Invalid QR code format:', qrImage?.substring(0, 50))
+        }
+        setQrText(response.invoice.qr_text)
+        setShowUniqueModal(true)
+        
+        // Start polling for payment status
+        startPaymentPolling(response.invoice.invoice_id)
+      } else {
+        throw new Error('Failed to create invoice')
+      }
+    } catch (error: any) {
+      console.error('Error creating unique product invoice:', error)
+      alert(error.message || 'Онцгой болгох төлбөр үүсгэхэд алдаа гарлаа')
+    } finally {
+      setIsCreatingInvoice(false)
+    }
+  }
+
+  const startPaymentPolling = (invoiceId: string) => {
+    // Clear any existing interval
+    if (paymentPollingInterval) {
+      clearInterval(paymentPollingInterval)
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await checkQPayPaymentStatus(invoiceId)
+        
+        if (response.success && response.payment) {
+          if (response.payment.isPaid) {
+            setPaymentStatus('completed')
+            clearInterval(interval)
+            setPaymentPollingInterval(null)
+            
+            // Refresh products to show updated isUnique status
+            if (user) {
+              await fetchData(user)
+            }
+            
+            // Close modal after 2 seconds
+            setTimeout(() => {
+              setShowUniqueModal(false)
+              setUniqueProduct(null)
+              setQrCode(null)
+              setQrText(null)
+              setInvoiceId(null)
+              setPaymentStatus('pending')
+            }, 2000)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error)
+      }
+    }, 3000) // Check every 3 seconds
+
+    setPaymentPollingInterval(interval)
+  }
+
+  useEffect(() => {
+    // Cleanup interval on unmount
+    return () => {
+      if (paymentPollingInterval) {
+        clearInterval(paymentPollingInterval)
+      }
+      if (walletRechargePollingInterval) {
+        clearInterval(walletRechargePollingInterval)
+      }
+    }
+  }, [paymentPollingInterval, walletRechargePollingInterval])
+
+  const handleWalletRecharge = async () => {
+    if (!walletRechargeAmount || parseFloat(walletRechargeAmount) <= 0) {
+      alert('Зөв дүн оруулна уу')
+      return
+    }
+
+    try {
+      setIsCreatingWalletInvoice(true)
+      setWalletRechargeStatus('pending')
+      
+      const response = await createWalletRechargeInvoice(parseFloat(walletRechargeAmount))
+      
+      if (response.success && response.invoice) {
+        setWalletRechargeInvoiceId(response.invoice.invoice_id)
+        
+        // Fix QR code: if it's a base64 string without prefix, add it
+        let qrImage = response.invoice.qr_image || response.invoice.qr_code
+        if (qrImage) {
+          // Check if it's a base64 string without data URL prefix
+          if (qrImage.startsWith('iVBORw0KGgo') || qrImage.startsWith('/9j/')) {
+            // It's a base64 PNG or JPEG without prefix
+            const prefix = qrImage.startsWith('iVBORw0KGgo') ? 'data:image/png;base64,' : 'data:image/jpeg;base64,'
+            qrImage = prefix + qrImage
+          } else if (!qrImage.startsWith('data:') && !qrImage.startsWith('http://') && !qrImage.startsWith('https://') && !qrImage.startsWith('/')) {
+            // If it doesn't start with data:, http://, https://, or /, assume it's base64
+            qrImage = 'data:image/png;base64,' + qrImage
+          }
+        }
+        
+        // Only set QR code if it's a valid data URL or HTTP URL
+        if (qrImage && (qrImage.startsWith('data:') || qrImage.startsWith('http://') || qrImage.startsWith('https://'))) {
+          setWalletRechargeQrCode(qrImage)
+        } else {
+          setWalletRechargeQrCode(null)
+          console.error('Invalid QR code format:', qrImage?.substring(0, 50))
+        }
+        setWalletRechargeQrText(response.invoice.qr_text)
+        
+        // Start polling for payment status
+        startWalletRechargePolling(response.invoice.invoice_id)
+      } else {
+        throw new Error('Failed to create wallet recharge invoice')
+      }
+    } catch (error: any) {
+      console.error('Error creating wallet recharge invoice:', error)
+      alert(error.message || 'Данс цэнэглэх төлбөр үүсгэхэд алдаа гарлаа')
+    } finally {
+      setIsCreatingWalletInvoice(false)
+    }
+  }
+
+  const startWalletRechargePolling = (invoiceId: string) => {
+    // Clear any existing interval
+    if (walletRechargePollingInterval) {
+      clearInterval(walletRechargePollingInterval)
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await checkWalletRechargeStatus(invoiceId)
+        
+        if (response.success && response.payment) {
+          if (response.payment.isPaid) {
+            setWalletRechargeStatus('completed')
+            clearInterval(interval)
+            setWalletRechargePollingInterval(null)
+            
+            // Refresh user data to show updated income
+            if (user) {
+              await fetchData(user)
+            }
+            
+            // Close modal after 2 seconds
+            setTimeout(() => {
+              setShowWalletRechargeModal(false)
+              setWalletRechargeAmount('')
+              setWalletRechargeQrCode(null)
+              setWalletRechargeQrText(null)
+              setWalletRechargeInvoiceId(null)
+              setWalletRechargeStatus('pending')
+            }, 2000)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking wallet recharge status:', error)
+      }
+    }, 3000) // Check every 3 seconds
+
+    setWalletRechargePollingInterval(interval)
   }
 
   if (!user || isLoadingData) {
@@ -460,9 +785,9 @@ export default function JournalistAccount() {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Нийт орлого</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Онлайн данс</div>
               <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {stats.totalEarnings.toLocaleString()}₮
+                {((user.income !== undefined && user.income !== null) ? parseFloat(user.income) : stats.totalEarnings).toLocaleString()}₮
               </div>
               <div className="text-sm text-gray-500 mt-1">
                 Хүлээгдэж байна: {stats.pendingEarnings.toLocaleString()}₮
@@ -495,7 +820,7 @@ export default function JournalistAccount() {
             <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
               {formatNumber(stats.totalEarnings)}₮
             </div>
-            <div className="text-gray-600 dark:text-gray-400">Орлого</div>
+            <div className="text-gray-600 dark:text-gray-400">Файл орлого</div>
           </div>
         </div>
 
@@ -545,12 +870,20 @@ export default function JournalistAccount() {
                   Тохиргоо
                 </button>
               </div>
-              <button
-                onClick={() => setShowAddProduct(true)}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md ml-4"
-              >
-                + Шинэ нийтлэл
-              </button>
+              <div className="flex items-center gap-3 ml-4">
+                <button
+                  onClick={() => setShowWalletRechargeModal(true)}
+                  className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2 rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-semibold shadow-md"
+                >
+                  💰 Данс цэнэглэх
+                </button>
+                <button
+                  onClick={() => setShowAddProduct(true)}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md"
+                >
+                  + Шинэ нийтлэл
+                </button>
+              </div>
             </div>
           </div>
 
@@ -583,12 +916,12 @@ export default function JournalistAccount() {
                           </h4>
                           <span
                             className={`text-xs px-2 py-1 rounded ${
-                              product.status === 'published'
+                              product.status === 'published' || product.status === 'new'
                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                                 : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                             }`}
                           >
-                            {product.status === 'published' ? 'Нийтлэгдсэн' : 'Ноорог'}
+                            {product.status === 'published' ? 'Нийтлэгдсэн' : product.status === 'new' ? 'Шинэ' : 'Ноорог'}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
@@ -627,9 +960,25 @@ export default function JournalistAccount() {
                         >
                           Үзэх
                         </button>
-                        <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-all text-sm font-semibold">
+                        <button 
+                          onClick={() => handleEditProduct(product)}
+                          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-all text-sm font-semibold"
+                        >
                           Засах
                         </button>
+                        {!product.isUnique && (
+                          <button 
+                            onClick={() => handleMakeUnique(product)}
+                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all text-sm font-semibold"
+                          >
+                            Онцгой болгох
+                          </button>
+                        )}
+                        {product.isUnique && (
+                          <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-4 py-2 rounded-lg text-sm font-semibold text-center">
+                            ⭐ Онцгой
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -862,10 +1211,10 @@ export default function JournalistAccount() {
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center z-10">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Шинэ контент нийтлэх
+                  {editingProduct ? 'Контент засах' : 'Шинэ контент нийтлэх'}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Контент, зураг, файл оруулаад нийтлээрэй
+                  {editingProduct ? 'Контентын мэдээллийг засна уу' : 'Контент, зураг, файл оруулаад нийтлээрэй'}
                 </p>
               </div>
               <button
@@ -1030,59 +1379,100 @@ export default function JournalistAccount() {
                 <label htmlFor="image" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Зураг (сонгох)
                 </label>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <label className="flex-1 cursor-pointer">
-                      <input
-                        type="file"
-                        id="image"
-                        name="image"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="hidden"
-                      />
-                      <div className="w-full px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors text-center bg-gray-50 dark:bg-gray-700/50">
-                        <span className="text-gray-600 dark:text-gray-400">
-                          {formData.image ? formData.image.name : 'Зураг сонгох'}
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <div className={`w-full px-4 py-3 rounded-lg border-2 border-dashed ${
+                    errors.image
+                      ? 'border-red-500'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
+                  } transition-colors text-center bg-gray-50 dark:bg-gray-700/50`}>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {formData.image || existingImageUrl ? (
+                        <span className="flex items-center justify-center space-x-2">
+                          <span>🖼️</span>
+                          <span>{formData.image ? formData.image.name : 'Одоогийн зураг'}</span>
                         </span>
-                      </div>
-                    </label>
+                      ) : (
+                        'Зураг сонгох'
+                      )}
+                    </span>
                   </div>
-                  {imagePreview && (
-                    <div className="relative w-full h-64 rounded-lg overflow-hidden border-2 border-gray-300 dark:border-gray-600">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, image: null }))
-                          setImagePreview(null)
-                        }}
-                        className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-colors"
-                      >
-                        Устгах
-                      </button>
-                    </div>
-                  )}
-                  {errors.image && (
-                    <p className="text-sm text-red-500">{errors.image}</p>
-                  )}
-                </div>
+                </label>
+                {(formData.image || existingImageUrl) && (
+                  <div className="mt-3 relative group">
+                    <img
+                      src={imagePreview || existingImageUrl || ''}
+                      alt="Preview"
+                      className="w-full h-64 object-cover rounded-lg border-2 border-gray-300 dark:border-gray-600"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.title}`;
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                    {existingImageUrl && !formData.image && (
+                      <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                        Одоогийн зураг
+                      </div>
+                    )}
+                  </div>
+                )}
+                {errors.image && (
+                  <p className="mt-1 text-sm text-red-500">{errors.image}</p>
+                )}
               </div>
 
               {/* File Upload */}
               <div>
-                <label htmlFor="file" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Файл <span className="text-red-500">*</span>
+                <label htmlFor="files" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Файлууд {!editingProduct && <span className="text-red-500">*</span>}
+                  <span className="text-xs text-gray-500 ml-2">(Олон файл сонгох боломжтой, ZIP болгож хадгална)</span>
                 </label>
+                {existingFileInfo && editingProduct && (
+                  <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span>📦</span>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            Одоогийн файл: {existingFileInfo.name}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            Төрөл: {existingFileInfo.type}
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href={existingFileInfo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+                      >
+                        Татах
+                      </a>
+                    </div>
+                  </div>
+                )}
                 <label className="cursor-pointer">
                   <input
                     type="file"
-                    id="file"
-                    name="file"
+                    id="files"
+                    name="files"
+                    multiple
                     onChange={handleFileChange}
                     className="hidden"
                   />
@@ -1092,40 +1482,50 @@ export default function JournalistAccount() {
                       : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
                   } transition-colors text-center bg-gray-50 dark:bg-gray-700/50`}>
                     <span className="text-gray-600 dark:text-gray-400">
-                      {formData.file ? (
-                        <span className="flex items-center justify-center space-x-2">
-                          <span>📄</span>
-                          <span>{formData.file.name}</span>
-                          <span className="text-sm text-gray-500">
-                            ({(formData.file.size / 1024 / 1024).toFixed(2)} MB)
+                      {formData.files.length > 0 ? (
+                        <span className="flex flex-col items-center justify-center space-y-2">
+                          <span className="text-sm font-semibold">
+                            {formData.files.length} файл сонгогдлоо (ZIP болгож хадгална)
                           </span>
                         </span>
                       ) : (
-                        'Файл сонгох (PDF, DOC, ZIP, EXE гэх мэт)'
+                        'Файлууд сонгох (PDF, DOC, ZIP, EXE, зураг гэх мэт) - Олон файл сонгох боломжтой, ZIP болгож хадгална'
                       )}
                     </span>
                   </div>
                 </label>
+                {formData.files.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {formData.files.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg"
+                      >
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <span>📄</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+                            {file.name}
+                          </span>
+                          <span className="text-xs text-gray-500 whitespace-nowrap">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(index)}
+                          className="ml-2 text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {errors.file && (
                   <p className="mt-1 text-sm text-red-500">{errors.file}</p>
                 )}
-              </div>
-
-              {/* Status */}
-              <div>
-                <label htmlFor="status" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Төлөв
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
-                >
-                  <option value="draft">Ноорог</option>
-                  <option value="published">Нийтлэх</option>
-                </select>
               </div>
 
               {/* Submit Buttons */}
@@ -1138,12 +1538,12 @@ export default function JournalistAccount() {
                   {isLoading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Нийтлэж байна...</span>
+                      <span>{editingProduct ? 'Хадгалж байна...' : 'Нийтлэж байна...'}</span>
                     </>
                   ) : (
                     <>
                       <span>✅</span>
-                      <span>Нийтлэх</span>
+                      <span>{editingProduct ? 'Хадгалах' : 'Нийтлэх'}</span>
                     </>
                   )}
                 </button>
@@ -1295,6 +1695,203 @@ export default function JournalistAccount() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Wallet Recharge Modal */}
+      {showWalletRechargeModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Данс цэнэглэх
+                </h2>
+                <button
+                  onClick={() => {
+                    if (walletRechargePollingInterval) {
+                      clearInterval(walletRechargePollingInterval)
+                      setWalletRechargePollingInterval(null)
+                    }
+                    setShowWalletRechargeModal(false)
+                    setWalletRechargeAmount('')
+                    setWalletRechargeQrCode(null)
+                    setWalletRechargeQrText(null)
+                    setWalletRechargeInvoiceId(null)
+                    setWalletRechargeStatus('pending')
+                  }}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {walletRechargeStatus === 'completed' ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">✅</div>
+                  <h3 className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
+                    Төлбөр амжилттай!
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Данс амжилттай цэнэглэгдлээ.
+                  </p>
+                </div>
+              ) : walletRechargeQrCode ? (
+                <div className="text-center space-y-4">
+                  <div className="mb-4">
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Цэнэглэх дүн: {parseFloat(walletRechargeAmount).toLocaleString()}₮
+                    </p>
+                  </div>
+                  <div className="flex justify-center">
+                    <img 
+                      src={walletRechargeQrCode} 
+                      alt="QPay QR Code" 
+                      className="w-64 h-64 border-2 border-gray-300 dark:border-gray-600 rounded-lg"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    QPay апп ашиглан QR кодыг уншуулж төлбөрөө төлнө үү.
+                  </p>
+                  <div className="flex items-center justify-center space-x-2 text-sm text-yellow-600 dark:text-yellow-400">
+                    <div className="w-2 h-2 bg-yellow-600 rounded-full animate-pulse"></div>
+                    <span>Төлбөрийн статус шалгаж байна...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="rechargeAmount" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Цэнэглэх дүн (₮) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="rechargeAmount"
+                      value={walletRechargeAmount}
+                      onChange={(e) => setWalletRechargeAmount(e.target.value)}
+                      min="1"
+                      step="1000"
+                      className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                      placeholder="Жишээ: 100000"
+                      disabled={isCreatingWalletInvoice}
+                    />
+                  </div>
+                  <button
+                    onClick={handleWalletRecharge}
+                    disabled={isCreatingWalletInvoice || !walletRechargeAmount || parseFloat(walletRechargeAmount) <= 0}
+                    className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {isCreatingWalletInvoice ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Төлбөр үүсгэж байна...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>💰</span>
+                        <span>Төлбөр үүсгэх</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unique Product Payment Modal */}
+      {showUniqueModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Онцгой болгох төлбөр
+                </h2>
+                <button
+                  onClick={() => {
+                    if (paymentPollingInterval) {
+                      clearInterval(paymentPollingInterval)
+                      setPaymentPollingInterval(null)
+                    }
+                    setShowUniqueModal(false)
+                    setUniqueProduct(null)
+                    setQrCode(null)
+                    setQrText(null)
+                    setInvoiceId(null)
+                    setPaymentStatus('pending')
+                  }}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {uniqueProduct && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Бүтээгдэхүүн: <span className="font-semibold text-gray-900 dark:text-white">{uniqueProduct.title}</span>
+                  </p>
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                    Төлбөр: 2,000₮
+                  </p>
+                </div>
+              )}
+
+              {paymentStatus === 'completed' ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">✅</div>
+                  <h3 className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
+                    Төлбөр амжилттай!
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Бүтээгдэхүүн амжилттай онцгой болголоо.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {qrCode ? (
+                    <div className="text-center space-y-4">
+                      <div className="flex justify-center">
+                        <img 
+                          src={qrCode} 
+                          alt="QPay QR Code" 
+                          className="w-64 h-64 border-2 border-gray-300 dark:border-gray-600 rounded-lg"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        QPay апп ашиглан QR кодыг уншуулж төлбөрөө төлнө үү.
+                      </p>
+                      <div className="flex items-center justify-center space-x-2 text-sm text-yellow-600 dark:text-yellow-400">
+                        <div className="w-2 h-2 bg-yellow-600 rounded-full animate-pulse"></div>
+                        <span>Төлбөрийн статус шалгаж байна...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-gray-600 dark:text-gray-400">Төлбөрийн QR код үүсгэж байна...</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

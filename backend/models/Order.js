@@ -17,18 +17,19 @@ const Order = sequelize.define('Order', {
   },
   productId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true, // Allow null for wallet recharge orders
     references: {
       model: 'products',
       key: 'id'
-    }
+    },
+    comment: 'Product ID (null for wallet recharge orders)'
   },
   amount: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false
   },
   paymentMethod: {
-    type: DataTypes.ENUM('qpay', 'bank', 'other'),
+    type: DataTypes.ENUM('qpay', 'bank', 'wallet', 'other'),
     allowNull: false
   },
   status: {

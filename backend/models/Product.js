@@ -62,12 +62,22 @@ const Product = sequelize.define('Product', {
   fileUrl: {
     type: DataTypes.STRING(500),
     allowNull: true,
-    comment: 'Deprecated: Use filePath instead. Kept for backward compatibility.'
+    comment: 'Cloudinary file URL (downloadable)'
   },
   filePath: {
     type: DataTypes.STRING(500),
     allowNull: true,
-    comment: 'Server-side file path (not publicly accessible)'
+    comment: 'Server-side file path (deprecated, use fileUrl for Cloudinary)'
+  },
+  cloudinaryFileUrl: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: 'Cloudinary file URL for downloadable files'
+  },
+  isUnique: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Unique product flag - journalist pays 2000₮ when admin sets this'
   },
   fileType: {
     type: DataTypes.STRING(255),
@@ -106,6 +116,11 @@ const Product = sequelize.define('Product', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
+  income: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: 'Total income from product sales'
+  },
   isDiploma: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
@@ -115,7 +130,7 @@ const Product = sequelize.define('Product', {
     defaultValue: true
   },
   status: {
-    type: DataTypes.ENUM('new', 'cancelled', 'deleted'),
+    type: DataTypes.ENUM('new', 'published', 'cancelled', 'deleted'),
     defaultValue: 'new',
     allowNull: false
   }

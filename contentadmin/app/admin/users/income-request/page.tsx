@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Pagination } from "@/components/ui/pagination";
 import { 
   DollarSign, 
   Search, 
@@ -383,27 +384,14 @@ export default function IncomeRequestPage() {
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Нийт {pagination.total} хүсэлт
+                Нийт {pagination.total} хүсэлт, {pagination.page}/{pagination.totalPages} хуудас
               </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                  disabled={pagination.page === 1}
-                >
-                  Өмнөх
-                </Button>
-                <span className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
-                  {pagination.page} / {pagination.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                  disabled={pagination.page === pagination.totalPages}
-                >
-                  Дараах
-                </Button>
-              </div>
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={(page) => setPagination(prev => ({ ...prev, page }))}
+                disabled={loading}
+              />
             </div>
           )}
         </CardContent>

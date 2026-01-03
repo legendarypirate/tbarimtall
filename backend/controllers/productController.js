@@ -2,6 +2,9 @@ const { Product, Category, Subcategory, User, Review, sequelize } = require('../
 const { Op } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
+const archiver = require('archiver');
 
 // Helper function to convert absolute file paths to full API URLs
 function convertImagePathToUrl(filePath) {
@@ -56,6 +59,40 @@ function convertImagePathToUrl(filePath) {
   return `${apiBaseUrl}/api/uploads/${urlPath}`;
 }
 
+// Helper function to recursively parse JSON strings until we get an array of URLs
+function parsePreviewImages(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    // If it's already an array, flatten any nested stringified arrays
+    return value.flatMap(item => {
+      if (typeof item === 'string') {
+        try {
+          const parsed = JSON.parse(item);
+          if (Array.isArray(parsed)) {
+            return parsePreviewImages(parsed);
+          }
+          // If parsed is a string (single URL), return it
+          return typeof parsed === 'string' ? parsed : item;
+        } catch (e) {
+          // If it's not JSON, it's probably a URL string
+          return item;
+        }
+      }
+      return item;
+    }).filter(item => typeof item === 'string' && item.trim() !== '');
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return parsePreviewImages(parsed);
+    } catch (e) {
+      // If it's not valid JSON, treat it as a single URL
+      return value.trim() !== '' ? [value] : [];
+    }
+  }
+  return [];
+}
+
 // Helper function to sanitize product data and convert image paths
 function sanitizeProduct(product) {
   const productData = product.toJSON ? product.toJSON() : product;
@@ -66,12 +103,12 @@ function sanitizeProduct(product) {
     productData.image = convertImagePathToUrl(productData.image);
   }
   
-  // Convert preview images paths to URLs
-  if (productData.previewImages && Array.isArray(productData.previewImages)) {
-    productData.previewImages = productData.previewImages.map(img => 
-      typeof img === 'string' ? convertImagePathToUrl(img) : img
-    );
-  }
+  // Parse and normalize preview images
+  const parsedPreviewImages = parsePreviewImages(productData.previewImages);
+  // Convert paths to URLs
+  productData.previewImages = parsedPreviewImages.map(img => 
+    typeof img === 'string' ? convertImagePathToUrl(img) : img
+  );
   
   return productData;
 }
@@ -91,7 +128,9 @@ exports.getAllProducts = async (req, res) => {
     } = req.query;
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
-    const where = { isActive: true };
+    const where = { 
+      status: 'published' // Only show published products (regardless of isActive status)
+    };
 
     if (categoryId) where.categoryId = categoryId;
     if (subcategoryId) where.subcategoryId = subcategoryId;
@@ -251,31 +290,204 @@ exports.createProduct = async (req, res) => {
       authorId: req.user.id
     };
 
+    // Helper function to upload file to Cloudinary
+    const uploadToCloudinary = (file) => {
+      return new Promise((resolve, reject) => {
+        // Preserve original filename with extension
+        const originalName = file.originalname;
+        const ext = path.extname(originalName);
+        const baseName = path.basename(originalName, ext);
+        // Clean filename (remove special characters, keep only alphanumeric, dash, underscore)
+        const cleanBaseName = baseName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const publicId = `tbarimt/products/${cleanBaseName}_${Date.now()}${ext}`;
+        
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'raw', // For non-image files (PDF, DOCX, etc.)
+            public_id: publicId,
+            use_filename: false, // We're setting public_id manually
+            unique_filename: false,
+            overwrite: false,
+            type: 'upload', // Ensure it's an upload type
+            access_mode: 'public', // Make file publicly accessible
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              // Add original filename to result for download
+              result.original_filename = originalName;
+              resolve(result);
+            }
+          }
+        );
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+      });
+    };
+
+    // Helper function to upload image to Cloudinary
+    const uploadImageToCloudinary = (file) => {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'image',
+            folder: 'tbarimt/images',
+            use_filename: true,
+            unique_filename: true,
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+      });
+    };
+
+    // Helper function to create ZIP from multiple files
+    const createZipFromFiles = (files) => {
+      return new Promise((resolve, reject) => {
+        const archive = archiver('zip', {
+          zlib: { level: 9 } // Maximum compression
+        });
+        
+        const chunks = [];
+        
+        archive.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        
+        archive.on('end', () => {
+          const buffer = Buffer.concat(chunks);
+          resolve(buffer);
+        });
+        
+        archive.on('error', (err) => {
+          reject(err);
+        });
+        
+        // Add each file to the ZIP
+        files.forEach((file) => {
+          archive.append(streamifier.createReadStream(file.buffer), {
+            name: file.originalname // Preserve original filename
+          });
+        });
+        
+        archive.finalize();
+      });
+    };
+
     // Process uploaded files (multer.fields() creates req.files object with arrays)
     if (req.files) {
-      // Handle product file (fieldname: 'file')
-      if (req.files.file && req.files.file.length > 0) {
+      // Collect all files and images to compress into ZIP
+      const allFilesToZip = [];
+      
+      // Add files to ZIP
+      if (req.files.files && req.files.files.length > 0) {
+        allFilesToZip.push(...req.files.files);
+      }
+      
+      // Add images to ZIP (they will be included in the ZIP)
+      if (req.files.images && req.files.images.length > 0) {
+        allFilesToZip.push(...req.files.images);
+      }
+      
+      // Handle multiple files/images - compress to ZIP and upload to Cloudinary
+      if (allFilesToZip.length > 0) {
+        try {
+          // Create ZIP from all files and images
+          const zipBuffer = await createZipFromFiles(allFilesToZip);
+          
+          // Create a file-like object for Cloudinary upload
+          const zipFile = {
+            buffer: zipBuffer,
+            originalname: `product_files_${Date.now()}.zip`,
+            mimetype: 'application/zip',
+            size: zipBuffer.length
+          };
+          
+          const cloudinaryResult = await uploadToCloudinary(zipFile);
+          // Store URL with ZIP filename in query parameter for proper download
+          const downloadUrl = `${cloudinaryResult.secure_url}?filename=${encodeURIComponent(zipFile.originalname)}`;
+          productData.fileUrl = downloadUrl; // Downloadable URL with filename
+          productData.cloudinaryFileUrl = cloudinaryResult.secure_url; // Base URL without query params
+          productData.fileType = 'zip';
+          productData.fileSize = `${(zipBuffer.length / 1024 / 1024).toFixed(2)} MB`;
+          productData.filePath = null; // No longer using local file path
+        } catch (uploadError) {
+          console.error('Error creating ZIP or uploading to Cloudinary:', uploadError);
+          throw new Error('Файлуудыг ZIP болгож upload хийхэд алдаа гарлаа: ' + uploadError.message);
+        }
+      }
+      
+      // Handle single product file (fieldname: 'file') - for backward compatibility
+      else if (req.files.file && req.files.file.length > 0) {
         const file = req.files.file[0];
-        productData.filePath = file.path;
-        productData.fileType = file.mimetype || path.extname(file.originalname).slice(1);
-        productData.fileSize = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
-        productData.fileUrl = null; // Don't store fileUrl - files are not publicly accessible
+        try {
+          const cloudinaryResult = await uploadToCloudinary(file);
+          // Store URL with original filename in query parameter for proper download
+          const originalFilename = file.originalname;
+          const downloadUrl = `${cloudinaryResult.secure_url}?filename=${encodeURIComponent(originalFilename)}`;
+          productData.fileUrl = downloadUrl; // Downloadable URL with filename
+          productData.cloudinaryFileUrl = cloudinaryResult.secure_url; // Base URL without query params
+          productData.fileType = file.mimetype || path.extname(file.originalname).slice(1);
+          productData.fileSize = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+          productData.filePath = null; // No longer using local file path
+        } catch (uploadError) {
+          console.error('Error uploading file to Cloudinary:', uploadError);
+          throw new Error('Файл upload хийхэд алдаа гарлаа: ' + uploadError.message);
+        }
       }
 
-      // Handle image file (fieldname: 'image')
-      if (req.files.image && req.files.image.length > 0) {
+      // Handle first image file (fieldname: 'image' or 'images') - upload to Cloudinary as preview
+      // This is for the main product image display, separate from ZIP
+      if (req.files.images && req.files.images.length > 0) {
+        const firstImage = req.files.images[0];
+        try {
+          const cloudinaryResult = await uploadImageToCloudinary(firstImage);
+          productData.image = cloudinaryResult.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading image to Cloudinary:', uploadError);
+          // Don't throw error, just log it - image is already in ZIP
+        }
+      } else if (req.files.image && req.files.image.length > 0) {
         const imageFile = req.files.image[0];
-        productData.image = imageFile.path;
+        try {
+          const cloudinaryResult = await uploadImageToCloudinary(imageFile);
+          productData.image = cloudinaryResult.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading image to Cloudinary:', uploadError);
+          throw new Error('Зураг upload хийхэд алдаа гарлаа: ' + uploadError.message);
+        }
       }
     } else if (req.file) {
       // Fallback for single file upload (if using single() instead of fields())
       if (req.file.fieldname === 'file') {
-        productData.filePath = req.file.path;
-        productData.fileType = req.file.mimetype || path.extname(req.file.originalname).slice(1);
-        productData.fileSize = `${(req.file.size / 1024 / 1024).toFixed(2)} MB`;
-        productData.fileUrl = null;
+        try {
+          const cloudinaryResult = await uploadToCloudinary(req.file);
+          // Store URL with original filename in query parameter for proper download
+          const originalFilename = req.file.originalname;
+          const downloadUrl = `${cloudinaryResult.secure_url}?filename=${encodeURIComponent(originalFilename)}`;
+          productData.fileUrl = downloadUrl;
+          productData.cloudinaryFileUrl = cloudinaryResult.secure_url;
+          productData.fileType = req.file.mimetype || path.extname(req.file.originalname).slice(1);
+          productData.fileSize = `${(req.file.size / 1024 / 1024).toFixed(2)} MB`;
+          productData.filePath = null;
+        } catch (uploadError) {
+          console.error('Error uploading file to Cloudinary:', uploadError);
+          throw new Error('Файл upload хийхэд алдаа гарлаа: ' + uploadError.message);
+        }
       } else if (req.file.fieldname === 'image') {
-        productData.image = req.file.path;
+        try {
+          const cloudinaryResult = await uploadImageToCloudinary(req.file);
+          productData.image = cloudinaryResult.secure_url;
+        } catch (uploadError) {
+          console.error('Error uploading image to Cloudinary:', uploadError);
+          throw new Error('Зураг upload хийхэд алдаа гарлаа: ' + uploadError.message);
+        }
       }
     }
 
@@ -288,19 +500,26 @@ exports.createProduct = async (req, res) => {
       }
     }
 
-    if (typeof productData.previewImages === 'string') {
-      try {
-        productData.previewImages = JSON.parse(productData.previewImages);
-      } catch (e) {
-        productData.previewImages = [];
-      }
-    }
+    // Parse previewImages using the helper function
+    productData.previewImages = parsePreviewImages(productData.previewImages);
 
     // Convert string numbers to proper types
     if (productData.price) productData.price = parseFloat(productData.price);
     if (productData.categoryId) productData.categoryId = parseInt(productData.categoryId);
     if (productData.subcategoryId) productData.subcategoryId = parseInt(productData.subcategoryId);
     if (productData.pages) productData.pages = parseInt(productData.pages);
+    if (productData.isUnique !== undefined) {
+      productData.isUnique = productData.isUnique === 'true' || productData.isUnique === true;
+    }
+    
+    // Default status to 'new' and isActive to false for journalist products
+    // Admin can later set isActive=true to publish
+    if (!productData.status) {
+      productData.status = 'new';
+    }
+    if (productData.isActive === undefined || productData.isActive === null) {
+      productData.isActive = false; // Journalist products are not published by default
+    }
 
     const product = await Product.create(productData);
 
@@ -311,38 +530,35 @@ exports.createProduct = async (req, res) => {
       ]
     });
 
+    // Update user's publishedFileCount if product is published
+    if (createdProduct.authorId && createdProduct.status === 'published' && createdProduct.isActive) {
+      try {
+        const { User } = require('../models');
+        const author = await User.findByPk(createdProduct.authorId);
+        if (author) {
+          const publishedCount = await Product.count({
+            where: {
+              authorId: author.id,
+              status: 'published',
+              isActive: true
+            }
+          });
+          await author.update({ publishedFileCount: publishedCount });
+        }
+      } catch (countError) {
+        console.error('Error updating publishedFileCount:', countError);
+        // Continue - don't fail the product creation
+      }
+    }
+
     // Remove filePath from response for security (don't expose internal paths)
     const responseProduct = createdProduct.toJSON();
     delete responseProduct.filePath;
 
     res.status(201).json({ product: responseProduct });
   } catch (error) {
-    // Clean up uploaded files if product creation failed
-    if (req.files) {
-      // Clean up file if uploaded
-      if (req.files.file && req.files.file.length > 0 && req.files.file[0].path) {
-        try {
-          fs.unlinkSync(req.files.file[0].path);
-        } catch (unlinkError) {
-          console.error('Error deleting uploaded file:', unlinkError);
-        }
-      }
-      // Clean up image if uploaded
-      if (req.files.image && req.files.image.length > 0 && req.files.image[0].path) {
-        try {
-          fs.unlinkSync(req.files.image[0].path);
-        } catch (unlinkError) {
-          console.error('Error deleting uploaded image:', unlinkError);
-        }
-      }
-    } else if (req.file && req.file.path) {
-      // Fallback for single file upload
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error deleting uploaded file:', unlinkError);
-      }
-    }
+    // No need to clean up local files since we're using Cloudinary now
+    // Cloudinary handles cleanup automatically
     console.error('Error creating product:', error);
     res.status(500).json({ error: error.message });
   }
@@ -362,6 +578,10 @@ exports.updateProduct = async (req, res) => {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
+    // Get old status before update
+    const oldStatus = product.status;
+    const oldIsActive = product.isActive;
+    
     await product.update(req.body);
 
     const updatedProduct = await Product.findByPk(id, {
@@ -370,6 +590,28 @@ exports.updateProduct = async (req, res) => {
         { model: User, as: 'author' }
       ]
     });
+
+    // Update user's publishedFileCount if status or isActive changed
+    if (updatedProduct.authorId && 
+        (oldStatus !== updatedProduct.status || oldIsActive !== updatedProduct.isActive)) {
+      try {
+        const { User } = require('../models');
+        const author = await User.findByPk(updatedProduct.authorId);
+        if (author) {
+          const publishedCount = await Product.count({
+            where: {
+              authorId: author.id,
+              status: 'published',
+              isActive: true
+            }
+          });
+          await author.update({ publishedFileCount: publishedCount });
+        }
+      } catch (countError) {
+        console.error('Error updating publishedFileCount:', countError);
+        // Continue - don't fail the product update
+      }
+    }
 
     // Sanitize product and convert image paths to URLs
     const productData = sanitizeProduct(updatedProduct);
@@ -544,15 +786,12 @@ exports.downloadProduct = async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    // Use filePath if available, otherwise fall back to fileUrl for backward compatibility
-    const filePath = product.filePath || product.fileUrl;
-    if (!filePath) {
+    // Check if file is in Cloudinary (fileUrl starts with http/https)
+    const fileUrl = product.fileUrl || product.cloudinaryFileUrl;
+    const filePath = product.filePath;
+    
+    if (!fileUrl && !filePath) {
       return res.status(404).json({ error: 'Product file not found' });
-    }
-
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found on server' });
     }
 
     // Mark token as used
@@ -563,6 +802,80 @@ exports.downloadProduct = async (req, res) => {
 
     // Increment product download count
     await product.increment('downloads');
+
+    // If file is in Cloudinary, fetch and stream with proper headers
+    if (fileUrl && (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))) {
+      // Extract filename from URL query parameter or use fileType
+      let filename = 'download';
+      try {
+        if (fileUrl.includes('?filename=')) {
+          const urlObj = new URL(fileUrl);
+          filename = decodeURIComponent(urlObj.searchParams.get('filename') || 'download');
+        } else if (product.fileType) {
+          filename = `file.${product.fileType}`;
+        }
+      } catch (e) {
+        // If URL parsing fails, use fileType
+        if (product.fileType) {
+          filename = `file.${product.fileType}`;
+        }
+      }
+      
+      // Get base Cloudinary URL (remove query params)
+      const baseUrl = fileUrl.split('?')[0];
+      
+      // Determine content type from file extension
+      const ext = path.extname(filename).toLowerCase();
+      const contentTypes = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.zip': 'application/zip',
+        '.rar': 'application/x-rar-compressed',
+        '.txt': 'text/plain',
+        '.exe': 'application/x-msdownload',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.svg': 'image/svg+xml'
+      };
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+      
+      // Fetch file from Cloudinary and stream to response
+      const https = require('https');
+      const http = require('http');
+      const urlModule = require('url');
+      
+      const parsedUrl = urlModule.parse(baseUrl);
+      const client = parsedUrl.protocol === 'https:' ? https : http;
+      
+      client.get(baseUrl, (cloudinaryRes) => {
+        // Set proper headers for download
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        
+        if (cloudinaryRes.statusCode === 200) {
+          cloudinaryRes.pipe(res);
+        } else {
+          res.status(cloudinaryRes.statusCode).json({ error: 'Failed to fetch file from Cloudinary' });
+        }
+      }).on('error', (error) => {
+        console.error('Error fetching file from Cloudinary:', error);
+        res.status(500).json({ error: 'Failed to download file' });
+      });
+      
+      return; // Don't continue to local file handling
+    }
+
+    // Fallback to local file system (for backward compatibility)
+    if (!filePath || !fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found on server' });
+    }
 
     // Get file stats for proper headers
     const stats = fs.statSync(filePath);
@@ -579,7 +892,11 @@ exports.downloadProduct = async (req, res) => {
       '.zip': 'application/zip',
       '.rar': 'application/x-rar-compressed',
       '.txt': 'text/plain',
-      '.exe': 'application/x-msdownload'
+      '.exe': 'application/x-msdownload',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.svg': 'image/svg+xml'
     };
 
     const contentType = contentTypes[ext] || 'application/octet-stream';

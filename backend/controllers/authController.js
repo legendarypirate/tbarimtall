@@ -88,14 +88,78 @@ exports.login = async (req, res) => {
   }
 };
 
+// Helper function to calculate user income from completed orders
+async function calculateUserIncome(userId) {
+  const { Order, Product, sequelize } = require('../models');
+  const { QueryTypes } = require('sequelize');
+  
+  // Use raw query to calculate income from completed orders
+  // Sum amounts from distinct orders (group by order id to avoid duplicates)
+  const result = await sequelize.query(
+    `SELECT COALESCE(SUM(order_amounts.amount), 0) as total
+     FROM (
+       SELECT DISTINCT o.id, o.amount
+       FROM orders o
+       INNER JOIN products p ON o."productId" = p.id
+       WHERE o.status = 'completed'
+       AND p."authorId" = :userId
+       AND o."productId" IS NOT NULL
+       AND p.id IS NOT NULL
+     ) as order_amounts`,
+    {
+      replacements: { userId },
+      type: QueryTypes.SELECT
+    }
+  );
+  
+  const calculatedIncome = parseFloat(result[0]?.total || 0);
+  
+  // Debug logging to help identify discrepancies
+  if (process.env.NODE_ENV === 'development') {
+    const debugInfo = await sequelize.query(
+      `SELECT 
+         COUNT(DISTINCT o.id) as distinct_order_count,
+         COUNT(*) as total_rows,
+         SUM(o.amount) as sum_all,
+         STRING_AGG(DISTINCT o.id::text, ', ') as order_ids
+       FROM orders o
+       INNER JOIN products p ON o."productId" = p.id
+       WHERE o.status = 'completed'
+       AND p."authorId" = :userId`,
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT
+      }
+    );
+    console.log(`[Income Calculation Debug] User ${userId}:`, {
+      calculatedIncome,
+      distinctOrderCount: debugInfo[0]?.distinct_order_count,
+      totalRows: debugInfo[0]?.total_rows,
+      sumAll: parseFloat(debugInfo[0]?.sum_all || 0),
+      orderIds: debugInfo[0]?.order_ids
+    });
+  }
+  
+  return calculatedIncome;
+}
+
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
       attributes: { exclude: ['password'] }
     });
 
-    res.json({ user });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userData = user.toJSON();
+    // Return the income value directly from the users table
+    userData.income = parseFloat(user.income || 0);
+    console.log(userData);
+    res.json({ user: userData });
   } catch (error) {
+    console.error('[getProfile Error]', error);
     res.status(500).json({ error: error.message });
   }
 };

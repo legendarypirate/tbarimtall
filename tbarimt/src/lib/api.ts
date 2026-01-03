@@ -252,12 +252,16 @@ export async function createProductWithFiles(formData: FormData) {
   if (pages) uploadData.append('pages', pages as string);
   if (size) uploadData.append('size', size as string);
 
-  // Add files if they exist
-  const file = formData.get('file');
+  // Add files if they exist (handle multiple files)
+  const files = formData.getAll('files');
+  files.forEach((file) => {
+    if (file instanceof File) {
+      uploadData.append('files', file);
+    }
+  });
+  
+  // Add single image if it exists
   const image = formData.get('image');
-  if (file instanceof File) {
-    uploadData.append('file', file);
-  }
   if (image instanceof File) {
     uploadData.append('image', image);
   }
@@ -314,5 +318,53 @@ export async function checkQPayPaymentStatus(invoiceId: string) {
 
 export async function getOrderByInvoice(invoiceId: string) {
   return fetchAPI(`/qpay/order/${invoiceId}`);
+}
+
+// Update product
+export async function updateProduct(productId: string | number, productData: any) {
+  return fetchAPI(`/products/${productId}`, {
+    method: 'PUT',
+    body: JSON.stringify(productData),
+  });
+}
+
+// Create QPay invoice for making product unique
+export async function createUniqueProductInvoice(productId: string | number) {
+  return fetchAPI('/qpay/invoice', {
+    method: 'POST',
+    body: JSON.stringify({
+      productId: productId,
+      amount: 2000,
+      description: 'Онцгой бүтээгдэхүүн болгох төлбөр'
+    }),
+  });
+}
+
+// Wallet recharge
+export async function createWalletRechargeInvoice(amount: number) {
+  return fetchAPI('/qpay/wallet/recharge', {
+    method: 'POST',
+    body: JSON.stringify({ amount }),
+  });
+}
+
+export async function checkWalletRechargeStatus(invoiceId: string) {
+  return fetchAPI(`/qpay/wallet/check/${invoiceId}`);
+}
+
+// Wallet payment - purchase product using wallet balance
+export async function payWithWallet(data: {
+  productId: string;
+  amount: number;
+}) {
+  return fetchAPI('/qpay/wallet/pay', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+// Get current user info (for checking balance)
+export async function getCurrentUser() {
+  return fetchAPI('/auth/profile');
 }
 

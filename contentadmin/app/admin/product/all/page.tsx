@@ -10,6 +10,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Pagination } from "@/components/ui/pagination";
 
 // Types matching backend Product model
 type Product = {
@@ -31,9 +32,11 @@ type Product = {
   rating: number;
   views: number;
   downloads: number;
+  income: number;
   isDiploma: boolean;
   isActive: boolean;
-  status: 'new' | 'cancelled' | 'deleted';
+  isUnique: boolean;
+  status: 'new' | 'published' | 'cancelled' | 'deleted';
   createdAt: string;
   updatedAt: string;
   category?: {
@@ -45,6 +48,8 @@ type Product = {
     id: number;
     username: string;
     fullName: string | null;
+    email: string | null;
+    phone: string | null;
   };
   subcategory?: {
     id: number;
@@ -132,7 +137,7 @@ const Alert = ({
 interface ProductEditFormProps {
   product: Product;
   onCancel: () => void;
-  onSave: (product: Partial<Product>) => Promise<void>;
+  onSave: (product: Partial<Product> | FormData) => Promise<void>;
   isCreating: boolean;
   categories: Category[];
 }
@@ -141,20 +146,103 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
   const [form, setForm] = useState<Partial<Product>>({ ...product });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [previewImages, setPreviewImages] = useState<string[]>(Array.isArray(product.previewImages) ? product.previewImages : []);
+  const [newPreviewImages, setNewPreviewImages] = useState<File[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+
+  // Update previewImages when product changes
+  useEffect(() => {
+    if (product.previewImages) {
+      setPreviewImages(Array.isArray(product.previewImages) ? product.previewImages : []);
+    }
+  }, [product.previewImages]);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          setIsAdmin(user.role === 'admin');
+        } catch {
+          setIsAdmin(false);
+        }
+      }
+    }
+  }, []);
 
   const updateField = <K extends keyof Product>(key: K, value: Product[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
+  };
+
+  const handlePreviewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setNewPreviewImages(prev => [...prev, ...files]);
+    }
+  };
+
+  const removePreviewImage = (index: number) => {
+    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeNewPreviewImage = (index: number) => {
+    setNewPreviewImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
     try {
       setSaving(true);
       setError(null);
-      await onSave(form);
+      setUploadingImages(true);
+
+      // If there are new images to upload, use FormData
+      if (newPreviewImages.length > 0) {
+        const formData = new FormData();
+        
+        // Add all form fields (excluding previewImages - we'll handle it separately)
+        Object.keys(form).forEach(key => {
+          const value = form[key as keyof Product];
+          if (value !== null && value !== undefined && key !== 'previewImages') {
+            if (key === 'tags') {
+              // Handle arrays
+              formData.append(key, JSON.stringify(value));
+            } else if (typeof value === 'object') {
+              formData.append(key, JSON.stringify(value));
+            } else {
+              formData.append(key, String(value));
+            }
+          }
+        });
+        
+        // Add existing preview images as JSON (only once)
+        // The backend will merge these with newly uploaded images
+        formData.append('previewImages', JSON.stringify(previewImages));
+        
+        // Add new preview images as files
+        newPreviewImages.forEach((file) => {
+          formData.append('previewImages', file);
+        });
+
+        await onSave(formData);
+        
+        // Reset new images after successful save
+        setNewPreviewImages([]);
+      } else {
+        // No new images, just update with previewImages array
+        const updatedForm = {
+          ...form,
+          previewImages: previewImages
+        };
+        await onSave(updatedForm);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Хадгалахад алдаа гарлаа');
     } finally {
       setSaving(false);
+      setUploadingImages(false);
     }
   };
 
@@ -166,6 +254,35 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
     <div className="space-y-6">
       {error && (
         <Alert variant="destructive">{error}</Alert>
+      )}
+
+      {/* Author Information Section */}
+      {product.author && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">Зохиогчийн мэдээлэл</h3>
+          <div className={`grid gap-4 ${product.author.phone ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            <div>
+              <label className="text-xs text-blue-700 dark:text-blue-300 block mb-1">Нэр</label>
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                {product.author.fullName || product.author.username || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs text-blue-700 dark:text-blue-300 block mb-1">Имэйл</label>
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                {product.author.email || 'N/A'}
+              </p>
+            </div>
+            {product.author.phone && (
+              <div>
+                <label className="text-xs text-blue-700 dark:text-blue-300 block mb-1">Утас</label>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {product.author.phone}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-4">
@@ -288,13 +405,208 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
       </div>
 
       <div>
-        <label className="text-sm font-medium block mb-1">Файлын URL</label>
-        <Input 
-          value={form.fileUrl || ''} 
-          onChange={(e) => updateField('fileUrl', e.target.value || null)} 
-          placeholder="https://example.com/file.pdf"
-          disabled={saving}
-        />
+        <label className="text-sm font-medium block mb-1">Preview Зургууд (Олон зураг)</label>
+        <div className="space-y-4">
+          {/* Existing Preview Images */}
+          {previewImages.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Одоогийн preview зургууд:</p>
+              <div className="grid grid-cols-4 gap-3">
+                {previewImages.map((img, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={img}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePreviewImage(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      disabled={saving}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* New Preview Images (not yet uploaded) */}
+          {newPreviewImages.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Шинээр нэмэгдсэн зургууд (хадгалахад upload хийгдэнэ):</p>
+              <div className="grid grid-cols-4 gap-3">
+                {newPreviewImages.map((file, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`New preview ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeNewPreviewImage(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      disabled={saving}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upload Button */}
+          <div>
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <Plus className="h-8 w-8 text-gray-400 mb-2" />
+                <p className="text-sm text-gray-500">
+                  <span className="font-semibold">Зураг сонгох</span> эсвэл чирж тавих
+                </p>
+                <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF хэлбэрээр (10MB хүртэл)</p>
+              </div>
+              <input
+                type="file"
+                className="hidden"
+                multiple
+                accept="image/*"
+                onChange={handlePreviewImageUpload}
+                disabled={saving || uploadingImages}
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium block mb-1">Файлын URL (Cloudinary)</label>
+        <div className="flex items-center gap-2">
+          <Input 
+            value={form.fileUrl || (form as any).cloudinaryFileUrl || ''} 
+            onChange={(e) => updateField('fileUrl', e.target.value || null)} 
+            placeholder="https://res.cloudinary.com/..."
+            disabled={saving}
+            className="flex-1"
+          />
+          {(form.fileUrl || (form as any).cloudinaryFileUrl) && (() => {
+            // Use fileUrl if available, otherwise use cloudinaryFileUrl
+            const fileUrl = form.fileUrl || (form as any).cloudinaryFileUrl || '';
+            try {
+              // Extract filename from URL query parameter or use fileType to construct filename
+              const url = new URL(fileUrl);
+              const filenameParam = url.searchParams.get('filename');
+              const filename = filenameParam || (form.fileType ? `file.${form.fileType}` : 'download.zip');
+              
+              // Use admin download endpoint instead of direct Cloudinary URL
+              const productId = (form as any).id || product.id;
+              const downloadUrl = `${API_URL}/admin/products/${productId}/download`;
+              
+              const handleDownload = async (e: React.MouseEvent) => {
+                e.preventDefault();
+                const token = getAuthToken();
+                if (!token) {
+                  alert('Нэвтрэх шаардлагатай');
+                  return;
+                }
+                
+                try {
+                  const response = await fetch(downloadUrl, {
+                    headers: {
+                      'Authorization': `Bearer ${token}`
+                    }
+                  });
+                  
+                  if (!response.ok) {
+                    throw new Error(`Download failed: ${response.status}`);
+                  }
+                  
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = filename;
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  document.body.removeChild(a);
+                } catch (error) {
+                  console.error('Download error:', error);
+                  alert('Файл татахад алдаа гарлаа');
+                }
+              };
+              
+              return (
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                  title={`Файл татаж авах: ${filename}`}
+                  disabled={saving}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+              );
+            } catch (e) {
+              // If URL parsing fails, still show download button using admin endpoint
+              const productId = (form as any).id || product.id;
+              const downloadUrl = `${API_URL}/admin/products/${productId}/download`;
+              
+              const handleDownload = async (e: React.MouseEvent) => {
+                e.preventDefault();
+                const token = getAuthToken();
+                if (!token) {
+                  alert('Нэвтрэх шаардлагатай');
+                  return;
+                }
+                
+                try {
+                  const response = await fetch(downloadUrl, {
+                    headers: {
+                      'Authorization': `Bearer ${token}`
+                    }
+                  });
+                  
+                  if (!response.ok) {
+                    throw new Error(`Download failed: ${response.status}`);
+                  }
+                  
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = form.fileType ? `file.${form.fileType}` : 'download';
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  document.body.removeChild(a);
+                } catch (error) {
+                  console.error('Download error:', error);
+                  alert('Файл татахад алдаа гарлаа');
+                }
+              };
+              
+              return (
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                  title="Файл татаж авах"
+                  disabled={saving}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+              );
+            }
+          })()}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -334,8 +646,10 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
       <div>
         <label className="text-sm font-medium block mb-1">Статус</label>
         <Select 
-          value={form.status || 'new'} 
-          onValueChange={(value) => updateField('status', value as 'new' | 'cancelled' | 'deleted')}
+          value={form.status || 'new'}
+          onValueChange={(value) => {
+            updateField('status', value as 'new' | 'published' | 'cancelled' | 'deleted');
+          }}
           disabled={saving}
         >
           <SelectTrigger>
@@ -343,40 +657,28 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="new">New</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
             <SelectItem value="deleted">Deleted</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="flex items-center space-x-4">
+      {isAdmin && (
         <div className="flex items-center space-x-2">
           <input
             type="checkbox"
-            id="isDiploma"
-            checked={form.isDiploma || false}
-            onChange={(e) => updateField('isDiploma', e.target.checked)}
+            id="isUnique"
+            checked={form.isUnique || false}
+            onChange={(e) => updateField('isUnique', e.target.checked)}
             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             disabled={saving}
           />
-          <label htmlFor="isDiploma" className="text-sm font-medium">
-            Дипломын ажил
+          <label htmlFor="isUnique" className="text-sm font-medium">
+            Unique product (2000₮ төлбөртэй)
           </label>
         </div>
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="isActive"
-            checked={form.isActive !== false}
-            onChange={(e) => updateField('isActive', e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            disabled={saving}
-          />
-          <label htmlFor="isActive" className="text-sm font-medium">
-            Идэвхтэй
-          </label>
-        </div>
-      </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-4 border-t">
         <Button variant="outline" onClick={onCancel} disabled={saving}>
@@ -453,13 +755,51 @@ export default function AdminProductList() {
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const [pagination, setPagination] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  } | null>(null);
+  const [isPurchaseHistoryOpen, setIsPurchaseHistoryOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
+  const [purchaseHistoryLoading, setPurchaseHistoryLoading] = useState(false);
+  const [purchaseHistoryPagination, setPurchaseHistoryPagination] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  } | null>(null);
+  const [selectedProductTitle, setSelectedProductTitle] = useState<string>('');
+  const [selectedProductIncome, setSelectedProductIncome] = useState<number>(0);
 
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
+    setCurrentPage(1); // Reset to first page when pathname changes
   }, [pathname]);
 
-  const fetchProducts = async () => {
+  useEffect(() => {
+    fetchProducts(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pathname]);
+
+  // Debounce search query - reset to page 1 when query changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchProducts = async (page: number = currentPage) => {
     try {
       setLoading(true);
       setError(null);
@@ -467,14 +807,27 @@ export default function AdminProductList() {
       // Get status from URL path
       let statusParam = '';
       if (pathname?.includes('/new')) {
-        statusParam = '?status=new';
+        statusParam = 'status=new';
+      } else if (pathname?.includes('/all')) {
+        statusParam = 'status=published';
       } else if (pathname?.includes('/cancelled')) {
-        statusParam = '?status=cancelled';
+        statusParam = 'status=cancelled';
       } else if (pathname?.includes('/deleted')) {
-        statusParam = '?status=deleted';
+        statusParam = 'status=deleted';
       }
       
-      const response = await fetch(`${API_URL}/admin/products${statusParam}`, {
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', itemsPerPage.toString());
+      if (statusParam) {
+        params.append(statusParam.split('=')[0], statusParam.split('=')[1]);
+      }
+      if (query) {
+        params.append('search', query);
+      }
+      
+      const response = await fetch(`${API_URL}/admin/products?${params.toString()}`, {
         headers: getAuthHeaders()
       });
       
@@ -492,6 +845,11 @@ export default function AdminProductList() {
         rating: product.rating != null ? Number(product.rating) || 0 : 0
       }));
       setProducts(normalizedProducts);
+      
+      // Store pagination info
+      if (data.pagination) {
+        setPagination(data.pagination);
+      }
     } catch (err) {
       console.error('Error fetching products:', err);
       setError(err instanceof Error ? err.message : 'Барааны мэдээлэл авахад алдаа гарлаа');
@@ -581,11 +939,8 @@ export default function AdminProductList() {
     }
   };
 
-  const filtered = products.filter(
-    (p) =>
-      p.title.toLowerCase().includes(query.toLowerCase()) ||
-      (p.description && p.description.toLowerCase().includes(query.toLowerCase()))
-  );
+  // Search is now handled by API, but we can still filter client-side if needed
+  const filtered = products;
 
   function handleView(product: Product) {
     setSelected(product);
@@ -613,16 +968,35 @@ export default function AdminProductList() {
     }
   }
 
-  async function saveEdit(edited: Partial<Product>) {
+  async function saveEdit(edited: Partial<Product> | FormData) {
     try {
       if (isCreating) {
-        await createProduct(edited);
+        await createProduct(edited as Partial<Product>);
         setIsEditOpen(false);
         setSelected(null);
         setIsCreating(false);
       } else {
         if (!selected) return;
-        await updateProduct(selected.id, edited);
+        // If it's FormData, handle it directly
+        if (edited instanceof FormData) {
+          const token = getAuthToken();
+          const response = await fetch(`${API_URL}/admin/products/${selected.id}`, {
+            method: 'PUT',
+            headers: {
+              ...(token && { 'Authorization': `Bearer ${token}` })
+            },
+            body: edited
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || errorData?.message || `HTTP error! status: ${response.status}`);
+          }
+
+          await fetchProducts();
+        } else {
+          await updateProduct(selected.id, edited as Partial<Product>);
+        }
         setIsEditOpen(false);
         setSelected(null);
         setIsCreating(false);
@@ -630,8 +1004,45 @@ export default function AdminProductList() {
     } catch (error) {
       console.error('Error saving product:', error);
       // Error is already set by create/update functions
+      throw error;
     }
   }
+
+  const handleViewIncome = async (productId: string) => {
+    try {
+      setSelectedProductId(productId);
+      setIsPurchaseHistoryOpen(true);
+      setPurchaseHistoryLoading(true);
+      
+      // Find product to get title
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        setSelectedProductTitle(product.title);
+        setSelectedProductIncome(product.income || 0);
+      }
+      
+      const response = await fetch(`${API_URL}/admin/products/${productId}/purchases?page=1&limit=20`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch purchase history');
+      }
+      
+      const data = await response.json();
+      setPurchaseHistory(data.orders || []);
+      setPurchaseHistoryPagination(data.pagination || null);
+      if (data.product) {
+        setSelectedProductTitle(data.product.title);
+        setSelectedProductIncome(data.product.totalIncome || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching purchase history:', error);
+      setError('Орлогын түүх авахад алдаа гарлаа');
+    } finally {
+      setPurchaseHistoryLoading(false);
+    }
+  };
 
   function addProduct() {
     const newProduct: Partial<Product> = { 
@@ -651,6 +1062,7 @@ export default function AdminProductList() {
       rating: 0,
       views: 0,
       downloads: 0,
+      income: 0,
       isDiploma: false,
       isActive: true,
       status: 'new',
@@ -694,7 +1106,15 @@ export default function AdminProductList() {
           <Input
             placeholder="Барааны нэрээр хайх..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setCurrentPage(1); // Reset to first page when search changes
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                fetchProducts(1);
+              }
+            }}
             className="w-72"
           />
           <Button onClick={addProduct} variant="default" className="flex items-center gap-2">
@@ -721,11 +1141,13 @@ export default function AdminProductList() {
             <TableHeader>
               <TableRow>
                 <TableHead>Гарчиг</TableHead>
-                <TableHead className="w-32">Ангилал</TableHead>
+                <TableHead className="w-32">Зохиогч</TableHead>
                 <TableHead className="w-28">Үнэ</TableHead>
-                <TableHead className="w-24">Хуудас/Хэмжээ</TableHead>
+                <TableHead className="w-28">Орлого</TableHead>
+                <TableHead className="w-24">Утас</TableHead>
                 <TableHead className="w-24">Үзсэн</TableHead>
                 <TableHead className="w-24">Татаж авсан</TableHead>
+                <TableHead className="w-32">Үүсгэсэн огноо</TableHead>
                 <TableHead className="w-32">Төлөв</TableHead>
                 <TableHead className="w-48 text-right">Үйлдэл</TableHead>
               </TableRow>
@@ -744,11 +1166,8 @@ export default function AdminProductList() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {p.category ? (
-                      <div className="flex items-center gap-1">
-                        {p.category.icon && <span>{p.category.icon}</span>}
-                        <span className="text-sm">{p.category.name}</span>
-                      </div>
+                    {p.author ? (
+                      <span className="text-sm">{p.author.fullName || p.author.username || '-'}</span>
                     ) : (
                       <span className="text-sm text-gray-400">-</span>
                     )}
@@ -757,10 +1176,17 @@ export default function AdminProductList() {
                     {formatPrice(p.price)}
                   </TableCell>
                   <TableCell>
-                    {p.pages ? (
-                      <span className="text-sm">{p.pages} хуудас</span>
-                    ) : p.size ? (
-                      <span className="text-sm">{p.size}</span>
+                    <button
+                      onClick={() => handleViewIncome(p.id)}
+                      className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                      title="Орлогын түүхийг харах"
+                    >
+                      {formatPrice(p.income || 0)}
+                    </button>
+                  </TableCell>
+                  <TableCell>
+                    {p.author?.phone ? (
+                      <span className="text-sm">{p.author.phone}</span>
                     ) : (
                       <span className="text-sm text-gray-400">-</span>
                     )}
@@ -772,9 +1198,27 @@ export default function AdminProductList() {
                     <span className="text-sm">{p.downloads}</span>
                   </TableCell>
                   <TableCell>
+                    {p.createdAt ? (
+                      <span className="text-sm text-gray-600">
+                        {new Date(p.createdAt).toLocaleDateString('mn-MN', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex flex-col gap-1">
                       {p.status === 'new' && (
                         <Badge variant="default" className="w-fit bg-blue-500">New</Badge>
+                      )}
+                      {p.status === 'published' && (
+                        <Badge variant="default" className="w-fit bg-green-500">Published</Badge>
                       )}
                       {p.status === 'cancelled' && (
                         <Badge variant="destructive" className="w-fit bg-orange-500">Cancelled</Badge>
@@ -827,13 +1271,28 @@ export default function AdminProductList() {
 
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-sm text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-sm text-gray-500">
                     {query ? "Хайлтын үр дүнд бараа олдсонгүй." : "Бараа олдсонгүй."}
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+          
+          {/* Pagination Controls */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-4 border-t">
+              <div className="text-sm text-gray-600">
+                Нийт {pagination.total} бараа, {pagination.page}/{pagination.totalPages} хуудас
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={setCurrentPage}
+                disabled={loading}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -909,6 +1368,9 @@ export default function AdminProductList() {
                         <span>
                           {selected.status === 'new' && (
                             <Badge variant="default" className="text-xs bg-blue-500">New</Badge>
+                          )}
+                          {selected.status === 'published' && (
+                            <Badge variant="default" className="text-xs bg-green-500">Published</Badge>
                           )}
                           {selected.status === 'cancelled' && (
                             <Badge variant="destructive" className="text-xs bg-orange-500">Cancelled</Badge>
@@ -1038,6 +1500,115 @@ export default function AdminProductList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Purchase History Modal */}
+      <Dialog open={isPurchaseHistoryOpen} onOpenChange={setIsPurchaseHistoryOpen}>
+  <DialogContent className="max-w-[98vw] w-[98vw] max-h-[90vh] overflow-y-auto sm:max-w-[95vw] sm:w-[95vw]">
+    <DialogHeader>
+      <DialogTitle className="text-xl">Орлогын түүх: {selectedProductTitle}</DialogTitle>
+      <DialogDescription className="text-base">
+        Нийт орлого: <span className="font-semibold text-green-600">{formatPrice(selectedProductIncome)}</span>
+      </DialogDescription>
+    </DialogHeader>
+    <div className="py-4">
+      {purchaseHistoryLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      ) : purchaseHistory.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          Худалдан авалтын түүх олдсонгүй
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-base min-w-[180px]">Огноо</TableHead>
+                <TableHead className="text-base min-w-[200px]">Худалдан авагч</TableHead>
+                <TableHead className="text-base min-w-[140px]">Утас</TableHead>
+                <TableHead className="text-base min-w-[150px]">Төлбөрийн арга</TableHead>
+                <TableHead className="text-base text-right min-w-[140px]">Дүн</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {purchaseHistory.map((order: any) => (
+                <TableRow key={order.id}>
+                  <TableCell>
+                    <span className="text-base">
+                      {new Date(order.createdAt).toLocaleDateString('mn-MN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-base">
+                      {(() => {
+                        // If user has Gmail email, show full name, otherwise show "Хэрэглэгч"
+                        if (order.user?.email && order.user.email.endsWith('@gmail.com')) {
+                          return order.user?.fullName || order.user?.username || 'Хэрэглэгч';
+                        }
+                        return 'Хэрэглэгч';
+                      })()}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-base">
+                      {order.user?.phone || '-'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-sm px-3 py-1">
+                      {order.paymentMethod === 'qpay' ? 'QPay' : 
+                       order.paymentMethod === 'bank' ? 'Банк' : 'Бусад'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-base">
+                    {formatPrice(parseFloat(order.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          
+          {purchaseHistoryPagination && purchaseHistoryPagination.totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-base text-gray-600">
+                Нийт {purchaseHistoryPagination.total} худалдан авалт
+              </div>
+              <Pagination
+                currentPage={purchaseHistoryPagination.page}
+                totalPages={purchaseHistoryPagination.totalPages}
+                onPageChange={(page) => {
+                  // Fetch next page
+                  if (selectedProductId) {
+                    fetch(`${API_URL}/admin/products/${selectedProductId}/purchases?page=${page}&limit=20`, {
+                      headers: getAuthHeaders()
+                    })
+                      .then(res => res.json())
+                      .then(data => {
+                        setPurchaseHistory(data.orders || []);
+                        setPurchaseHistoryPagination(data.pagination || null);
+                      })
+                      .catch(err => console.error('Error fetching purchase history:', err));
+                  }
+                }}
+                disabled={purchaseHistoryLoading}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+    <DialogFooter>
+      <Button onClick={() => setIsPurchaseHistoryOpen(false)} className="px-6 py-2 text-base">Хаах</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
     </div>
   );
 }
