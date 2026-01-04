@@ -5,6 +5,7 @@ const fs = require('fs');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 const archiver = require('archiver');
+const { clearCacheByPattern } = require('../middleware/cache');
 
 // Helper function to convert absolute file paths to full API URLs
 function convertImagePathToUrl(filePath) {
@@ -555,6 +556,11 @@ exports.createProduct = async (req, res) => {
     const responseProduct = createdProduct.toJSON();
     delete responseProduct.filePath;
 
+    // Clear cache for featured products and product lists
+    clearCacheByPattern('/products/featured');
+    clearCacheByPattern('/products\\?');
+    clearCacheByPattern('/journalists/top');
+
     res.status(201).json({ product: responseProduct });
   } catch (error) {
     // No need to clean up local files since we're using Cloudinary now
@@ -616,6 +622,11 @@ exports.updateProduct = async (req, res) => {
     // Sanitize product and convert image paths to URLs
     const productData = sanitizeProduct(updatedProduct);
 
+    // Clear cache for featured products and product lists
+    clearCacheByPattern('/products/featured');
+    clearCacheByPattern('/products\\?');
+    clearCacheByPattern('/journalists/top');
+
     res.json({ product: productData });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -637,6 +648,11 @@ exports.deleteProduct = async (req, res) => {
     }
 
     await product.update({ status: 'deleted', isActive: false });
+
+    // Clear cache for featured products and product lists
+    clearCacheByPattern('/products/featured');
+    clearCacheByPattern('/products\\?');
+    clearCacheByPattern('/journalists/top');
 
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {

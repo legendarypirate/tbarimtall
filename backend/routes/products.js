@@ -3,9 +3,11 @@ const router = express.Router();
 const productController = require('../controllers/productController');
 const { authenticate, authorize } = require('../middleware/auth');
 const { uploadProduct } = require('../config/multer');
+const { cacheMiddleware } = require('../middleware/cache');
 
 router.get('/', productController.getAllProducts);
-router.get('/featured', productController.getFeaturedProducts);
+// Cache featured products for 2 minutes (frequently accessed on homepage)
+router.get('/featured', cacheMiddleware(2 * 60 * 1000), productController.getFeaturedProducts);
 router.get('/my-products', authenticate, productController.getMyProducts);
 router.get('/my-statistics', authenticate, productController.getMyStatistics);
 router.get('/download/:token', productController.downloadProduct);
