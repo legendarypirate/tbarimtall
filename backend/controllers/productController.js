@@ -194,7 +194,10 @@ exports.getProductById = async (req, res) => {
     if (uuidRegex.test(id)) {
       // Find by UUID (for frontend display)
       product = await Product.findOne({
-        where: { uuid: id },
+        where: { 
+          uuid: id,
+          status: 'published' // Only show published products (consistent with getAllProducts)
+        },
         include: [
           { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
           { model: Subcategory, as: 'subcategory', attributes: ['id', 'name'], required: false },
@@ -219,7 +222,11 @@ exports.getProductById = async (req, res) => {
       });
     } else {
       // Find by integer ID
-      product = await Product.findByPk(id, {
+      product = await Product.findOne({
+        where: {
+          id: id,
+          status: 'published' // Only show published products (consistent with getAllProducts)
+        },
         include: [
           { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
           { model: Subcategory, as: 'subcategory', attributes: ['id', 'name'], required: false },
@@ -244,7 +251,7 @@ exports.getProductById = async (req, res) => {
       });
     }
 
-    if (!product || !product.isActive) {
+    if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
 

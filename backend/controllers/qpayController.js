@@ -92,8 +92,17 @@ exports.createInvoice = async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    if (!product.isActive) {
+    // For unique product payments (2000₮), allow even if product is not active
+    // This allows journalists to make their products unique even before they're published
+    const isUniqueProductPayment = amount === 2000;
+    
+    if (!isUniqueProductPayment && !product.isActive) {
       return res.status(400).json({ error: 'Product is not available' });
+    }
+    
+    // For unique product payments, verify the user is the product owner
+    if (isUniqueProductPayment && finalUserId && product.authorId !== finalUserId) {
+      return res.status(403).json({ error: 'You can only make your own products unique' });
     }
 
     // Use the product's integer ID (Order.productId is INTEGER, references products.id)
