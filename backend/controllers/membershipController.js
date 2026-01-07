@@ -1,4 +1,4 @@
-const { Membership } = require('../models');
+const { Membership, User, Product } = require('../models');
 const { Op } = require('sequelize');
 
 // Get all memberships
@@ -150,6 +150,160 @@ exports.getActiveMemberships = async (req, res) => {
     });
 
     res.json({ memberships });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get current user's membership info
+exports.getUserMembership = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findByPk(userId, {
+      attributes: ['id', 'membership_type', 'subscriptionStartDate', 'subscriptionEndDate', 'publishedFileCount']
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get membership details
+    let membership = null;
+    if (user.membership_type) {
+      membership = await Membership.findByPk(user.membership_type);
+    } else {
+      // Default to FREE membership if not set
+      membership = await Membership.findByPk(2); // FREE membership
+    }
+
+    // Check if subscription is active
+    const now = new Date();
+    const isSubscriptionActive = user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
+
+    // Get current published count
+    const publishedCount = await Product.count({
+      where: {
+        authorId: userId,
+        status: 'published',
+        isActive: true
+      }
+    });
+
+    // Check if user can post more
+    const maxPosts = membership ? membership.maxPosts : 100;
+    const canPost = isSubscriptionActive && publishedCount < maxPosts;
+    const remainingPosts = Math.max(0, maxPosts - publishedCount);
+
+    res.json({
+      membership: membership ? membership.toJSON() : null,
+      subscriptionStartDate: user.subscriptionStartDate,
+      subscriptionEndDate: user.subscriptionEndDate,
+      isSubscriptionActive,
+      publishedCount,
+      maxPosts,
+      remainingPosts,
+      canPost
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Check if user can post (for validation before product creation)
+exports.canUserPost = async (userId) => {
+  try {
+    const user = await User.findByPk(userId);
+    if (!user || user.role !== 'journalist') {
+      return { canPost: false, reason: 'User is not a journalist' };
+    }
+
+    // Check subscription
+    const now = new Date();
+    if (!user.subscriptionEndDate || new Date(user.subscriptionEndDate) <= now) {
+      return { canPost: false, reason: 'Subscription has expired. Please renew your membership.' };
+    }
+
+    // Get membership
+    let membership = null;
+    if (user.membership_type) {
+      membership = await Membership.findByPk(user.membership_type);
+    } else {
+      membership = await Membership.findByPk(2); // Default to FREE
+    }
+
+    if (!membership) {
+      return { canPost: false, reason: 'Membership not found' };
+    }
+
+    // Check published count
+    const publishedCount = await Product.count({
+      where: {
+        authorId: userId,
+        status: 'published',
+        isActive: true
+      }
+    });
+
+    if (publishedCount >= membership.maxPosts) {
+      return { 
+        canPost: false, 
+        reason: `You have reached the maximum number of posts (${membership.maxPosts}) for your current membership. Please upgrade to post more.`,
+        publishedCount,
+        maxPosts: membership.maxPosts
+      };
+    }
+
+    return { 
+      canPost: true, 
+      publishedCount, 
+      maxPosts: membership.maxPosts,
+      remainingPosts: membership.maxPosts - publishedCount
+    };
+  } catch (error) {
+    console.error('Error checking if user can post:', error);
+    return { canPost: false, reason: 'Error checking posting limits' };
+  }
+};
+
+// Update user subscription dates (admin only)
+exports.updateUserSubscription = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { subscriptionStartDate, subscriptionEndDate, membership_type } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updateData = {};
+    if (subscriptionStartDate !== undefined) {
+      updateData.subscriptionStartDate = subscriptionStartDate ? new Date(subscriptionStartDate) : null;
+    }
+    if (subscriptionEndDate !== undefined) {
+      updateData.subscriptionEndDate = subscriptionEndDate ? new Date(subscriptionEndDate) : null;
+    }
+    if (membership_type !== undefined) {
+      updateData.membership_type = membership_type;
+    }
+
+    await user.update(updateData);
+
+    // Get updated membership info
+    let membership = null;
+    if (user.membership_type) {
+      membership = await Membership.findByPk(user.membership_type);
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        membership_type: user.membership_type,
+        subscriptionStartDate: user.subscriptionStartDate,
+        subscriptionEndDate: user.subscriptionEndDate
+      },
+      membership: membership ? membership.toJSON() : null
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

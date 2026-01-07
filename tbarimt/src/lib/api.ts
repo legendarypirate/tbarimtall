@@ -368,3 +368,12 @@ export async function getCurrentUser() {
   return fetchAPI('/auth/profile');
 }
 
+// Memberships
+export async function getActiveMemberships() {
+  return fetchAPI('/memberships');
+}
+
+export async function getMyMembership() {
+  return fetchAPI('/memberships/my-membership');
+}
+

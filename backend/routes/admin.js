@@ -63,5 +63,8 @@ router.post('/memberships', membershipController.createMembership);
 router.put('/memberships/:id', membershipController.updateMembership);
 router.delete('/memberships/:id', membershipController.deleteMembership);
 
+// User subscription management
+router.put('/users/:userId/subscription', membershipController.updateUserSubscription);
+
 module.exports = router;
 

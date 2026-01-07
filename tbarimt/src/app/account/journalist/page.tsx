@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus } from '@/lib/api'
+import MembershipBar from '@/components/MembershipBar'
 
 // Interface for product data
 interface ProductData {
@@ -754,6 +755,9 @@ export default function JournalistAccount() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Membership Bar */}
+        <MembershipBar />
+        
         {/* Profile Card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-6">

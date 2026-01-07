@@ -61,6 +61,8 @@ export interface UserData {
   wallet?: string;
   income?: number;
   publishedFileCount?: number;
+  subscriptionStartDate?: string | null;
+  subscriptionEndDate?: string | null;
 }
 
 // Membership type
@@ -104,7 +106,9 @@ function UserForm({
     total_spent: user?.total_spent || 0,
     device: user?.device || "mobile",
     wallet: user?.wallet || "",
-    password: ""
+    password: "",
+    subscriptionStartDate: user?.subscriptionStartDate || null,
+    subscriptionEndDate: user?.subscriptionEndDate || null
   });
 
   // Update form when user prop changes (for edit mode)
@@ -123,7 +127,9 @@ function UserForm({
         total_spent: user.total_spent || 0,
         device: user.device || "mobile",
         wallet: user.wallet || "",
-        password: "" // Don't populate password when editing
+        password: "", // Don't populate password when editing
+        subscriptionStartDate: user.subscriptionStartDate || null,
+        subscriptionEndDate: user.subscriptionEndDate || null
       });
     } else {
       // Reset form for new user
@@ -196,6 +202,30 @@ function UserForm({
             placeholder="QPay, банкны данс гэх мэт"
           />
         </div>
+
+        {user && (
+          <>
+            <div>
+              <Label htmlFor="subscriptionStartDate">Гишүүнчлэл эхлэх огноо</Label>
+              <Input
+                id="subscriptionStartDate"
+                type="datetime-local"
+                value={form.subscriptionStartDate ? new Date(form.subscriptionStartDate).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setForm({...form, subscriptionStartDate: e.target.value ? new Date(e.target.value).toISOString() : null})}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="subscriptionEndDate">Гишүүнчлэл дуусах огноо</Label>
+              <Input
+                id="subscriptionEndDate"
+                type="datetime-local"
+                value={form.subscriptionEndDate ? new Date(form.subscriptionEndDate).toISOString().slice(0, 16) : ''}
+                onChange={(e) => setForm({...form, subscriptionEndDate: e.target.value ? new Date(e.target.value).toISOString() : null})}
+              />
+            </div>
+          </>
+        )}
 
         {!user && (
           <div>
@@ -456,7 +486,9 @@ export default function UsersPage() {
             // New fields
             wallet: user.wallet || undefined,
             income: user.income !== undefined ? parseFloat(user.income) : 0,
-            publishedFileCount: user.publishedFileCount !== undefined ? parseInt(user.publishedFileCount) : 0
+            publishedFileCount: user.publishedFileCount !== undefined ? parseInt(user.publishedFileCount) : 0,
+            subscriptionStartDate: user.subscriptionStartDate || null,
+            subscriptionEndDate: user.subscriptionEndDate || null
           };
         });
         
@@ -531,7 +563,9 @@ export default function UsersPage() {
         role: backendRole,
         isActive: userData.is_active !== undefined ? userData.is_active : true,
         membership_type: userData.membership_type !== undefined ? userData.membership_type : null,
-        wallet: userData.wallet || undefined
+        wallet: userData.wallet || undefined,
+        subscriptionStartDate: userData.subscriptionStartDate || null,
+        subscriptionEndDate: userData.subscriptionEndDate || null
       };
       
       const response = await fetch(API_URL, {
@@ -618,7 +652,9 @@ export default function UsersPage() {
         role: backendRole,
         isActive: userData.is_active !== undefined ? userData.is_active : true,
         membership_type: userData.membership_type !== undefined ? userData.membership_type : null,
-        wallet: userData.wallet || undefined
+        wallet: userData.wallet || undefined,
+        subscriptionStartDate: userData.subscriptionStartDate || null,
+        subscriptionEndDate: userData.subscriptionEndDate || null
       };
       
       // Only update password if provided
@@ -676,6 +712,8 @@ export default function UsersPage() {
                 wallet: apiUser.wallet !== undefined ? apiUser.wallet : userData.wallet,
                 income: apiUser.income !== undefined ? parseFloat(apiUser.income) : (userData.income || 0),
                 publishedFileCount: apiUser.publishedFileCount !== undefined ? parseInt(apiUser.publishedFileCount) : (userData.publishedFileCount || 0),
+                subscriptionStartDate: apiUser.subscriptionStartDate !== undefined ? apiUser.subscriptionStartDate : (userData.subscriptionStartDate || null),
+                subscriptionEndDate: apiUser.subscriptionEndDate !== undefined ? apiUser.subscriptionEndDate : (userData.subscriptionEndDate || null),
                 updatedAt: apiUser.updatedAt || new Date().toISOString()
               }
             : user

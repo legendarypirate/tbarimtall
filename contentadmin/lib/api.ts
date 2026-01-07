@@ -88,6 +88,16 @@ export const usersApi = {
       method: 'DELETE',
     });
   },
+  updateSubscription: async (userId: string | number, subscriptionData: {
+    subscriptionStartDate?: string | null;
+    subscriptionEndDate?: string | null;
+    membership_type?: number | null;
+  }) => {
+    return apiCall(`/api/admin/users/${userId}/subscription`, {
+      method: 'PUT',
+      body: JSON.stringify(subscriptionData),
+    });
+  },
 };
 
 // Products API

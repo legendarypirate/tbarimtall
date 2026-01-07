@@ -285,6 +285,18 @@ exports.getFeaturedProducts = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
+    // Check membership limits before creating product
+    const membershipController = require('./membershipController');
+    const canPostResult = await membershipController.canUserPost(req.user.id);
+    
+    if (!canPostResult.canPost) {
+      return res.status(403).json({ 
+        error: canPostResult.reason || 'Cannot create product',
+        publishedCount: canPostResult.publishedCount,
+        maxPosts: canPostResult.maxPosts
+      });
+    }
+
     // Handle file uploads
     const productData = {
       ...req.body,

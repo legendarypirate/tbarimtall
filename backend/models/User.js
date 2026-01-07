@@ -55,6 +55,16 @@ const User = sequelize.define('User', {
     defaultValue: null,
     comment: 'Reference to membership id (gold, silver, bronze)'
   },
+  subscriptionStartDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Subscription start date'
+  },
+  subscriptionEndDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Subscription end date'
+  },
   wallet: {
     type: DataTypes.STRING(255),
     allowNull: true,
@@ -86,6 +96,17 @@ const User = sequelize.define('User', {
     beforeCreate: async (user) => {
       if (user.password) {
         user.password = await bcrypt.hash(user.password, 10);
+      }
+      
+      // Set default FREE membership (id: 2) for journalists
+      if (user.role === 'journalist' && !user.membership_type) {
+        user.membership_type = 2; // FREE membership
+        // Set subscription dates (1 year from now)
+        const now = new Date();
+        user.subscriptionStartDate = now;
+        const oneYearLater = new Date(now);
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        user.subscriptionEndDate = oneYearLater;
       }
       
       // Auto-assign wallet number if not provided
