@@ -734,17 +734,13 @@ exports.getMyStatistics = async (req, res) => {
     });
     const totalDownloads = totalDownloadsResult || 0;
 
-    // Get total earnings (sum of all product earnings)
-    // For now, we'll calculate based on downloads * price (assuming 100% earnings)
-    // You may need to adjust this based on your actual earnings calculation
-    const products = await Product.findAll({
-      where: { authorId: userId },
-      attributes: ['price', 'downloads']
+    // Get total earnings from user's income field
+    // This field is already updated correctly with commission-based earnings 
+    // at the time of each order completion, taking into account membership percentage
+    const user = await User.findByPk(userId, {
+      attributes: ['income']
     });
-    
-    const totalEarnings = products.reduce((sum, product) => {
-      return sum + (product.price * product.downloads);
-    }, 0);
+    const totalEarnings = parseFloat(user?.income || 0);
 
     // Get pending earnings (from withdrawal requests)
     const { WithdrawalRequest } = require('../models');
