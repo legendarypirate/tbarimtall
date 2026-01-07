@@ -60,6 +60,7 @@ export interface UserData {
   // New fields
   wallet?: string;
   income?: number;
+  point?: number;
   publishedFileCount?: number;
   subscriptionStartDate?: string | null;
   subscriptionEndDate?: string | null;
@@ -486,6 +487,7 @@ export default function UsersPage() {
             // New fields
             wallet: user.wallet || undefined,
             income: user.income !== undefined ? parseFloat(user.income) : 0,
+            point: user.point !== undefined ? parseFloat(user.point) : 0,
             publishedFileCount: user.publishedFileCount !== undefined ? parseInt(user.publishedFileCount) : 0,
             subscriptionStartDate: user.subscriptionStartDate || null,
             subscriptionEndDate: user.subscriptionEndDate || null
@@ -613,6 +615,7 @@ export default function UsersPage() {
           device: userData.device,
           wallet: apiUser.wallet || userData.wallet,
           income: apiUser.income !== undefined ? parseFloat(apiUser.income) : 0,
+          point: apiUser.point !== undefined ? parseFloat(apiUser.point) : 0,
           publishedFileCount: apiUser.publishedFileCount !== undefined ? parseInt(apiUser.publishedFileCount) : 0
         };
         
@@ -711,6 +714,7 @@ export default function UsersPage() {
                 device: userData.device,
                 wallet: apiUser.wallet !== undefined ? apiUser.wallet : userData.wallet,
                 income: apiUser.income !== undefined ? parseFloat(apiUser.income) : (userData.income || 0),
+                point: apiUser.point !== undefined ? parseFloat(apiUser.point) : (userData.point || 0),
                 publishedFileCount: apiUser.publishedFileCount !== undefined ? parseInt(apiUser.publishedFileCount) : (userData.publishedFileCount || 0),
                 subscriptionStartDate: apiUser.subscriptionStartDate !== undefined ? apiUser.subscriptionStartDate : (userData.subscriptionStartDate || null),
                 subscriptionEndDate: apiUser.subscriptionEndDate !== undefined ? apiUser.subscriptionEndDate : (userData.subscriptionEndDate || null),
@@ -736,8 +740,8 @@ export default function UsersPage() {
     }
   };
 
-  // Charge user income
-  const chargeUserIncome = async (userId: number, amount: number) => {
+  // Charge user point
+  const chargeUserPoint = async (userId: number, amount: number) => {
     try {
       // Validate inputs
       if (!userId || userId <= 0) {
@@ -745,7 +749,7 @@ export default function UsersPage() {
       }
   
       if (!amount || amount <= 0 || isNaN(amount)) {
-        throw new Error('Мөнгөн дүн буруу байна');
+        throw new Error('Point дүн буруу байна');
       }
   
       // Format amount to 2 decimal places
@@ -755,14 +759,14 @@ export default function UsersPage() {
       setError(null);
       setSuccess(null);
       
-      console.log(`🔄 Орлого нэмэх: Хэрэглэгч ${userId}, Дүн: ${formattedAmount}`);
+      console.log(`🔄 Point нэмэх: Хэрэглэгч ${userId}, Дүн: ${formattedAmount}`);
   
       // Find the current user before update for comparison
       const currentUser = users.find(u => u.id === userId);
-      const currentIncome = currentUser?.income || 0;
-      console.log(`📊 Одоогийн орлого: ${currentIncome}`);
+      const currentPoint = currentUser?.point || 0;
+      console.log(`📊 Одоогийн point: ${currentPoint}`);
   
-      const response = await fetch(`${API_URL}/${userId}/charge-income`, {
+      const response = await fetch(`${API_URL}/${userId}/charge-point`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ amount: formattedAmount }),
@@ -801,33 +805,33 @@ export default function UsersPage() {
         throw new Error('Серверээс буруу хариу ирлээ');
       }
   
-      // Extract new income with multiple fallbacks
-      let newIncome: number;
+      // Extract new point with multiple fallbacks
+      let newPoint: number;
       
-      if (result.newIncome !== undefined) {
-        newIncome = typeof result.newIncome === 'number' 
-          ? result.newIncome 
-          : parseFloat(result.newIncome);
-      } else if (result.user?.income !== undefined) {
-        newIncome = typeof result.user.income === 'number' 
-          ? result.user.income 
-          : parseFloat(result.user.income);
-      } else if (result.data?.transaction?.newIncome !== undefined) {
-        newIncome = typeof result.data.transaction.newIncome === 'number'
-          ? result.data.transaction.newIncome
-          : parseFloat(result.data.transaction.newIncome);
+      if (result.newPoint !== undefined) {
+        newPoint = typeof result.newPoint === 'number' 
+          ? result.newPoint 
+          : parseFloat(result.newPoint);
+      } else if (result.user?.point !== undefined) {
+        newPoint = typeof result.user.point === 'number' 
+          ? result.user.point 
+          : parseFloat(result.user.point);
+      } else if (result.data?.transaction?.newPoint !== undefined) {
+        newPoint = typeof result.data.transaction.newPoint === 'number'
+          ? result.data.transaction.newPoint
+          : parseFloat(result.data.transaction.newPoint);
       } else {
         // Calculate from current if no server value
-        newIncome = currentIncome + formattedAmount;
+        newPoint = currentPoint + formattedAmount;
       }
   
-      // Validate the calculated newIncome
-      if (isNaN(newIncome)) {
-        console.warn('❌ Орлогын утга тоо биш байна:', newIncome);
-        newIncome = currentIncome + formattedAmount; // Use calculated value
+      // Validate the calculated newPoint
+      if (isNaN(newPoint)) {
+        console.warn('❌ Point утга тоо биш байна:', newPoint);
+        newPoint = currentPoint + formattedAmount; // Use calculated value
       }
   
-      console.log(`✅ Шинэ орлого: ${newIncome} (${typeof newIncome})`);
+      console.log(`✅ Шинэ point: ${newPoint} (${typeof newPoint})`);
   
       // Update the user in state - use functional update for reliability
       setUsers(prevUsers => {
@@ -835,7 +839,7 @@ export default function UsersPage() {
           if (user.id === userId) {
             const updatedUser = {
               ...user,
-              income: newIncome,
+              point: newPoint,
               updatedAt: new Date().toISOString() // Update timestamp
             };
             console.log(`🔄 Хэрэглэгч шинэчлэгдлээ:`, updatedUser);
@@ -846,7 +850,7 @@ export default function UsersPage() {
         
         // Verify the update
         const updatedUser = updatedUsers.find(u => u.id === userId);
-        console.log(`🔍 Шинэчлэгдсэн хэрэглэгчийн орлого:`, updatedUser?.income);
+        console.log(`🔍 Шинэчлэгдсэн хэрэглэгчийн point:`, updatedUser?.point);
         
         return updatedUsers;
       });
@@ -858,20 +862,20 @@ export default function UsersPage() {
       
       // Show success message
       const successMsg = result.message || 
-        `Амжилттай ${formatPrice(formattedAmount)}₮ нэмлээ. Шинэ орлого: ${formatPrice(newIncome)}₮`;
+        `Амжилттай ${formatPrice(formattedAmount)} point нэмлээ. Шинэ point: ${formatPrice(newPoint)}`;
       
       setSuccess(successMsg);
       
       // Optional: Log to analytics or send notification
-      console.log(`🎉 Орлого амжилттай нэмэгдлээ! Хэрэглэгч: ${userId}, Хуучин: ${currentIncome}₮, Шинэ: ${newIncome}₮`);
+      console.log(`🎉 Point амжилттай нэмэгдлээ! Хэрэглэгч: ${userId}, Хуучин: ${currentPoint}, Шинэ: ${newPoint}`);
       
       // Refresh the users list from server to get the latest data
       setTimeout(() => fetchUsers(currentPage), 500);
   
     } catch (err) {
-      console.error('❌ Орлого нэмэхэд алдаа гарлаа:', err);
+      console.error('❌ Point нэмэхэд алдаа гарлаа:', err);
       
-      let errorMessage = 'Орлого нэмэхэд алдаа гарлаа';
+      let errorMessage = 'Point нэмэхэд алдаа гарлаа';
       
       if (err instanceof Error) {
         errorMessage = err.message;
@@ -884,7 +888,7 @@ export default function UsersPage() {
         'NetworkError': 'Сүлжээний алдаа гарлаа. Интернэт холболтоо шалгана уу.',
         'Failed to fetch': 'Серверт холбогдоход алдаа гарлаа.',
         'Хэрэглэгч олдсонгүй': 'Хэрэглэгчийн мэдээлэл олдсонгүй.',
-        'Мөнгөн дүн буруу байна': 'Мөнгөн дүн буруу байна. Зөв дүнг оруулна уу.',
+        'Point дүн буруу байна': 'Point дүн буруу байна. Зөв дүнг оруулна уу.',
       };
       
       if (userFriendlyErrors[errorMessage]) {
@@ -1190,7 +1194,7 @@ export default function UsersPage() {
                   <th className="text-left p-3">Үүрэг</th>
                   <th className="text-left p-3">Гишүүнчлэл</th>
                   <th className="text-left p-3">Төлөв</th>
-                  <th className="text-left p-3">Орлого</th>
+                  <th className="text-left p-3">Point</th>
                   <th className="text-left p-3">Нийтлэл</th>
                   <th className="text-left p-3">Захиалга</th>
                   <th className="text-left p-3">Зарцуулалт</th>
@@ -1249,9 +1253,9 @@ export default function UsersPage() {
                     </td>
                     <td className="p-3">
                       <div className="font-medium text-green-600">
-                        {formatPrice(user.income || 0)}
+                        {formatPrice(user.point || 0)}
                       </div>
-                      <div className="text-xs text-gray-500">нийт орлого</div>
+                      <div className="text-xs text-gray-500">point</div>
                     </td>
                     <td className="p-3">
                       <div className="font-medium">{user.publishedFileCount || 0}</div>
@@ -1319,7 +1323,7 @@ export default function UsersPage() {
                             setConfirmCharge(false);
                             setError(null);
                           }}
-                          title="Орлого нэмэх"
+                          title="Point нэмэх"
                           className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
                         >
                           <Plus className="h-4 w-4" />
@@ -1496,7 +1500,7 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Charge Income Dialog */}
+      {/* Charge Point Dialog */}
       <Dialog open={chargeIncomeDialog.open} onOpenChange={(open) => {
         if (!open) {
           setChargeIncomeDialog({open: false});
@@ -1510,7 +1514,7 @@ export default function UsersPage() {
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Plus className="h-5 w-5 text-purple-600" />
               </div>
-              Орлого нэмэх
+              Point нэмэх
             </DialogTitle>
           </DialogHeader>
           {chargeIncomeDialog.user && (
@@ -1520,12 +1524,12 @@ export default function UsersPage() {
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-2">
                     <div className="text-sm text-gray-600 dark:text-gray-400">Хэрэглэгч</div>
                     <div className="font-semibold text-lg">{chargeIncomeDialog.user.full_name}</div>
-                    <div className="text-sm text-gray-500">Одоогийн орлого: <span className="font-semibold text-green-600">{formatPrice(chargeIncomeDialog.user.income || 0)}</span></div>
+                    <div className="text-sm text-gray-500">Одоогийн point: <span className="font-semibold text-green-600">{formatPrice(chargeIncomeDialog.user.point || 0)}</span></div>
                   </div>
                   
                   <div>
                     <Label htmlFor="chargeAmount" className="text-sm font-semibold">
-                      Нэмэх дүн (₮)
+                      Нэмэх point
                     </Label>
                     <Input
                       id="chargeAmount"
@@ -1545,8 +1549,8 @@ export default function UsersPage() {
                     />
                     {chargeAmount && !isNaN(parseFloat(chargeAmount)) && parseFloat(chargeAmount) > 0 && (
                       <div className="mt-2 text-sm text-gray-600">
-                        Шинэ орлого: <span className="font-bold text-green-600">
-                          {formatPrice((chargeIncomeDialog.user.income || 0) + parseFloat(chargeAmount))}
+                        Шинэ point: <span className="font-bold text-green-600">
+                          {formatPrice((chargeIncomeDialog.user.point || 0) + parseFloat(chargeAmount))}
                         </span>
                       </div>
                     )}
@@ -1565,11 +1569,11 @@ export default function UsersPage() {
                         <div className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">Та итгэлтэй байна уу?</div>
                         <div className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
                           <div>Хэрэглэгч: <span className="font-semibold">{chargeIncomeDialog.user.full_name}</span></div>
-                          <div>Одоогийн орлого: <span className="font-semibold">{formatPrice(chargeIncomeDialog.user.income || 0)}</span></div>
-                          <div>Нэмэх дүн: <span className="font-semibold text-green-600">{formatPrice(parseFloat(chargeAmount))}</span></div>
+                          <div>Одоогийн point: <span className="font-semibold">{formatPrice(chargeIncomeDialog.user.point || 0)}</span></div>
+                          <div>Нэмэх point: <span className="font-semibold text-green-600">{formatPrice(parseFloat(chargeAmount))}</span></div>
                           <div className="pt-2 border-t border-yellow-200 dark:border-yellow-800">
-                            Шинэ орлого: <span className="font-bold text-lg text-green-600">
-                              {formatPrice((chargeIncomeDialog.user.income || 0) + parseFloat(chargeAmount))}
+                            Шинэ point: <span className="font-bold text-lg text-green-600">
+                              {formatPrice((chargeIncomeDialog.user.point || 0) + parseFloat(chargeAmount))}
                             </span>
                           </div>
                         </div>
@@ -1622,7 +1626,7 @@ export default function UsersPage() {
                   <Button 
                     onClick={() => {
                       if (chargeIncomeDialog.user) {
-                        chargeUserIncome(chargeIncomeDialog.user.id, parseFloat(chargeAmount));
+                        chargeUserPoint(chargeIncomeDialog.user.id, parseFloat(chargeAmount));
                       }
                     }}
                     disabled={isCharging}

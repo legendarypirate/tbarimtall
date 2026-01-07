@@ -425,6 +425,165 @@ exports.chargeUserIncome = async (req, res) => {
     });
   }
 };
+
+exports.chargeUserPoint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount } = req.body;
+
+    // Validate request
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Valid user ID is required' 
+      });
+    }
+
+    if (!amount || amount === '' || amount === null || amount === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Amount is required' 
+      });
+    }
+
+    // Parse and validate amount
+    const chargeAmount = parseFloat(amount);
+    if (isNaN(chargeAmount)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Amount must be a valid number' 
+      });
+    }
+
+    if (chargeAmount <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Amount must be greater than 0' 
+      });
+    }
+
+    // Check for maximum amount (optional - add your business logic)
+    const MAX_CHARGE_AMOUNT = 1000000000; // 1 billion
+    if (chargeAmount > MAX_CHARGE_AMOUNT) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Amount cannot exceed ${MAX_CHARGE_AMOUNT}` 
+      });
+    }
+
+    console.log(`Charging user ${id} with points: ${chargeAmount}`);
+
+    // Find user
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User not found' 
+      });
+    }
+
+    // Parse current point with proper type handling
+    let currentPoint;
+    try {
+      currentPoint = typeof user.point === 'string' 
+        ? parseFloat(user.point) 
+        : Number(user.point);
+      
+      if (isNaN(currentPoint)) {
+        currentPoint = 0;
+        console.warn(`User ${id} has invalid point value, resetting to 0`);
+      }
+    } catch (error) {
+      console.error('Error parsing current point:', error);
+      currentPoint = 0;
+    }
+
+    // Calculate new point
+    const newPoint = parseFloat((currentPoint + chargeAmount).toFixed(2));
+    
+    console.log(`User ${id}: Current point = ${currentPoint}, Charge amount = ${chargeAmount}, New point = ${newPoint}`);
+
+    // Update user point directly (more reliable than User.update for hooks)
+    user.point = newPoint;
+    await user.save({ fields: ['point'] }); // Only save point field
+
+    // Force reload from database
+    await user.reload();
+
+    // Get updated user data
+    const userData = user.toJSON();
+    
+    // Ensure point is a number in the response
+    let finalPoint;
+    try {
+      finalPoint = typeof userData.point === 'string' 
+        ? parseFloat(userData.point) 
+        : Number(userData.point);
+      
+      if (isNaN(finalPoint)) {
+        finalPoint = newPoint; // Use our calculated value as fallback
+      }
+    } catch (error) {
+      finalPoint = newPoint;
+    }
+
+    // Remove sensitive data
+    delete userData.password;
+
+    // Create response with consistent number types
+    const response = {
+      success: true,
+      data: {
+        user: {
+          ...userData,
+          point: finalPoint
+        },
+        transaction: {
+          previousPoint: currentPoint,
+          chargeAmount: chargeAmount,
+          newPoint: finalPoint,
+          timestamp: new Date().toISOString()
+        }
+      },
+      message: `Successfully charged ${chargeAmount} points to user. New balance: ${finalPoint} points`
+    };
+
+    // Log successful transaction
+    console.log(`✅ Charged ${chargeAmount} points to user ${id}. New point: ${finalPoint}`);
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Error charging user point:', error);
+    
+    // Handle Sequelize validation errors
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        details: error.errors.map(err => ({
+          field: err.path,
+          message: err.message
+        }))
+      });
+    }
+
+    // Handle database connection errors
+    if (error.name === 'SequelizeConnectionError') {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection error. Please try again later.'
+      });
+    }
+
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal server error',
+      message: error.message 
+    });
+  }
+};
+
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
