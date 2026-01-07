@@ -529,13 +529,21 @@ export default function UsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
-  // Reset to page 1 when filters change (debounced)
+  // Reset to page 1 and fetch users when filters change (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCurrentPage(1);
+      // If not on page 1, reset page (which will trigger fetchUsers via the page change effect)
+      // If already on page 1, fetch directly with new filters
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        // Fetch with current filters - fetchUsers uses searchTerm and roleFilter from closure
+        fetchUsers(1);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, roleFilter]);
 
   // Initial load
