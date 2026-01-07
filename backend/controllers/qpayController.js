@@ -476,16 +476,35 @@ exports.paymentWebhook = async (req, res) => {
           const user = await User.findByPk(order.userId);
           if (user) {
             const now = new Date();
-            const endDate = new Date(now);
-            endDate.setDate(endDate.getDate() + 30); // 30 days from now
+            const isExtending = user.membership_type === order.membershipId;
+            
+            let startDate = now;
+            let endDate = new Date(now);
+            
+            if (isExtending && user.subscriptionEndDate) {
+              // Extending current membership: add 30 days to current end date
+              const currentEndDate = new Date(user.subscriptionEndDate);
+              if (currentEndDate > now) {
+                // Current subscription is still active, extend from end date
+                endDate = new Date(currentEndDate);
+                endDate.setDate(endDate.getDate() + 30);
+                startDate = user.subscriptionStartDate || now;
+              } else {
+                // Current subscription expired, start fresh from today
+                endDate.setDate(endDate.getDate() + 30);
+              }
+            } else {
+              // New membership purchase: start from today, 30 days later
+              endDate.setDate(endDate.getDate() + 30);
+            }
             
             await user.update({
               membership_type: order.membershipId,
-              subscriptionStartDate: now,
+              subscriptionStartDate: startDate,
               subscriptionEndDate: endDate
             });
             
-            console.log(`User ${user.id} membership updated via webhook: membership ${order.membershipId}, end date ${endDate}`);
+            console.log(`User ${user.id} membership ${isExtending ? 'extended' : 'updated'} via webhook: membership ${order.membershipId}, start ${startDate}, end ${endDate}`);
           }
         } catch (membershipError) {
           console.error(`Error updating user membership via webhook:`, membershipError);
@@ -902,16 +921,35 @@ exports.checkMembershipPaymentStatus = async (req, res) => {
         const user = await User.findByPk(userId);
         if (user) {
           const now = new Date();
-          const endDate = new Date(now);
-          endDate.setDate(endDate.getDate() + 30); // 30 days from now
+          const isExtending = user.membership_type === order.membershipId;
+          
+          let startDate = now;
+          let endDate = new Date(now);
+          
+          if (isExtending && user.subscriptionEndDate) {
+            // Extending current membership: add 30 days to current end date
+            const currentEndDate = new Date(user.subscriptionEndDate);
+            if (currentEndDate > now) {
+              // Current subscription is still active, extend from end date
+              endDate = new Date(currentEndDate);
+              endDate.setDate(endDate.getDate() + 30);
+              startDate = user.subscriptionStartDate || now;
+            } else {
+              // Current subscription expired, start fresh from today
+              endDate.setDate(endDate.getDate() + 30);
+            }
+          } else {
+            // New membership purchase: start from today, 30 days later
+            endDate.setDate(endDate.getDate() + 30);
+          }
           
           await user.update({
             membership_type: order.membershipId,
-            subscriptionStartDate: now,
+            subscriptionStartDate: startDate,
             subscriptionEndDate: endDate
           });
           
-          console.log(`User ${userId} membership updated to ${order.membershipId} via payment`);
+          console.log(`User ${userId} membership ${isExtending ? 'extended' : 'updated'} to ${order.membershipId} via payment, start ${startDate}, end ${endDate}`);
         }
       }
     }

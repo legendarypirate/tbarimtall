@@ -280,6 +280,7 @@ export default function MembershipPage() {
         description: membershipData.description || undefined,
         isActive: membershipData.isActive,
         order: membershipData.order,
+        percentage: membershipData.percentage,
       });
 
       setSuccess('Гишүүнчлэл амжилттай үүслээ');
@@ -310,6 +311,7 @@ export default function MembershipPage() {
         description: membershipData.description || undefined,
         isActive: membershipData.isActive,
         order: membershipData.order,
+        percentage: membershipData.percentage,
       });
 
       setSuccess('Гишүүнчлэл амжилттай шинэчлэгдлээ');
