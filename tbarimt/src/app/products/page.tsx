@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getProducts } from '@/lib/api'
+import { getProducts, getCategories } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
@@ -142,7 +142,8 @@ const defaultProducts = [
   }
 ]
 
-const categories = [
+// Default categories (fallback)
+const defaultCategories = [
   'Бүгд',
   'Реферат',
   'Дипломын ажил',
@@ -176,6 +177,41 @@ export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [allProducts, setAllProducts] = useState(defaultProducts)
   const [loading, setLoading] = useState(true)
+  const [categories, setCategories] = useState<string[]>(defaultCategories)
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getCategories()
+        if (response.categories && Array.isArray(response.categories)) {
+          // Extract only parent category names (excluding subcategories and generic "Category X" names)
+          const categoryNames: string[] = ['Бүгд'] // Always include "All" first
+          
+          response.categories.forEach((cat: any) => {
+            // Skip categories with generic names like "Category 37", "Category 40", etc.
+            // These are likely subcategories that were incorrectly stored as categories
+            const isGenericCategory = /^Category\s+\d+$/i.test(cat.name)
+            
+            // Only add meaningful parent category names
+            if (cat.name && !isGenericCategory) {
+              categoryNames.push(cat.name)
+            }
+          })
+          
+          // If we got categories from API, use them; otherwise keep defaults
+          if (categoryNames.length > 1) {
+            setCategories(categoryNames)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+        // Keep default categories on error
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   useEffect(() => {
     const fetchProducts = async () => {

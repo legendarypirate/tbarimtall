@@ -2,7 +2,7 @@ const { Category, Subcategory, Product } = require('../models');
 
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.findAll({
+    const allCategories = await Category.findAll({
       where: { isActive: true },
       include: [{
         model: Subcategory,
@@ -11,6 +11,13 @@ exports.getAllCategories = async (req, res) => {
         required: false
       }],
       order: [['id', 'ASC']]
+    });
+
+    // Filter out generic category names like "Category 37", "Category 40", etc.
+    // These are likely subcategories that were incorrectly stored as categories
+    const categories = allCategories.filter(cat => {
+      const isGenericCategory = /^Category\s+\d+$/i.test(cat.name);
+      return !isGenericCategory;
     });
 
     res.json({ categories });

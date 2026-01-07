@@ -223,11 +223,13 @@ export default function CategoryPage() {
       await categoriesApi.delete(id);
       
       setSuccess('Ангилал амжилттай устгагдлаа');
-      setDeleteDialog({open: false});
+      setDeleteDialog({open: false, categoryId: undefined});
       fetchCategories();
     } catch (err) {
       console.error('Error deleting category:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete category');
+      const errorMessage = err instanceof Error ? err.message : 'Ангилал устгахад алдаа гарлаа';
+      setError(errorMessage);
+      // Keep dialog open on error so user can see the error message
     } finally {
       setIsFormLoading(false);
     }

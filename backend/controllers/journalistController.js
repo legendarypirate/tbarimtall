@@ -64,7 +64,17 @@ exports.getJournalistById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const journalist = await Journalist.findOne({
+    // First check if user exists
+    const user = await User.findByPk(id, {
+      attributes: ['id', 'username', 'fullName', 'avatar', 'email', 'role']
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Journalist not found' });
+    }
+
+    // Check if journalist record exists, if not create one
+    let journalist = await Journalist.findOne({
       where: { userId: id },
       include: [{
         model: User,
@@ -73,8 +83,28 @@ exports.getJournalistById = async (req, res) => {
       }]
     });
 
+    // If no journalist record exists, create one with default values
     if (!journalist) {
-      return res.status(404).json({ error: 'Journalist not found' });
+      journalist = await Journalist.create({
+        userId: id,
+        specialty: null,
+        bio: null,
+        rating: 0,
+        followers: 0,
+        posts: 0
+      });
+      
+      // Manually attach user data since we already have it
+      journalist = journalist.toJSON();
+      journalist.user = {
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName,
+        avatar: user.avatar,
+        email: user.email
+      };
+    } else {
+      journalist = journalist.toJSON();
     }
 
     // Get products
@@ -93,7 +123,7 @@ exports.getJournalistById = async (req, res) => {
 
     res.json({
       journalist: {
-        ...journalist.toJSON(),
+        ...journalist,
         posts: postsCount,
         products
       }

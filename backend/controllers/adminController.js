@@ -719,16 +719,37 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const category = await Category.findByPk(id);
+    const category = await Category.findByPk(id, {
+      include: [
+        { model: Subcategory, as: 'subcategories' },
+        { model: Product, as: 'products' }
+      ]
+    });
 
     if (!category) {
       return res.status(404).json({ error: 'Category not found' });
     }
 
-    await category.update({ isActive: false });
+    // Check if category has products
+    const productsCount = await Product.count({ where: { categoryId: id } });
+    if (productsCount > 0) {
+      return res.status(400).json({ 
+        error: `Cannot delete category. There are ${productsCount} product(s) associated with this category. Please remove or reassign the products first.` 
+      });
+    }
+
+    // Delete associated subcategories first
+    const subcategoriesCount = await Subcategory.count({ where: { categoryId: id } });
+    if (subcategoriesCount > 0) {
+      await Subcategory.destroy({ where: { categoryId: id } });
+    }
+
+    // Actually destroy the category
+    await category.destroy();
     res.json({ message: 'Category deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error deleting category:', error);
+    res.status(500).json({ error: error.message || 'Failed to delete category' });
   }
 };
 

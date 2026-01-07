@@ -6,147 +6,41 @@ import { getJournalistById } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
-// Default journalist data (fallback)
-const defaultJournalistsData: { [key: string]: any } = {
-  '1': {
-    id: 1,
-    name: 'Батбаяр',
-    username: '@batbayar_pro',
-    email: 'batbayar@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Batbayar',
-    specialty: 'Дипломын ажил',
-    rating: 4.9,
-    followers: 12500,
-    following: 234,
-    posts: 234,
-    totalViews: 125000,
-    totalDownloads: 45000,
-    totalEarnings: 1250000,
-    bio: 'Мэдээллийн технологи, дипломын ажлууд бэлтгэх мэргэжилтэн. 5+ жилийн туршлагатай.',
-    joinedDate: '2020-01-15',
-    location: 'Улаанбаатар, Монгол улс',
-    website: 'https://batbayar.pro',
-    verified: true,
-    products: [
-      {
-        id: 1,
-        title: 'Монгол улсын эдийн засгийн хөгжил',
-        category: 'Реферат',
-        price: 15000,
-        downloads: 234,
-        rating: 4.8,
-        image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=250&fit=crop',
-        createdAt: '2024-01-15'
-      },
-      {
-        id: 2,
-        title: 'Компьютерийн сүлжээний аюулгүй байдал',
-        category: 'Дипломын ажил',
-        price: 45000,
-        downloads: 156,
-        rating: 4.9,
-        image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop',
-        createdAt: '2024-02-20'
-      },
-      {
-        id: 3,
-        title: 'Мэдээллийн системийн дизайн',
-        category: 'Курсын ажил',
-        price: 20000,
-        downloads: 178,
-        rating: 4.6,
-        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop',
-        createdAt: '2024-03-10'
-      }
-    ],
-    reviews: [
-      {
-        id: 1,
-        user: 'Сараа',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Saraa',
-        rating: 5,
-        comment: 'Маш чанартай ажил байсан. Амжилт хүсье!',
-        date: '2024-01-20'
-      },
-      {
-        id: 2,
-        user: 'Оюунцэцэг',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Oyuntsetseg',
-        rating: 5,
-        comment: 'Хурдан, найдвартай. Маш сайн!',
-        date: '2024-02-15'
-      }
-    ]
-  },
-  '2': {
-    id: 2,
-    name: 'Сараа',
-    username: '@saraa_writer',
-    email: 'saraa@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Saraa',
-    specialty: 'Реферат',
-    rating: 4.8,
-    followers: 8300,
-    following: 189,
-    posts: 189,
-    totalViews: 89000,
-    totalDownloads: 32000,
-    totalEarnings: 850000,
-    bio: 'Боловсрол, соёлын сэдвээр реферат бэлтгэх мэргэжилтэн.',
-    joinedDate: '2020-03-20',
-    location: 'Улаанбаатар, Монгол улс',
-    verified: true,
-    products: [
-      {
-        id: 4,
-        title: 'Монгол хэлний утга зохиол',
-        category: 'Реферат',
-        price: 12000,
-        downloads: 312,
-        rating: 4.5,
-        image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop',
-        createdAt: '2024-01-10'
-      }
-    ],
-    reviews: [
-      {
-        id: 3,
-        user: 'Батбаяр',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Batbayar',
-        rating: 4,
-        comment: 'Сайн ажил байна.',
-        date: '2024-01-25'
-      }
-    ]
-  }
-}
-
 export default function JournalistProfile() {
   const params = useParams()
   const router = useRouter()
   const journalistId = params?.id as string
   const [activeTab, setActiveTab] = useState<'products' | 'reviews'>('products')
-  const [journalist, setJournalist] = useState<any>(defaultJournalistsData[journalistId] || defaultJournalistsData['1'])
+  const [journalist, setJournalist] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchJournalist = async () => {
+      if (!journalistId) {
+        setError('Journalist ID is required')
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
+        setError(null)
         const response = await getJournalistById(journalistId)
         if (response.journalist) {
           setJournalist(response.journalist)
+        } else {
+          setError('Journalist not found')
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching journalist:', error)
+        setError(error.message || 'Failed to load journalist profile')
       } finally {
         setLoading(false)
       }
     }
 
-    if (journalistId) {
-      fetchJournalist()
-    }
+    fetchJournalist()
   }, [journalistId])
 
   const formatNumber = (num: number) => {
@@ -167,9 +61,41 @@ export default function JournalistProfile() {
     )
   }
 
+  if (error || !journalist) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😕</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            {error || 'Нийтлэлч олдсонгүй'}
+          </h2>
+          <button
+            onClick={() => router.push('/')}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Нүүр хуудас руу буцах
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const user = journalist.user || {}
   const products = journalist.products || []
   const reviews = journalist.reviews || []
+
+  // Check if user is Google author (username starts with "google_")
+  const isGoogleAuthor = user.username?.startsWith('google_')
+  
+  // Generate avatar URL: use actual avatar if Google author and has avatar, otherwise use DiceBear
+  const getAvatarUrl = () => {
+    if (isGoogleAuthor && user.avatar) {
+      return user.avatar
+    }
+    // Use DiceBear API for random avatar SVG
+    const seed = user.fullName || user.email || user.username || user.id || 'default'
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -198,9 +124,14 @@ export default function JournalistProfile() {
           <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
             <div className="relative">
               <img
-                src={user.avatar || '/placeholder.png'}
+                src={getAvatarUrl()}
                 alt={user.fullName || user.username || 'Journalist'}
                 className="w-32 h-32 rounded-full border-4 border-blue-500 dark:border-blue-400 shadow-lg"
+                onError={(e) => {
+                  // Fallback to DiceBear if image fails to load
+                  const seed = user.fullName || user.email || user.username || user.id || 'default'
+                  ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+                }}
               />
             </div>
             <div className="flex-1">
@@ -212,9 +143,11 @@ export default function JournalistProfile() {
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">
                 @{user.username || 'unknown'}
               </p>
-              <p className="text-gray-700 dark:text-gray-300 mb-4">
-                {journalist.bio || 'Тайлбар байхгүй байна.'}
-              </p>
+              {journalist.bio && (
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  {journalist.bio}
+                </p>
+              )}
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                 {journalist.specialty && (
                   <span className="flex items-center space-x-1">
@@ -296,7 +229,7 @@ export default function JournalistProfile() {
           <div className="p-6">
             {activeTab === 'products' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {journalist.products.map((product: any) => (
+                {products.length > 0 ? products.map((product: any) => (
                   <div
                     key={product.id}
                     onClick={() => router.push(`/products/${product.uuid || product.id}`)}
@@ -325,23 +258,33 @@ export default function JournalistProfile() {
                             ? product.category
                             : 'N/A'}
                         </span>
-                        <span>⬇️ {product.downloads}</span>
+                        <span>⬇️ {product.downloads || 0}</span>
                       </div>
                       <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                         <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                          {product.price.toLocaleString()}₮
+                          {parseFloat(product.price || 0).toLocaleString()}₮
                         </span>
-                        <span className="text-xs text-gray-500">{product.createdAt}</span>
+                        {product.createdAt && (
+                          <span className="text-xs text-gray-500">
+                            {new Date(product.createdAt).toLocaleDateString('mn-MN')}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Бүтээгдэхүүн олдсонгүй
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === 'reviews' && (
               <div className="space-y-4">
-                {journalist.reviews.map((review: any) => (
+                {reviews.length > 0 ? reviews.map((review: any) => (
                   <div
                     key={review.id}
                     className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-700"
@@ -375,7 +318,13 @@ export default function JournalistProfile() {
                       </div>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Үнэлгээ олдсонгүй
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -384,4 +333,5 @@ export default function JournalistProfile() {
     </div>
   )
 }
+
 

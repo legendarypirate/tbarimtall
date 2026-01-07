@@ -556,15 +556,39 @@ export default function ProductDetail() {
     )
   }
 
+  // Generate random placeholder images
+  const generatePlaceholderImages = (count: number = 3): string[] => {
+    // Use product ID or UUID to generate consistent random images
+    const seed = product.id || product.uuid || productId || Math.random().toString(36).substring(7);
+    const images: string[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      // Use Picsum Photos with seed for consistent random images
+      const imageSeed = `${seed}-${i}`;
+      images.push(`https://picsum.photos/seed/${imageSeed}/800/500`);
+    }
+    
+    return images;
+  };
+
   // Ensure previewImages is always an array
   const getPreviewImages = () => {
     if (!product.previewImages) {
-      return product.image ? [product.image] : [];
+      // If no preview images and no main image, return random placeholders
+      if (!product.image) {
+        return generatePlaceholderImages(3);
+      }
+      return [product.image];
     }
     
-    // If it's already an array, return it
+    // If it's already an array, return it (filter out empty values)
     if (Array.isArray(product.previewImages)) {
-      return product.previewImages.filter(Boolean);
+      const filtered = product.previewImages.filter(Boolean);
+      // If array is empty, return random placeholders
+      if (filtered.length === 0) {
+        return generatePlaceholderImages(3);
+      }
+      return filtered;
     }
     
     // If it's a string, try to parse it
@@ -572,19 +596,37 @@ export default function ProductDetail() {
       try {
         const parsed = JSON.parse(product.previewImages);
         if (Array.isArray(parsed)) {
-          return parsed.filter(Boolean);
+          const filtered = parsed.filter(Boolean);
+          // If array is empty, return random placeholders
+          if (filtered.length === 0) {
+            return generatePlaceholderImages(3);
+          }
+          return filtered;
         }
       } catch (e) {
         console.error('Error parsing previewImages:', e);
       }
     }
     
-    // Fallback to main image
-    return product.image ? [product.image] : [];
+    // Fallback to main image or random placeholders
+    if (product.image) {
+      return [product.image];
+    }
+    
+    return generatePlaceholderImages(3);
   };
   
   const previewImages = getPreviewImages();
   const author = product.author || {}
+
+  // Get avatar URL with DiceBear SVG fallback
+  const getAvatarUrl = () => {
+    if (author.avatar) {
+      return author.avatar;
+    }
+    const seed = author.fullName || author.email || author.username || author.id || 'default';
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -702,7 +744,7 @@ export default function ProductDetail() {
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
               <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
                 <img
-                  src={previewImages[selectedImageIndex] || product.image || '/placeholder.png'}
+                  src={previewImages[selectedImageIndex] || previewImages[0] || product.image || '/placeholder.png'}
                   alt={product.title}
                   className="w-full h-full object-cover cursor-pointer"
                   onClick={() => setIsImageModalOpen(true)}
@@ -804,9 +846,14 @@ export default function ProductDetail() {
               </h3>
               <div className="flex items-center space-x-4">
                 <img
-                  src={author.avatar || '/placeholder.png'}
+                  src={getAvatarUrl()}
                   alt={author.fullName || author.username || 'Author'}
                   className="w-16 h-16 rounded-full border-2 border-blue-500 dark:border-blue-400"
+                  onError={(e) => {
+                    // Fallback to DiceBear if image fails to load
+                    const seed = author.fullName || author.email || author.username || author.id || 'default';
+                    (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+                  }}
                 />
                 <div className="flex-1">
                   <h4 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -926,7 +973,7 @@ export default function ProductDetail() {
               ×
             </button>
             <img
-              src={previewImages[selectedImageIndex] || product.image || '/placeholder.png'}
+              src={previewImages[selectedImageIndex] || previewImages[0] || product.image || '/placeholder.png'}
               alt={product.title}
               className="w-full h-auto rounded-lg"
               onClick={(e) => e.stopPropagation()}

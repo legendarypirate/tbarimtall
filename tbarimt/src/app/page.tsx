@@ -176,49 +176,6 @@ const defaultFeaturedProducts = [
   }
 ]
 
-// Default top bloggers data (fallback)
-const defaultTopBloggers = [
-  {
-    id: 1,
-    name: 'Батбаяр',
-    username: '@batbayar_pro',
-    followers: '12.5K',
-    posts: 234,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Batbayar',
-    specialty: 'Дипломын ажил',
-    rating: 4.9
-  },
-  {
-    id: 2,
-    name: 'Сараа',
-    username: '@saraa_writer',
-    followers: '8.3K',
-    posts: 189,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Saraa',
-    specialty: 'Реферат',
-    rating: 4.8
-  },
-  {
-    id: 3,
-    name: 'Энхбат',
-    username: '@enkhat_dev',
-    followers: '15.2K',
-    posts: 312,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Enkhat',
-    specialty: 'Программ хангамж',
-    rating: 4.9
-  },
-  {
-    id: 4,
-    name: 'Оюунцэцэг',
-    username: '@oyuntsetseg',
-    followers: '9.7K',
-    posts: 156,
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Oyuntsetseg',
-    specialty: 'Курсын ажил',
-    rating: 4.7
-  }
-]
 
 // Product type definition
 type Product = {
@@ -243,7 +200,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [categories, setCategories] = useState(defaultCategories)
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>(defaultFeaturedProducts)
-  const [topBloggers, setTopBloggers] = useState(defaultTopBloggers)
+  const [topBloggers, setTopBloggers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -265,16 +222,23 @@ export default function Home() {
         const [categoriesRes, productsRes, journalistsRes] = await Promise.all([
           getCategories().catch(() => ({ categories: defaultCategories })),
           getFeaturedProducts(8).catch(() => ({ products: defaultFeaturedProducts })),
-          getTopJournalists(4).catch(() => ({ journalists: defaultTopBloggers }))
+          getTopJournalists(4).catch(() => ({ journalists: [] }))
         ])
 
         if (categoriesRes.categories) {
           // Filter to only show parent categories (those with subcategories)
           // This excludes subcategories that might be returned as separate items
+          // Also exclude generic category names like "Category 37", "Category 40", etc.
           const filteredCategories = categoriesRes.categories.filter((cat: any) => {
+            // Skip categories with generic names like "Category 37", "Category 40", etc.
+            const isGenericCategory = /^Category\s+\d+$/i.test(cat.name)
+            if (isGenericCategory) {
+              return false
+            }
+            
             // Only show categories that have subcategories (parent categories)
             // OR are in the defaultCategories list (known parent categories)
-            const parentCategoryIds = defaultCategories.map(c => c.id)
+            const parentCategoryIds = defaultCategories.map((c: any) => c.id)
             const hasSubcategories = cat.subcategories && Array.isArray(cat.subcategories) && cat.subcategories.length > 0
             const isDefaultParent = parentCategoryIds.includes(cat.id)
             return hasSubcategories || isDefaultParent
@@ -284,8 +248,17 @@ export default function Home() {
         if (productsRes.products) {
           setFeaturedProducts(productsRes.products)
         }
-        if (journalistsRes.journalists) {
-          setTopBloggers(journalistsRes.journalists)
+        if (journalistsRes.journalists && Array.isArray(journalistsRes.journalists)) {
+          // Format followers number to display format (e.g., 12500 -> "12.5K")
+          const formattedJournalists = journalistsRes.journalists.map((j: any) => ({
+            ...j,
+            followers: typeof j.followers === 'number' 
+              ? j.followers >= 1000 
+                ? (j.followers / 1000).toFixed(1) + 'K'
+                : j.followers.toString()
+              : j.followers
+          }))
+          setTopBloggers(formattedJournalists)
         }
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -657,55 +630,69 @@ export default function Home() {
             Манай платформ дээрх хамгийн идэвхтэй, чанартай контент бүтээгчдэд тавтай морил
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {topBloggers.map((blogger) => (
-            <div
-              key={blogger.id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 transform hover:-translate-y-2 text-center"
-            >
-              <div className="relative mb-4 inline-block">
-                <img
-                  src={blogger.avatar}
-                  alt={blogger.name}
-                  className="w-20 h-20 rounded-full border-4 border-blue-500 dark:border-blue-400 shadow-lg"
-                />
-                <div className="absolute -bottom-1 -right-1 bg-green-500 w-6 h-6 rounded-full border-2 border-white dark:border-gray-800"></div>
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {blogger.name}
-              </h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                {blogger.username}
-              </p>
-              <div className="flex items-center justify-center space-x-1 mb-4">
-                <span className="text-yellow-400">⭐</span>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  {blogger.rating}
-                </span>
-              </div>
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Дагагчид:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{blogger.followers}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Нийтлэл:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{blogger.posts}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Мэргэжил:</span>
-                  <span className="font-semibold text-blue-600 dark:text-blue-400">{blogger.specialty}</span>
-                </div>
-              </div>
-              <button 
-                onClick={() => router.push(`/journalist/${blogger.id}`)}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-sm font-semibold shadow-md hover:shadow-lg"
+        {topBloggers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {topBloggers.map((blogger) => (
+              <div
+                key={blogger.id || blogger.userId}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-gray-200 dark:border-gray-700 transform hover:-translate-y-2 text-center"
               >
-                Профайл үзэх
-              </button>
-            </div>
-          ))}
-        </div>
+                <div className="relative mb-4 inline-block">
+                  <img
+                    src={blogger.avatar || '/placeholder.png'}
+                    alt={blogger.name || 'Journalist'}
+                    className="w-20 h-20 rounded-full border-4 border-blue-500 dark:border-blue-400 shadow-lg"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (blogger.name || 'default');
+                    }}
+                  />
+                  <div className="absolute -bottom-1 -right-1 bg-green-500 w-6 h-6 rounded-full border-2 border-white dark:border-gray-800"></div>
+                </div>
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                  {blogger.name || 'Unknown'}
+                </h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  {blogger.username || '@unknown'}
+                </p>
+                <div className="flex items-center justify-center space-x-1 mb-4">
+                  <span className="text-yellow-400">⭐</span>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {parseFloat(blogger.rating) || 0}
+                  </span>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Дагагчид:</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{blogger.followers || 0}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Нийтлэл:</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{blogger.posts || 0}</span>
+                  </div>
+                  {blogger.specialty && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Мэргэжил:</span>
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">{blogger.specialty}</span>
+                    </div>
+                  )}
+                </div>
+                <button 
+                  onClick={() => router.push(`/journalist/${blogger.userId || blogger.id}`)}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-sm font-semibold shadow-md hover:shadow-lg"
+                >
+                  Профайл үзэх
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">
+              Шилдэг нийтлэлчид олдсонгүй
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Featured Products Section */}
