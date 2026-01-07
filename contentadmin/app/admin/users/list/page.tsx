@@ -1194,10 +1194,10 @@ export default function UsersPage() {
                   <th className="text-left p-3">Үүрэг</th>
                   <th className="text-left p-3">Гишүүнчлэл</th>
                   <th className="text-left p-3">Төлөв</th>
+                  <th className="text-left p-3">Орлого</th>
                   <th className="text-left p-3">Point</th>
                   <th className="text-left p-3">Нийтлэл</th>
                   <th className="text-left p-3">Захиалга</th>
-                  <th className="text-left p-3">Зарцуулалт</th>
                   <th className="text-left p-3">Гишүүнчлэлийн хугацаа</th>
                   <th className="text-left p-3">Байршил</th>
                   <th className="text-left p-3">Бүртгүүлсэн</th>
@@ -1253,6 +1253,11 @@ export default function UsersPage() {
                     </td>
                     <td className="p-3">
                       <div className="font-medium text-green-600">
+                        {formatPrice(user.income || 0)}
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <div className="font-medium text-green-600">
                         {formatPrice(user.point || 0)}
                       </div>
                       <div className="text-xs text-gray-500">point</div>
@@ -1265,11 +1270,7 @@ export default function UsersPage() {
                       <div className="font-medium">{user.total_orders || 0}</div>
                       <div className="text-xs text-gray-500">захиалга</div>
                     </td>
-                    <td className="p-3">
-                      <div className="font-medium text-green-600">
-                        {formatPrice(user.total_spent || 0)}
-                      </div>
-                    </td>
+                   
                     <td className="p-3">
                       <div className="text-xs">
                         {user.subscriptionStartDate ? (
