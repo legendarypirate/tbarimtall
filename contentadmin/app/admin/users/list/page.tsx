@@ -1194,6 +1194,7 @@ export default function UsersPage() {
                   <th className="text-left p-3">Нийтлэл</th>
                   <th className="text-left p-3">Захиалга</th>
                   <th className="text-left p-3">Зарцуулалт</th>
+                  <th className="text-left p-3">Гишүүнчлэлийн хугацаа</th>
                   <th className="text-left p-3">Байршил</th>
                   <th className="text-left p-3">Бүртгүүлсэн</th>
                   <th className="text-left p-3">Үйлдэл</th>
@@ -1266,6 +1267,22 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="p-3">
+                      <div className="text-xs">
+                        {user.subscriptionStartDate ? (
+                          <div className="text-gray-600">Эхлэх: {formatDate(user.subscriptionStartDate)}</div>
+                        ) : (
+                          <div className="text-gray-400">-</div>
+                        )}
+                        {user.subscriptionEndDate ? (
+                          <div className={`mt-1 ${new Date(user.subscriptionEndDate) < new Date() ? 'text-red-600 font-semibold' : 'text-gray-600'}`}>
+                            Дуусах: {formatDate(user.subscriptionEndDate)}
+                          </div>
+                        ) : (
+                          <div className="text-gray-400">-</div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3">
                       <div>{user.location || "-"}</div>
                       <div className="text-xs text-gray-500">{user.device || "-"}</div>
                     </td>
@@ -1322,7 +1339,7 @@ export default function UsersPage() {
 
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={13} className="p-8 text-center text-gray-500">
+                    <td colSpan={14} className="p-8 text-center text-gray-500">
                       Хэрэглэгч олдсонгүй
                     </td>
                   </tr>
@@ -1398,6 +1415,25 @@ export default function UsersPage() {
                       </Badge>
                     ) : (
                       <span className="text-sm text-gray-400">Гишүүнчлэлгүй</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Гишүүнчлэл эхлэх огноо</Label>
+                  <div className="mt-1 text-sm">
+                    {viewingUser.subscriptionStartDate ? formatDate(viewingUser.subscriptionStartDate) : "-"}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-gray-600">Гишүүнчлэл дуусах огноо</Label>
+                  <div className={`mt-1 text-sm ${
+                    viewingUser.subscriptionEndDate && new Date(viewingUser.subscriptionEndDate) < new Date() 
+                      ? 'text-red-600 font-semibold' 
+                      : ''
+                  }`}>
+                    {viewingUser.subscriptionEndDate ? formatDate(viewingUser.subscriptionEndDate) : "-"}
+                    {viewingUser.subscriptionEndDate && new Date(viewingUser.subscriptionEndDate) < new Date() && (
+                      <span className="ml-2 text-xs">(Дууссан)</span>
                     )}
                   </div>
                 </div>

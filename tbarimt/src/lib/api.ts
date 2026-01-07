@@ -377,3 +377,18 @@ export async function getMyMembership() {
   return fetchAPI('/memberships/my-membership');
 }
 
+// Membership payment
+export async function createMembershipInvoice(data: {
+  membershipId: number;
+  extendOnly?: boolean;
+}) {
+  return fetchAPI('/qpay/membership/invoice', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function checkMembershipPaymentStatus(invoiceId: string) {
+  return fetchAPI(`/qpay/membership/check/${invoiceId}`);
+}
+

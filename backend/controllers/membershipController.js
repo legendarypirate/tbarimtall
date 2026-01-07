@@ -160,7 +160,7 @@ exports.getUserMembership = async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await User.findByPk(userId, {
-      attributes: ['id', 'membership_type', 'subscriptionStartDate', 'subscriptionEndDate', 'publishedFileCount']
+      attributes: ['id', 'role', 'membership_type', 'subscriptionStartDate', 'subscriptionEndDate', 'publishedFileCount']
     });
 
     if (!user) {
@@ -176,8 +176,37 @@ exports.getUserMembership = async (req, res) => {
       membership = await Membership.findByPk(2); // FREE membership
     }
 
-    // Check if subscription is active
+    // If user doesn't have membership_type set but is a journalist, set default FREE membership
     const now = new Date();
+    if (!user.membership_type && user.role === 'journalist') {
+      const oneYearLater = new Date(now);
+      oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+      
+      await user.update({
+        membership_type: 2, // FREE membership
+        subscriptionStartDate: user.subscriptionStartDate || now,
+        subscriptionEndDate: user.subscriptionEndDate || oneYearLater
+      });
+      
+      // Reload user to get updated values
+      await user.reload();
+    }
+    
+    // If user doesn't have subscription dates but has membership, set default dates (1 year from now)
+    if (membership && !user.subscriptionStartDate && !user.subscriptionEndDate) {
+      const oneYearLater = new Date(now);
+      oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+      
+      await user.update({
+        subscriptionStartDate: now,
+        subscriptionEndDate: oneYearLater
+      });
+      
+      // Reload user to get updated values
+      await user.reload();
+    }
+
+    // Check if subscription is active
     const isSubscriptionActive = user.subscriptionEndDate && new Date(user.subscriptionEndDate) > now;
 
     // Get current published count

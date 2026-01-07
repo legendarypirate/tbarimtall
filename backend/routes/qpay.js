@@ -13,6 +13,10 @@ router.post('/wallet/pay', authenticate, qpayController.payWithWallet);
 router.post('/wallet/recharge', authenticate, qpayController.createWalletRechargeInvoice);
 router.get('/wallet/check/:invoiceId', authenticate, qpayController.checkWalletRechargeStatus);
 
+// Membership payment endpoints (require authentication)
+router.post('/membership/invoice', authenticate, qpayController.createMembershipInvoice);
+router.get('/membership/check/:invoiceId', authenticate, qpayController.checkMembershipPaymentStatus);
+
 // Check payment status (no authentication required)
 router.get('/check/:invoiceId', qpayController.checkPaymentStatus);
 

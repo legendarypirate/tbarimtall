@@ -22,7 +22,16 @@ const Order = sequelize.define('Order', {
       model: 'products',
       key: 'id'
     },
-    comment: 'Product ID (null for wallet recharge orders)'
+    comment: 'Product ID (null for wallet recharge or membership orders)'
+  },
+  membershipId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'memberships',
+      key: 'id'
+    },
+    comment: 'Membership ID (null for product or wallet recharge orders)'
   },
   amount: {
     type: DataTypes.DECIMAL(10, 2),

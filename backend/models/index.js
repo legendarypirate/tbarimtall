@@ -35,6 +35,7 @@ Review.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
 Order.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Order.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+Order.belongsTo(Membership, { foreignKey: 'membershipId', as: 'membership' });
 
 User.hasMany(WithdrawalRequest, { foreignKey: 'userId', as: 'withdrawalRequests' });
 WithdrawalRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });

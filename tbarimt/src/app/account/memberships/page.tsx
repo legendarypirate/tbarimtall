@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { getActiveMemberships, getMyMembership } from '@/lib/api'
+import { getActiveMemberships, getMyMembership, createMembershipInvoice, checkMembershipPaymentStatus } from '@/lib/api'
 
 interface Membership {
   id: number
@@ -16,10 +16,13 @@ interface Membership {
 
 interface MyMembership {
   membership: Membership | null
+  subscriptionStartDate: string | null
   subscriptionEndDate: string | null
   isSubscriptionActive: boolean
   publishedCount: number
   maxPosts: number
+  remainingPosts: number
+  canPost: boolean
 }
 
 export default function MembershipsPage() {
@@ -28,9 +31,25 @@ export default function MembershipsPage() {
   const [myMembership, setMyMembership] = useState<MyMembership | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedMembership, setSelectedMembership] = useState<number | null>(null)
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const [qrText, setQrText] = useState<string | null>(null)
+  const [invoiceId, setInvoiceId] = useState<string | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | null>(null)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [isExtending, setIsExtending] = useState(false)
+  const paymentPollingInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     fetchData()
+    
+    // Cleanup polling on unmount
+    return () => {
+      if (paymentPollingInterval.current) {
+        clearInterval(paymentPollingInterval.current)
+      }
+    }
   }, [])
 
   const fetchData = async () => {
@@ -62,12 +81,160 @@ export default function MembershipsPage() {
     return new Intl.NumberFormat('mn-MN').format(numPrice) + '₮'
   }
 
-  const handleSelectMembership = (membershipId: number) => {
-    setSelectedMembership(membershipId)
-    // Here you would typically redirect to payment page
-    // For now, we'll just show a message
-    alert('Төлбөрийн хуудас руу шилжиж байна...')
-    // TODO: Implement payment flow
+  const startPaymentPolling = (invoiceId: string) => {
+    // Clear any existing interval
+    if (paymentPollingInterval.current) {
+      clearInterval(paymentPollingInterval.current)
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await checkMembershipPaymentStatus(invoiceId)
+        
+        if (response.success && response.payment) {
+          if (response.payment.isPaid) {
+            setPaymentStatus('completed')
+            if (paymentPollingInterval.current) {
+              clearInterval(paymentPollingInterval.current)
+              paymentPollingInterval.current = null
+            }
+            
+            // Refresh membership data
+            await fetchData()
+            
+            // Close modal after 2 seconds
+            setTimeout(() => {
+              setShowPaymentModal(false)
+              setQrCode(null)
+              setQrText(null)
+              setInvoiceId(null)
+              setPaymentStatus(null)
+              setSelectedMembership(null)
+              setIsExtending(false)
+              alert('Төлбөр амжилттай төлөгдлөө! Гишүүнчлэл шинэчлэгдлээ.')
+            }, 2000)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error)
+      }
+    }, 3000) // Check every 3 seconds
+
+    paymentPollingInterval.current = interval
+  }
+
+  const handleExtendMembership = async (membershipId: number) => {
+    try {
+      setIsExtending(true)
+      setIsCreatingInvoice(true)
+      setPaymentError(null)
+
+      const response = await createMembershipInvoice({
+        membershipId,
+        extendOnly: true
+      })
+
+      if (response.success && response.invoice) {
+        setInvoiceId(response.invoice.invoice_id)
+        
+        // Fix QR code: if it's a base64 string without prefix, add it
+        let qrImage = response.invoice.qr_image || response.invoice.qr_code
+        if (qrImage) {
+          // Check if it's a base64 string without data URL prefix
+          if (qrImage.startsWith('iVBORw0KGgo') || qrImage.startsWith('/9j/')) {
+            // It's a base64 PNG or JPEG without prefix
+            const prefix = qrImage.startsWith('iVBORw0KGgo') ? 'data:image/png;base64,' : 'data:image/jpeg;base64,'
+            qrImage = prefix + qrImage
+          } else if (!qrImage.startsWith('data:') && !qrImage.startsWith('http://') && !qrImage.startsWith('https://') && !qrImage.startsWith('/')) {
+            // If it doesn't start with data:, http://, https://, or /, assume it's base64
+            qrImage = 'data:image/png;base64,' + qrImage
+          }
+        }
+        
+        // Only set QR code if it's a valid data URL or HTTP URL
+        if (qrImage && (qrImage.startsWith('data:') || qrImage.startsWith('http://') || qrImage.startsWith('https://'))) {
+          setQrCode(qrImage)
+        } else {
+          setQrCode(null)
+          console.error('Invalid QR code format:', qrImage?.substring(0, 50))
+        }
+        setQrText(response.invoice.qr_text)
+        setShowPaymentModal(true)
+        setPaymentStatus('pending')
+        
+        // Start polling for payment status
+        startPaymentPolling(response.invoice.invoice_id)
+      } else {
+        throw new Error('Failed to create invoice')
+      }
+    } catch (error: any) {
+      console.error('Error creating membership invoice:', error)
+      setPaymentError(error.message || 'Төлбөрийн хуудас үүсгэхэд алдаа гарлаа')
+    } finally {
+      setIsCreatingInvoice(false)
+      setIsExtending(false)
+    }
+  }
+
+  const handleSelectMembership = async (membershipId: number) => {
+    const isCurrent = isCurrentMembership(membershipId)
+    
+    if (isCurrent) {
+      // Extend current membership
+      await handleExtendMembership(membershipId)
+    } else {
+      // Different membership - show alert and proceed to payment
+      alert('Төлбөрийн хуудас руу шилжиж байна...')
+      
+      try {
+        setIsCreatingInvoice(true)
+        setPaymentError(null)
+
+        const response = await createMembershipInvoice({
+          membershipId,
+          extendOnly: false
+        })
+
+        if (response.success && response.invoice) {
+          setInvoiceId(response.invoice.invoice_id)
+          
+          // Fix QR code: if it's a base64 string without prefix, add it
+          let qrImage = response.invoice.qr_image || response.invoice.qr_code
+          if (qrImage) {
+            // Check if it's a base64 string without data URL prefix
+            if (qrImage.startsWith('iVBORw0KGgo') || qrImage.startsWith('/9j/')) {
+              // It's a base64 PNG or JPEG without prefix
+              const prefix = qrImage.startsWith('iVBORw0KGgo') ? 'data:image/png;base64,' : 'data:image/jpeg;base64,'
+              qrImage = prefix + qrImage
+            } else if (!qrImage.startsWith('data:') && !qrImage.startsWith('http://') && !qrImage.startsWith('https://') && !qrImage.startsWith('/')) {
+              // If it doesn't start with data:, http://, https://, or /, assume it's base64
+              qrImage = 'data:image/png;base64,' + qrImage
+            }
+          }
+          
+          // Only set QR code if it's a valid data URL or HTTP URL
+          if (qrImage && (qrImage.startsWith('data:') || qrImage.startsWith('http://') || qrImage.startsWith('https://'))) {
+            setQrCode(qrImage)
+          } else {
+            setQrCode(null)
+            console.error('Invalid QR code format:', qrImage?.substring(0, 50))
+          }
+          setQrText(response.invoice.qr_text)
+          setShowPaymentModal(true)
+          setPaymentStatus('pending')
+          
+          // Start polling for payment status
+          startPaymentPolling(response.invoice.invoice_id)
+        } else {
+          throw new Error('Failed to create invoice')
+        }
+      } catch (error: any) {
+        console.error('Error creating membership invoice:', error)
+        setPaymentError(error.message || 'Төлбөрийн хуудас үүсгэхэд алдаа гарлаа')
+      } finally {
+        setIsCreatingInvoice(false)
+      }
+    }
   }
 
   const isCurrentMembership = (membershipId: number) => {
@@ -170,21 +337,23 @@ export default function MembershipsPage() {
 
                   {isCurrent ? (
                     <button
-                      disabled
-                      className="w-full bg-gray-300 text-gray-600 py-2 rounded-lg font-semibold cursor-not-allowed"
+                      onClick={() => handleExtendMembership(membership.id)}
+                      disabled={isExtending || isCreatingInvoice}
+                      className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                     >
-                      Одоогийн гишүүнчлэл
+                      {isExtending ? 'Ачааллаж байна...' : 'Сунгах'}
                     </button>
                   ) : (
                     <button
                       onClick={() => handleSelectMembership(membership.id)}
-                      className={`w-full py-2 rounded-lg font-semibold transition-colors ${
+                      disabled={isCreatingInvoice}
+                      className={`w-full py-2 rounded-lg font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed ${
                         isFree
                           ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                           : 'bg-blue-600 text-white hover:bg-blue-700'
                       }`}
                     >
-                      {isFree ? 'Сонгох' : 'Сонгох'}
+                      {isCreatingInvoice ? 'Ачааллаж байна...' : 'Сонгох'}
                     </button>
                   )}
                 </div>
@@ -219,7 +388,75 @@ export default function MembershipsPage() {
           </div>
         )}
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+            <button
+              onClick={() => {
+                setShowPaymentModal(false)
+                setQrCode(null)
+                setQrText(null)
+                setInvoiceId(null)
+                setPaymentStatus(null)
+                setPaymentError(null)
+                if (paymentPollingInterval.current) {
+                  clearInterval(paymentPollingInterval.current)
+                  paymentPollingInterval.current = null
+                }
+              }}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              ×
+            </button>
+
+            <h2 className="text-2xl font-bold mb-4">QPay төлбөр</h2>
+
+            {paymentError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <p className="text-red-800">{paymentError}</p>
+              </div>
+            )}
+
+            {paymentStatus === 'completed' ? (
+              <div className="text-center py-8">
+                <div className="text-green-500 text-6xl mb-4">✓</div>
+                <p className="text-xl font-semibold text-green-600">Төлбөр амжилттай төлөгдлөө!</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-gray-600 mb-4">
+                  QPay апп ашиглан QR кодыг уншуулж төлбөрөө төлөөрэй.
+                </p>
+
+                {qrCode ? (
+                  <div className="flex flex-col items-center mb-4">
+                    <img
+                      src={qrCode}
+                      alt="QPay QR Code"
+                      className="w-64 h-64 border-2 border-gray-200 rounded-lg mb-4"
+                    />
+                    {qrText && (
+                      <p className="text-sm text-gray-600 break-all text-center">{qrText}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 rounded-lg p-8 mb-4 text-center">
+                    <p className="text-gray-600">QR код үүсгэж байна...</p>
+                  </div>
+                )}
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-blue-800">
+                    Төлбөр төлөгдсөний дараа автоматаар шинэчлэгдэнэ. Хэсэг хугацааны дараа хуудас шинэчлэх шаардлагагүй.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-

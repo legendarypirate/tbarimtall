@@ -1,4 +1,4 @@
-const { Order, User, Product, DownloadToken } = require('../models');
+const { Order, User, Product, DownloadToken, Membership } = require('../models');
 const axios = require('axios');
 
 // QPay credentials - should be in environment variables
@@ -430,8 +430,8 @@ exports.paymentWebhook = async (req, res) => {
       await order.update({ status: 'completed' });
       console.log(`Order ${order.id} marked as completed via webhook`);
       
-      // Handle wallet recharge (productId is null)
-      if (!order.productId && order.userId) {
+      // Handle wallet recharge (productId is null, membershipId is null)
+      if (!order.productId && !order.membershipId && order.userId) {
         try {
           const user = await User.findByPk(order.userId);
           if (user) {
@@ -444,6 +444,26 @@ exports.paymentWebhook = async (req, res) => {
           }
         } catch (incomeError) {
           console.error(`Error updating user income via webhook (wallet recharge):`, incomeError);
+        }
+      } else if (order.membershipId) {
+        // Handle membership payment
+        try {
+          const user = await User.findByPk(order.userId);
+          if (user) {
+            const now = new Date();
+            const endDate = new Date(now);
+            endDate.setDate(endDate.getDate() + 30); // 30 days from now
+            
+            await user.update({
+              membership_type: order.membershipId,
+              subscriptionStartDate: now,
+              subscriptionEndDate: endDate
+            });
+            
+            console.log(`User ${user.id} membership updated via webhook: membership ${order.membershipId}, end date ${endDate}`);
+          }
+        } catch (membershipError) {
+          console.error(`Error updating user membership via webhook:`, membershipError);
         }
       } else if (order.productId) {
         // Update product income
@@ -661,6 +681,205 @@ exports.createWalletRechargeInvoice = async (req, res) => {
     console.error('Create wallet recharge invoice error:', error);
     res.status(500).json({
       error: 'Failed to create wallet recharge invoice',
+      message: error.response?.data?.message || error.message
+    });
+  }
+};
+
+// Create membership payment invoice
+exports.createMembershipInvoice = async (req, res) => {
+  try {
+    const { membershipId, extendOnly } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!membershipId) {
+      return res.status(400).json({ error: 'Membership ID is required' });
+    }
+
+    // Get membership details
+    const membership = await Membership.findByPk(membershipId);
+    if (!membership) {
+      return res.status(404).json({ error: 'Membership not found' });
+    }
+
+    if (!membership.isActive) {
+      return res.status(400).json({ error: 'Membership is not active' });
+    }
+
+    // Get user to check current membership
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get QPay token
+    const token = await getQPayToken();
+
+    // Generate unique invoice number for membership payment
+    const senderInvoiceNo = `MEMBERSHIP_${Date.now()}_${userId}_${membershipId}`;
+    const invoiceCode = process.env.QPAY_INVOICE_CODE || 'KONO_INVOICE';
+    const invoiceReceiverCode = process.env.QPAY_RECEIVER_CODE || 'DEFAULT_COM_ID';
+
+    const membershipName = membership.name;
+    const amount = parseFloat(membership.price);
+    const description = extendOnly 
+      ? `Гишүүнчлэл сунгах - ${membershipName}`
+      : `Гишүүнчлэл сонгох - ${membershipName}`;
+
+    // Create invoice in QPay
+    const invoiceResponse = await axios.post(
+      `${QPAY_BASE_URL}/invoice`,
+      {
+        invoice_code: invoiceCode,
+        sender_invoice_no: senderInvoiceNo,
+        invoice_receiver_code: invoiceReceiverCode,
+        invoice_description: description,
+        amount: amount
+      },
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!invoiceResponse.data || !invoiceResponse.data.invoice_id) {
+      throw new Error('Failed to create QPay invoice');
+    }
+
+    const invoiceData = invoiceResponse.data;
+
+    // Create order for membership payment (productId = null, membershipId set)
+    const order = await Order.create({
+      userId: parseInt(userId),
+      productId: null, // Membership payment has no product
+      membershipId: parseInt(membershipId),
+      amount: amount,
+      paymentMethod: 'qpay',
+      status: 'pending',
+      invoiceId: invoiceData.invoice_id,
+      qrImage: invoiceData.qr_image || null,
+      qrText: invoiceData.qr_text || null
+    });
+
+    res.json({
+      success: true,
+      order: order.toJSON(),
+      invoice: {
+        invoice_id: invoiceData.invoice_id,
+        qr_image: invoiceData.qr_image,
+        qr_text: invoiceData.qr_text,
+        qr_code: invoiceData.qr_code,
+        urls: invoiceData.urls
+      },
+      membership: membership.toJSON()
+    });
+  } catch (error) {
+    console.error('Create membership invoice error:', error);
+    res.status(500).json({
+      error: 'Failed to create membership invoice',
+      message: error.response?.data?.message || error.message
+    });
+  }
+};
+
+// Check membership payment status
+exports.checkMembershipPaymentStatus = async (req, res) => {
+  try {
+    const { invoiceId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Find order by invoice ID
+    const order = await Order.findOne({
+      where: { invoiceId, userId: parseInt(userId) },
+      include: [
+        { model: Membership, as: 'membership', required: false }
+      ]
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Get QPay token
+    const token = await getQPayToken();
+
+    // Check payment status in QPay
+    const checkResponse = await axios.post(
+      `${QPAY_BASE_URL}/payment/check`,
+      {
+        object_type: 'INVOICE',
+        object_id: invoiceId,
+        offset: {
+          page_number: 1,
+          page_limit: 100
+        }
+      },
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const paymentData = checkResponse.data;
+    let paymentStatus = 'PENDING';
+    let isPaid = false;
+
+    if (paymentData.rows && paymentData.rows.length > 0) {
+      const payment = paymentData.rows[0];
+      paymentStatus = payment.payment_status || 'PENDING';
+      isPaid = paymentStatus === 'PAID';
+    }
+
+    // Update order status if paid
+    if (isPaid && order.status !== 'completed') {
+      await order.update({ status: 'completed' });
+      
+      // Update user membership and subscription dates
+      if (order.membershipId) {
+        const user = await User.findByPk(userId);
+        if (user) {
+          const now = new Date();
+          const endDate = new Date(now);
+          endDate.setDate(endDate.getDate() + 30); // 30 days from now
+          
+          await user.update({
+            membership_type: order.membershipId,
+            subscriptionStartDate: now,
+            subscriptionEndDate: endDate
+          });
+          
+          console.log(`User ${userId} membership updated to ${order.membershipId} via payment`);
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      payment: {
+        isPaid,
+        status: paymentStatus,
+        orderStatus: order.status
+      },
+      order: order.toJSON()
+    });
+  } catch (error) {
+    console.error('Check membership payment status error:', error);
+    res.status(500).json({
+      error: 'Failed to check payment status',
       message: error.response?.data?.message || error.message
     });
   }
