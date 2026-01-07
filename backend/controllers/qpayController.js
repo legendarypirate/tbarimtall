@@ -281,28 +281,53 @@ exports.checkPaymentStatus = async (req, res) => {
       await order.update({ status: 'completed' });
       order.status = 'completed';
       
-      // Update product income and user income
+      // Update product income and user income based on membership percentage
       if (order.productId) {
         try {
           const product = await Product.findByPk(order.productId);
           if (product) {
-            const currentIncome = parseFloat(product.income || 0);
             const orderAmount = parseFloat(order.amount);
-            await product.update({ 
-              income: currentIncome + orderAmount 
-            });
-            console.log(`Product ${product.id} income updated: ${currentIncome} + ${orderAmount} = ${currentIncome + orderAmount}`);
             
-            // Update user (author) income
+            // Get author's membership to calculate commission percentage
+            let commissionPercentage = 20.00; // Default to 20% for FREE membership
+            if (product.authorId) {
+              const { User, Membership } = require('../models');
+              const author = await User.findByPk(product.authorId);
+              if (author) {
+                let membership = null;
+                if (author.membership_type) {
+                  membership = await Membership.findByPk(author.membership_type);
+                } else {
+                  // Default to FREE membership (id: 2)
+                  membership = await Membership.findByPk(2);
+                }
+                
+                if (membership && membership.percentage) {
+                  commissionPercentage = parseFloat(membership.percentage);
+                }
+              }
+            }
+            
+            // Calculate income based on membership percentage
+            const authorIncome = orderAmount * (commissionPercentage / 100);
+            
+            // Update product income (full amount for tracking)
+            const currentProductIncome = parseFloat(product.income || 0);
+            await product.update({ 
+              income: currentProductIncome + orderAmount 
+            });
+            console.log(`Product ${product.id} income updated: ${currentProductIncome} + ${orderAmount} = ${currentProductIncome + orderAmount}`);
+            
+            // Update user (author) income (percentage-based)
             if (product.authorId) {
               const { User } = require('../models');
               const author = await User.findByPk(product.authorId);
               if (author) {
                 const currentUserIncome = parseFloat(author.income || 0);
                 await author.update({
-                  income: currentUserIncome + orderAmount
+                  income: currentUserIncome + authorIncome
                 });
-                console.log(`User ${author.id} income updated: ${currentUserIncome} + ${orderAmount} = ${currentUserIncome + orderAmount}`);
+                console.log(`User ${author.id} income updated: ${currentUserIncome} + ${authorIncome} (${commissionPercentage}% of ${orderAmount}) = ${currentUserIncome + authorIncome}`);
               }
             }
           }
@@ -472,20 +497,44 @@ exports.paymentWebhook = async (req, res) => {
           if (product) {
             const currentIncome = parseFloat(product.income || 0);
             const orderAmount = parseFloat(order.amount);
+            
+            // Get author's membership to calculate commission percentage
+            let commissionPercentage = 20.00; // Default to 20% for FREE membership
+            if (product.authorId) {
+              const { User, Membership } = require('../models');
+              const author = await User.findByPk(product.authorId);
+              if (author) {
+                let membership = null;
+                if (author.membership_type) {
+                  membership = await Membership.findByPk(author.membership_type);
+                } else {
+                  // Default to FREE membership (id: 2)
+                  membership = await Membership.findByPk(2);
+                }
+                
+                if (membership && membership.percentage) {
+                  commissionPercentage = parseFloat(membership.percentage);
+                }
+              }
+            }
+            
+            // Calculate income based on membership percentage
+            const authorIncome = orderAmount * (commissionPercentage / 100);
+            
             await product.update({ 
               income: currentIncome + orderAmount 
             });
             console.log(`Product ${product.id} income updated via webhook: ${currentIncome} + ${orderAmount} = ${currentIncome + orderAmount}`);
             
-            // Update user (author) income
+            // Update user (author) income (percentage-based)
             if (product.authorId) {
               const author = await User.findByPk(product.authorId);
               if (author) {
                 const currentUserIncome = parseFloat(author.income || 0);
                 await author.update({
-                  income: currentUserIncome + orderAmount
+                  income: currentUserIncome + authorIncome
                 });
-                console.log(`User ${author.id} income updated via webhook: ${currentUserIncome} + ${orderAmount} = ${currentUserIncome + orderAmount}`);
+                console.log(`User ${author.id} income updated via webhook: ${currentUserIncome} + ${authorIncome} (${commissionPercentage}% of ${orderAmount}) = ${currentUserIncome + authorIncome}`);
               }
             }
           }
@@ -973,6 +1022,49 @@ exports.payWithWallet = async (req, res) => {
 
       // Increment product downloads
       await product.increment('downloads', { transaction });
+
+      // Update product income (full amount for tracking)
+      const currentProductIncome = parseFloat(product.income || 0);
+      await product.update({ 
+        income: currentProductIncome + purchaseAmount 
+      }, { transaction });
+
+      // Update author income based on membership percentage
+      if (product.authorId) {
+        const { Membership } = require('../models');
+        let commissionPercentage = 20.00; // Default to 20% for FREE membership
+        
+        const author = await User.findByPk(product.authorId, { transaction });
+        if (author) {
+          let membership = null;
+          if (author.membership_type) {
+            membership = await Membership.findByPk(author.membership_type, { transaction });
+          } else {
+            // Default to FREE membership (id: 2)
+            membership = await Membership.findByPk(2, { transaction });
+          }
+          
+          if (membership && membership.percentage) {
+            commissionPercentage = parseFloat(membership.percentage);
+          }
+        }
+        
+        // Calculate author income based on membership percentage
+        const authorIncome = purchaseAmount * (commissionPercentage / 100);
+        
+        // Update author income
+        await User.update(
+          { 
+            income: sequelize.literal(`income + ${authorIncome}`)
+          },
+          { 
+            where: { id: product.authorId },
+            transaction 
+          }
+        );
+        
+        console.log(`Author ${product.authorId} income updated via wallet payment: +${authorIncome} (${commissionPercentage}% of ${purchaseAmount})`);
+      }
 
       // Commit transaction
       await transaction.commit();

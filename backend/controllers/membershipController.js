@@ -59,7 +59,7 @@ exports.getMembershipById = async (req, res) => {
 // Create membership
 exports.createMembership = async (req, res) => {
   try {
-    const { name, price, maxPosts, advantages, description, isActive, order } = req.body;
+    const { name, price, maxPosts, advantages, description, isActive, order, percentage } = req.body;
 
     // Validate required fields
     if (!name || price === undefined || maxPosts === undefined) {
@@ -76,7 +76,8 @@ exports.createMembership = async (req, res) => {
       advantages: advantagesArray,
       description: description || null,
       isActive: isActive !== undefined ? isActive : true,
-      order: order !== undefined ? parseInt(order) : 0
+      order: order !== undefined ? parseInt(order) : 0,
+      percentage: percentage !== undefined ? parseFloat(percentage) : 20.00
     });
 
     res.status(201).json({ membership });
@@ -92,7 +93,7 @@ exports.createMembership = async (req, res) => {
 exports.updateMembership = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, maxPosts, advantages, description, isActive, order } = req.body;
+    const { name, price, maxPosts, advantages, description, isActive, order, percentage } = req.body;
 
     const membership = await Membership.findByPk(id);
 
@@ -110,6 +111,7 @@ exports.updateMembership = async (req, res) => {
     if (description !== undefined) updateData.description = description;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (order !== undefined) updateData.order = parseInt(order);
+    if (percentage !== undefined) updateData.percentage = parseFloat(percentage);
 
     await membership.update(updateData);
 

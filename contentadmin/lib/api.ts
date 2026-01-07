@@ -277,13 +277,13 @@ export const membershipsApi = {
   getById: async (id: string | number) => {
     return apiCall(`/api/admin/memberships/${id}`);
   },
-  create: async (membershipData: { name: string; price: number; maxPosts: number; advantages?: string[]; description?: string; isActive?: boolean; order?: number }) => {
+  create: async (membershipData: { name: string; price: number; maxPosts: number; advantages?: string[]; description?: string; isActive?: boolean; order?: number; percentage?: number }) => {
     return apiCall('/api/admin/memberships', {
       method: 'POST',
       body: JSON.stringify(membershipData),
     });
   },
-  update: async (id: string | number, membershipData: { name?: string; price?: number; maxPosts?: number; advantages?: string[]; description?: string; isActive?: boolean; order?: number }) => {
+  update: async (id: string | number, membershipData: { name?: string; price?: number; maxPosts?: number; advantages?: string[]; description?: string; isActive?: boolean; order?: number; percentage?: number }) => {
     return apiCall(`/api/admin/memberships/${id}`, {
       method: 'PUT',
       body: JSON.stringify(membershipData),

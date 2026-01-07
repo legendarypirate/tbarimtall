@@ -43,6 +43,16 @@ const Membership = sequelize.define('Membership', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
     comment: 'Display order'
+  },
+  percentage: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: false,
+    defaultValue: 20.00,
+    comment: 'Commission percentage for product sales (e.g., 20.00 for 20%)',
+    validate: {
+      min: 0,
+      max: 100
+    }
   }
 }, {
   tableName: 'memberships',

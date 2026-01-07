@@ -24,6 +24,7 @@ export interface MembershipData {
   description?: string | null;
   isActive: boolean;
   order: number;
+  percentage: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,6 +49,7 @@ function MembershipForm({
     description: membership?.description || "",
     isActive: membership?.isActive ?? true,
     order: membership?.order || 0,
+    percentage: membership?.percentage || 20.00,
   });
 
   const [advantageInput, setAdvantageInput] = useState("");
@@ -128,6 +130,24 @@ function MembershipForm({
             placeholder="0"
           />
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="percentage" className="mb-2 block">Комиссын хувь (%) *</Label>
+        <Input
+          id="percentage"
+          type="number"
+          min="0"
+          max="100"
+          step="0.01"
+          value={form.percentage}
+          onChange={(e) => setForm({...form, percentage: parseFloat(e.target.value) || 20.00})}
+          placeholder="20.00"
+          required
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Борлуулалтаас авна комиссын хувь (жишээ: 20.00 = 20%)
+        </p>
       </div>
 
       <div>
@@ -471,6 +491,10 @@ export default function MembershipPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <span className="font-medium">Сарын нийтлэл: {membership.maxPosts}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium">Комисс: {membership.percentage || 20}%</span>
                   </div>
                   
                   {membership.advantages && membership.advantages.length > 0 && (
