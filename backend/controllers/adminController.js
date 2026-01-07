@@ -105,61 +105,27 @@ exports.getAllUsers = async (req, res) => {
 
     const { count, rows } = await User.findAndCountAll({
       where,
-      attributes: { exclude: ['password'] },
+      attributes: { exclude: ['password'] }, // This includes all fields except password, including income
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
       offset
     });
 
     console.log(`📊 [getAllUsers] Found ${count} total users, returning ${rows.length} users`);
-    
-    // Add specific logging for user with ID 12
-    const user12 = rows.find(user => user.id === 12);
-    if (user12) {
-      console.log(`👤 [getAllUsers] User 12 found:`, {
-        id: user12.id,
-        incomeRaw: user12.income,
-        incomeType: typeof user12.income,
-        incomeValue: user12.income,
-        username: user12.username,
-        fullName: user12.fullName
-      });
-    } else {
-      console.log(`👤 [getAllUsers] User 12 NOT found in this page`);
-    }
 
-    // Simply return users without recalculating income
+    // Return users with income column included
     const usersWithStats = rows.map((user) => {
       const userData = user.toJSON();
       
-      // Log each user's income for debugging
-      if (user.id === 12) {
-        console.log(`💰 [getAllUsers] User 12 JSON income:`, {
-          raw: userData.income,
-          type: typeof userData.income,
-          beforeParse: userData.income
-        });
-      }
-      
-      // Ensure income is a number (DECIMAL returns as string)
+      // Ensure income is always included and properly formatted as a number
+      // The User model has a getter that converts DECIMAL to float, but we ensure it's a number
       if (userData.income !== null && userData.income !== undefined) {
-        const originalIncome = userData.income;
         userData.income = typeof userData.income === 'string' 
           ? parseFloat(userData.income) 
           : Number(userData.income);
         
         if (isNaN(userData.income)) {
           userData.income = 0;
-        }
-        
-        // Log conversion for user 12
-        if (user.id === 12) {
-          console.log(`💰 [getAllUsers] User 12 income conversion:`, {
-            original: originalIncome,
-            originalType: typeof originalIncome,
-            parsed: userData.income,
-            parsedType: typeof userData.income
-          });
         }
       } else {
         userData.income = 0;
@@ -181,9 +147,6 @@ exports.getAllUsers = async (req, res) => {
       return userData;
     });
 
-    // Log final result before sending
-    console.log(`📦 [getAllUsers] Sending response with ${usersWithStats.length} users`);
-    
     const response = {
       users: usersWithStats,
       pagination: {
@@ -193,17 +156,6 @@ exports.getAllUsers = async (req, res) => {
         totalPages: Math.ceil(count / parseInt(limit))
       }
     };
-    
-    // Log user 12 in final response
-    const finalUser12 = response.users.find(u => u.id === 12);
-    if (finalUser12) {
-      console.log(`✅ [getAllUsers] FINAL User 12 in response:`, {
-        id: finalUser12.id,
-        name: finalUser12.fullName,
-        income: finalUser12.income,
-        incomeType: typeof finalUser12.income
-      });
-    }
 
     res.json(response);
     

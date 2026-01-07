@@ -308,8 +308,8 @@ exports.checkPaymentStatus = async (req, res) => {
               }
             }
             
-            // Calculate income based on membership percentage
-            const authorIncome = orderAmount * (commissionPercentage / 100);
+            // Calculate commission points based on membership percentage
+            const authorPoints = orderAmount * (commissionPercentage / 100);
             
             // Update product income (full amount for tracking)
             const currentProductIncome = parseFloat(product.income || 0);
@@ -318,16 +318,16 @@ exports.checkPaymentStatus = async (req, res) => {
             });
             console.log(`Product ${product.id} income updated: ${currentProductIncome} + ${orderAmount} = ${currentProductIncome + orderAmount}`);
             
-            // Update user (author) income (percentage-based)
+            // Update user (author) points (percentage-based commission)
             if (product.authorId) {
               const { User } = require('../models');
               const author = await User.findByPk(product.authorId);
               if (author) {
-                const currentUserIncome = parseFloat(author.income || 0);
+                const currentUserPoints = parseFloat(author.point || 0);
                 await author.update({
-                  income: currentUserIncome + authorIncome
+                  point: currentUserPoints + authorPoints
                 });
-                console.log(`User ${author.id} income updated: ${currentUserIncome} + ${authorIncome} (${commissionPercentage}% of ${orderAmount}) = ${currentUserIncome + authorIncome}`);
+                console.log(`User ${author.id} points updated: ${currentUserPoints} + ${authorPoints} (${commissionPercentage}% of ${orderAmount}) = ${currentUserPoints + authorPoints}`);
               }
             }
           }
@@ -537,23 +537,23 @@ exports.paymentWebhook = async (req, res) => {
               }
             }
             
-            // Calculate income based on membership percentage
-            const authorIncome = orderAmount * (commissionPercentage / 100);
+            // Calculate commission points based on membership percentage
+            const authorPoints = orderAmount * (commissionPercentage / 100);
             
             await product.update({ 
               income: currentIncome + orderAmount 
             });
             console.log(`Product ${product.id} income updated via webhook: ${currentIncome} + ${orderAmount} = ${currentIncome + orderAmount}`);
             
-            // Update user (author) income (percentage-based)
+            // Update user (author) points (percentage-based commission)
             if (product.authorId) {
               const author = await User.findByPk(product.authorId);
               if (author) {
-                const currentUserIncome = parseFloat(author.income || 0);
+                const currentUserPoints = parseFloat(author.point || 0);
                 await author.update({
-                  income: currentUserIncome + authorIncome
+                  point: currentUserPoints + authorPoints
                 });
-                console.log(`User ${author.id} income updated via webhook: ${currentUserIncome} + ${authorIncome} (${commissionPercentage}% of ${orderAmount}) = ${currentUserIncome + authorIncome}`);
+                console.log(`User ${author.id} points updated via webhook: ${currentUserPoints} + ${authorPoints} (${commissionPercentage}% of ${orderAmount}) = ${currentUserPoints + authorPoints}`);
               }
             }
           }
@@ -1087,13 +1087,13 @@ exports.payWithWallet = async (req, res) => {
           }
         }
         
-        // Calculate author income based on membership percentage
-        const authorIncome = purchaseAmount * (commissionPercentage / 100);
+        // Calculate author points based on membership percentage
+        const authorPoints = purchaseAmount * (commissionPercentage / 100);
         
-        // Update author income
+        // Update author points
         await User.update(
           { 
-            income: sequelize.literal(`income + ${authorIncome}`)
+            point: sequelize.literal(`point + ${authorPoints}`)
           },
           { 
             where: { id: product.authorId },
@@ -1101,7 +1101,7 @@ exports.payWithWallet = async (req, res) => {
           }
         );
         
-        console.log(`Author ${product.authorId} income updated via wallet payment: +${authorIncome} (${commissionPercentage}% of ${purchaseAmount})`);
+        console.log(`Author ${product.authorId} points updated via wallet payment: +${authorPoints} (${commissionPercentage}% of ${purchaseAmount})`);
       }
 
       // Commit transaction

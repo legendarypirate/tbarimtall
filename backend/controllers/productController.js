@@ -734,13 +734,13 @@ exports.getMyStatistics = async (req, res) => {
     });
     const totalDownloads = totalDownloadsResult || 0;
 
-    // Get total earnings from user's income field
-    // This field is already updated correctly with commission-based earnings 
+    // Get total earnings from user's point field
+    // This field is updated with commission-based earnings (points)
     // at the time of each order completion, taking into account membership percentage
     const user = await User.findByPk(userId, {
-      attributes: ['income']
+      attributes: ['point']
     });
-    const totalEarnings = parseFloat(user?.income || 0);
+    const totalEarnings = parseFloat(user?.point || 0);
 
     // Get pending earnings (from withdrawal requests)
     const { WithdrawalRequest } = require('../models');

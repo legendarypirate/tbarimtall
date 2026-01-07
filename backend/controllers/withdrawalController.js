@@ -19,7 +19,7 @@ exports.createWithdrawalRequest = async (req, res) => {
     }
 
     const requestedAmount = parseFloat(amount);
-    const currentIncome = parseFloat(user.income || 0);
+    const currentPoints = parseFloat(user.point || 0);
 
     // Calculate total amount in pending and approved requests
     const existingRequests = await WithdrawalRequest.findAll({
@@ -33,8 +33,8 @@ exports.createWithdrawalRequest = async (req, res) => {
       return sum + parseFloat(req.amount || 0);
     }, 0);
 
-    // Check if user has enough balance (current income - pending requests - new request amount)
-    const availableBalance = currentIncome - totalPendingAmount;
+    // Check if user has enough balance (current points - pending requests - new request amount)
+    const availableBalance = currentPoints - totalPendingAmount;
     
     if (requestedAmount > availableBalance) {
       return res.status(400).json({ 
@@ -207,32 +207,32 @@ exports.updateWithdrawalRequestStatus = async (req, res) => {
 
     const withdrawalAmount = parseFloat(request.amount);
 
-    // If status is 'approved', deduct amount from user's amount
+    // If status is 'approved', deduct amount from user's points
     if (status === 'approved') {
-      // Reload user to get latest amount value
+      // Reload user to get latest point value
       await user.reload();
       
-      // Use income field as the amount field (since User model has 'income' not 'amount')
-      const currentAmount = parseFloat(user.income || 0);
+      // Use point field for withdrawal requests
+      const currentPoints = parseFloat(user.point || 0);
       
-      console.log(`💰 Processing withdrawal deduction: User ${user.id} (${user.username}), Current amount: ${currentAmount}₮, Withdrawal amount: ${withdrawalAmount}₮`);
+      console.log(`💰 Processing withdrawal deduction: User ${user.id} (${user.username}), Current points: ${currentPoints}₮, Withdrawal amount: ${withdrawalAmount}₮`);
       
       // Check if user has sufficient balance
-      if (currentAmount < withdrawalAmount) {
-        console.error(`❌ Insufficient balance: User ${user.id} has ${currentAmount}₮ but needs ${withdrawalAmount}₮`);
+      if (currentPoints < withdrawalAmount) {
+        console.error(`❌ Insufficient balance: User ${user.id} has ${currentPoints}₮ but needs ${withdrawalAmount}₮`);
         return res.status(400).json({ 
-          error: `Хэрэглэгчийн үлдэгдэл хүрэлцэхгүй байна. Одоогийн үлдэгдэл: ${currentAmount.toFixed(2)}₮, Хүсэлтийн дүн: ${withdrawalAmount.toFixed(2)}₮` 
+          error: `Хэрэглэгчийн үлдэгдэл хүрэлцэхгүй байна. Одоогийн үлдэгдэл: ${currentPoints.toFixed(2)}₮, Хүсэлтийн дүн: ${withdrawalAmount.toFixed(2)}₮` 
         });
       }
 
       // Use Sequelize's decrement method for atomic operation
-      await user.decrement('income', { by: withdrawalAmount });
+      await user.decrement('point', { by: withdrawalAmount });
       
       // Reload to verify the update
       await user.reload();
-      const newAmount = parseFloat(user.income || 0);
+      const newPoints = parseFloat(user.point || 0);
       
-      console.log(`✅ Deducted ${withdrawalAmount}₮ from user ${user.id} (${user.username}). Previous amount: ${currentAmount}₮, New amount: ${newAmount}₮`);
+      console.log(`✅ Deducted ${withdrawalAmount}₮ from user ${user.id} (${user.username}). Previous points: ${currentPoints}₮, New points: ${newPoints}₮`);
     }
 
     // Update request
@@ -249,7 +249,7 @@ exports.updateWithdrawalRequestStatus = async (req, res) => {
       include: [{
         model: User,
         as: 'user',
-        attributes: ['id', 'username', 'email', 'fullName', 'income']
+        attributes: ['id', 'username', 'email', 'fullName', 'point']
       }, {
         model: User,
         as: 'processedByUser',

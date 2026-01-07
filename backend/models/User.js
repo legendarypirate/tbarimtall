@@ -84,6 +84,20 @@ const User = sequelize.define('User', {
       this.setDataValue('income', parseFloat(value) || 0);
     }
   },
+  point: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0,
+    comment: 'Points earned from product sales commissions (membership-based)',
+    get() {
+      const value = this.getDataValue('point');
+      return value !== null && value !== undefined 
+        ? parseFloat(value) 
+        : 0;
+    },
+    set(value) {
+      this.setDataValue('point', parseFloat(value) || 0);
+    }
+  },
   publishedFileCount: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
