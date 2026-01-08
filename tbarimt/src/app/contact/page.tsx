@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export default function ContactPage() {
   const router = useRouter()
-  const { isDark } = useDarkMode()
+  const { isDark, toggle: toggleDarkMode } = useDarkMode()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
