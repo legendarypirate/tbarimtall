@@ -792,7 +792,7 @@ export default function PublishPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   )
 }
 
