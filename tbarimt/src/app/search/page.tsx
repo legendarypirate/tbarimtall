@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useDarkMode } from '@/hooks/useDarkMode'
 import { searchProducts } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
@@ -154,6 +155,7 @@ const sortOptions = [
 function SearchContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { isDark, toggle: toggleDarkMode } = useDarkMode()
   const queryParam = searchParams.get('q') || ''
   
   const [searchQuery, setSearchQuery] = useState(queryParam)
@@ -207,75 +209,176 @@ function SearchContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+    <main className="min-h-screen bg-white">
+      {/* Top Header - Logo, Search, Upload/Dipbard */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#004e6c]/10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span>Нүүр</span>
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              Хайлтын үр дүн
-            </h1>
-            <div className="w-20"></div>
+          <div className="flex justify-between items-center py-5">
+            {/* Logo */}
+            <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => router.push('/')}>
+              <div className="w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center shadow-lg group-hover:bg-[#ff6b35] group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                <span className="text-white font-bold text-xl">T</span>
+              </div>
+              <h1 className="text-2xl font-bold text-[#004e6c] group-hover:text-[#ff6b35] transition-colors">
+                TBARIMT
+              </h1>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="flex flex-1 max-w-md mx-4 md:mx-8">
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-[#004e6c]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Хайх..."
+                  className="block w-full pl-12 pr-4 py-3 border-2 border-[#004e6c]/20 rounded-xl bg-white text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 focus:border-[#004e6c] text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                />
+              </div>
+            </div>
+            
+            {/* Upload and Dipbard Buttons */}
+            <div className="flex items-center space-x-3">
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className="p-2.5 rounded-xl text-[#004e6c] hover:bg-[#004e6c]/10 transition-all duration-200"
+                aria-label="Toggle dark mode"
+              >
+                {isDark ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+              
+              <button 
+                onClick={() => {
+                  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+                  const baseUrl = API_URL.trim().endsWith('/api') 
+                    ? API_URL.trim().slice(0, -4) 
+                    : API_URL.trim()
+                  window.location.href = `${baseUrl}/api/auth/google`
+                }}
+                className="bg-[#004e6c] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Upload
+              </button>
+              
+              <button 
+                onClick={() => router.push('/dashboard')}
+                className="bg-[#004e6c] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Dipbard
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
+      {/* Main Navigation Bar */}
+      <nav className="bg-[#004e6c] shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
+                <span className="text-white font-bold text-sm">T</span>
+              </div>
+              <h2 className="text-lg font-bold text-white">
+                TBARIMT
+              </h2>
+            </div>
+            <div className="flex items-center space-x-8">
+              <button 
+                onClick={() => router.push('/products')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                Categories
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/about')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                How it Works
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/pricing')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                Pricing
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Bar */}
         <div className="mb-8">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="h-6 w-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#004e6c] via-[#006b8f] to-[#ff6b35] rounded-2xl opacity-20 group-hover:opacity-30 blur transition-opacity duration-300"></div>
+            <div className="relative bg-white rounded-2xl shadow-xl border-2 border-[#004e6c]/20 overflow-hidden">
+              <div className="flex items-center">
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#004e6c] to-[#006b8f] shadow-md">
+                    <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Хайх... (жишээ: реферат, дипломын ажил, тоглоом)"
+                  className="flex-1 pl-16 pr-32 py-4 text-lg bg-transparent text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('')
+                      router.push('/search?q=')
+                    }}
+                    className="absolute inset-y-0 right-24 pr-4 flex items-center text-[#004e6c]/60 hover:text-[#004e6c] transition-colors"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+                <button
+                  onClick={handleSearch}
+                  className="absolute inset-y-0 right-0 px-6 bg-gradient-to-r from-[#004e6c] to-[#ff6b35] text-white rounded-r-xl hover:from-[#006b8f] hover:to-[#ff8555] transition-all font-semibold shadow-md hover:shadow-lg"
+                >
+                  Хайх
+                </button>
+              </div>
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Хайх... (жишээ: реферат, дипломын ажил, тоглоом)"
-              className="w-full pl-12 pr-32 py-4 text-lg rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery('')
-                  router.push('/search?q=')
-                }}
-                className="absolute inset-y-0 right-24 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-            <button
-              onClick={handleSearch}
-              className="absolute inset-y-0 right-0 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-r-xl hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md hover:shadow-lg"
-            >
-              Хайх
-            </button>
           </div>
         </div>
 
         {/* Controls Row */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
           {/* Results Count */}
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-sm text-[#004e6c]/70 font-medium">
             {searchQuery ? (
               <>
-                "<span className="font-semibold text-gray-900 dark:text-white">{searchQuery}</span>" хайлтаар{' '}
-                <span className="font-semibold">{filteredProducts.length}</span> бүтээгдэхүүн олдлоо
+                "<span className="font-bold text-[#004e6c]">{searchQuery}</span>" хайлтаар{' '}
+                <span className="font-bold text-[#004e6c]">{filteredProducts.length}</span> бүтээгдэхүүн олдлоо
               </>
             ) : (
               <span>Хайлтын үг оруулна уу</span>
@@ -285,13 +388,13 @@ function SearchContent() {
           {/* View Mode and Sort */}
           <div className="flex items-center space-x-3">
             {/* View Mode Toggle */}
-            <div className="flex items-center space-x-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+            <div className="flex items-center space-x-1 bg-white border-2 border-[#004e6c]/20 rounded-xl p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'grid'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-[#004e6c] text-white'
+                    : 'text-[#004e6c] hover:bg-[#004e6c]/10'
                 }`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,10 +403,10 @@ function SearchContent() {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'list'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-[#004e6c] text-white'
+                    : 'text-[#004e6c] hover:bg-[#004e6c]/10'
                 }`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,7 +419,7 @@ function SearchContent() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 rounded-xl border-2 border-[#004e6c]/20 bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 focus:border-[#004e6c] font-medium"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -330,21 +433,21 @@ function SearchContent() {
         {/* Products Grid/List */}
         {loading ? (
           <div className="text-center py-16">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Хайж байна...</p>
+            <div className="w-16 h-16 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+            <p className="text-[#004e6c] text-lg font-medium">Хайж байна...</p>
           </div>
         ) : !searchQuery ? (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-2xl font-bold text-[#004e6c] mb-2">
               Хайлтын үг оруулна уу
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-[#004e6c]/70 mb-6 font-medium">
               Дээрх хайлтын талбарт хайх үгээ оруулна уу
             </p>
             <button
               onClick={() => router.push('/')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              className="px-6 py-3 bg-[#004e6c] text-white rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Нүүр хуудас руу буцах
             </button>
@@ -359,12 +462,12 @@ function SearchContent() {
               <div
                 key={product.id}
                 onClick={() => router.push(`/products/${(product as any).uuid || (product as any).id}`)}
-                className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 transform hover:-translate-y-2 group cursor-pointer ${
+                className={`bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-[#004e6c]/10 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 group cursor-pointer ${
                   viewMode === 'list' ? 'flex' : ''
                 }`}
               >
                 {/* Product Image */}
-                <div className={`relative overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 ${
+                <div className={`relative overflow-hidden bg-gradient-to-br from-[#004e6c]/10 to-[#006b8f]/10 ${
                   viewMode === 'list' ? 'w-48 h-48 flex-shrink-0' : 'h-48'
                 }`}>
                     <img
@@ -376,14 +479,14 @@ function SearchContent() {
                         target.style.display = 'none';
                       }}
                     />
-                  <div className="absolute top-3 right-3 flex items-center space-x-1 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded-full">
+                  <div className="absolute top-3 right-3 flex items-center space-x-1 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-lg">
                     <span className="text-yellow-400 text-sm">⭐</span>
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-xs font-semibold text-[#004e6c]">
                       {parseFloat((product as any).rating) || 0}
                     </span>
                   </div>
                   <div className="absolute top-3 left-3">
-                    <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-md">
+                    <span className="text-xs font-bold text-white bg-[#004e6c] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] transition-colors">
                       {typeof (product as any).category === 'object' && (product as any).category?.name
                         ? (product as any).category.name
                         : typeof (product as any).category === 'string'
@@ -395,10 +498,10 @@ function SearchContent() {
 
                 {/* Product Info */}
                 <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <h4 className="text-lg font-semibold text-[#004e6c] mb-3 line-clamp-2 group-hover:text-[#ff6b35] transition-colors">
                     {(product as any).title}
                   </h4>
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <div className="flex items-center justify-between text-sm text-[#004e6c]/70 mb-4 font-medium">
                     <span className="flex items-center space-x-1">
                       <span>📄</span>
                       <span>{(product as any).pages ? `${(product as any).pages} хуудас` : (product as any).size || 'N/A'}</span>
@@ -408,8 +511,8 @@ function SearchContent() {
                       <span>{formatNumber((product as any).downloads || 0)}</span>
                     </span>
                   </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700 gap-3">
-                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                  <div className="flex items-center justify-between pt-4 border-t-2 border-[#004e6c]/10 gap-3">
+                    <span className="text-lg font-bold text-[#004e6c]">
                       {formatNumber(parseFloat((product as any).price) || 0)}₮
                     </span>
                     <button 
@@ -417,7 +520,7 @@ function SearchContent() {
                         e.stopPropagation()
                         router.push(`/products/${(product as any).uuid || (product as any).id}`)
                       }}
-                      className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
+                      className="bg-gradient-to-r from-[#004e6c] to-[#006b8f] text-white px-3 py-1.5 rounded-xl hover:from-[#ff6b35] hover:to-[#ff8555] transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
                     >
                       Дэлгэрэнгүй
                     </button>
@@ -429,11 +532,11 @@ function SearchContent() {
         ) : (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-2xl font-bold text-[#004e6c] mb-2">
               Бүтээгдэхүүн олдсонгүй
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              "<span className="font-semibold">{searchQuery}</span>" хайлтаар бүтээгдэхүүн олдсонгүй
+            <p className="text-[#004e6c]/70 mb-6 font-medium">
+              "<span className="font-bold text-[#004e6c]">{searchQuery}</span>" хайлтаар бүтээгдэхүүн олдсонгүй
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
@@ -441,13 +544,13 @@ function SearchContent() {
                   setSearchQuery('')
                   router.push('/search?q=')
                 }}
-                className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-semibold"
+                className="px-6 py-3 bg-white border-2 border-[#004e6c]/20 text-[#004e6c] rounded-xl hover:bg-[#004e6c]/10 hover:border-[#ff6b35]/50 transition-all duration-300 font-semibold"
               >
                 Хайлтыг цэвэрлэх
               </button>
               <button
                 onClick={() => router.push('/products')}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                className="px-6 py-3 bg-[#004e6c] text-white rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 Бүх бүтээгдэхүүн үзэх
               </button>
@@ -455,17 +558,85 @@ function SearchContent() {
           </div>
         )}
       </div>
-    </div>
+
+      {/* Footer */}
+      <footer className="bg-[#004e6c] mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Navigation Links Row */}
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 mb-10">
+            <button 
+              onClick={() => router.push('/terms')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Terms
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/privacy')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Privacy Policy
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/about')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              How It Works
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/pricing')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Pricing
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/help')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Help
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/mby')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Mby
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/search')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Q
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+          </div>
+          
+          {/* Logo at Bottom Left */}
+          <div className="flex items-center space-x-3 pt-8 border-t border-white/20">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
+              <span className="text-white font-bold text-lg">T</span>
+            </div>
+            <h5 className="text-2xl font-extrabold text-white">
+              TBARIMT
+            </h5>
+          </div>
+        </div>
+      </footer>
+    </main>
   )
 }
 
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Ачааллаж байна...</p>
+          <div className="w-16 h-16 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <p className="text-[#004e6c] text-lg font-medium">Ачааллаж байна...</p>
         </div>
       </div>
     }>

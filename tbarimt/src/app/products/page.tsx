@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useDarkMode } from '@/hooks/useDarkMode'
 import { getProducts, getCategories } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
@@ -166,6 +167,7 @@ const sortOptions = [
 
 export default function ProductsPage() {
   const router = useRouter()
+  const { isDark, toggle: toggleDarkMode } = useDarkMode()
   
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Бүгд')
@@ -298,37 +300,135 @@ export default function ProductsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Ачааллаж байна...</p>
+          <div className="w-16 h-16 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <p className="text-[#004e6c] text-lg font-medium">Ачааллаж байна...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+    <main className="min-h-screen bg-white">
+      {/* Top Header - Logo, Search, Upload/Dipbard */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#004e6c]/10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span>Нүүр</span>
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              Бүх контент
-            </h1>
-            <div className="w-20"></div>
+          <div className="flex justify-between items-center py-5">
+            {/* Logo */}
+            <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => router.push('/')}>
+              <div className="w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center shadow-lg group-hover:bg-[#ff6b35] group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                <span className="text-white font-bold text-xl">T</span>
+              </div>
+              <h1 className="text-2xl font-bold text-[#004e6c] group-hover:text-[#ff6b35] transition-colors">
+                TBARIMT
+              </h1>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="flex flex-1 max-w-md mx-4 md:mx-8">
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-[#004e6c]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && searchQuery) {
+                      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+                    }
+                  }}
+                  placeholder="Хайх..."
+                  className="block w-full pl-12 pr-4 py-3 border-2 border-[#004e6c]/20 rounded-xl bg-white text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 focus:border-[#004e6c] text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                />
+              </div>
+            </div>
+            
+            {/* Upload and Dipbard Buttons */}
+            <div className="flex items-center space-x-3">
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className="p-2.5 rounded-xl text-[#004e6c] hover:bg-[#004e6c]/10 transition-all duration-200"
+                aria-label="Toggle dark mode"
+              >
+                {isDark ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+              
+              <button 
+                onClick={() => {
+                  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+                  const baseUrl = API_URL.trim().endsWith('/api') 
+                    ? API_URL.trim().slice(0, -4) 
+                    : API_URL.trim()
+                  window.location.href = `${baseUrl}/api/auth/google`
+                }}
+                className="bg-[#004e6c] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Upload
+              </button>
+              
+              <button 
+                onClick={() => router.push('/dashboard')}
+                className="bg-[#004e6c] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Dipbard
+              </button>
+            </div>
           </div>
         </div>
       </header>
+
+      {/* Main Navigation Bar */}
+      <nav className="bg-[#004e6c] shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
+                <span className="text-white font-bold text-sm">T</span>
+              </div>
+              <h2 className="text-lg font-bold text-white">
+                TBARIMT
+              </h2>
+            </div>
+            <div className="flex items-center space-x-8">
+              <button 
+                onClick={() => router.push('/products')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                Categories
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/about')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                How it Works
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/pricing')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                Pricing
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Top Controls */}
@@ -336,13 +436,13 @@ export default function ProductsPage() {
           {/* Search Bar */}
           <div className="relative group">
             {/* Animated background gradient */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl opacity-20 group-hover:opacity-30 blur transition-opacity duration-300"></div>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#004e6c] via-[#006b8f] to-[#ff6b35] rounded-2xl opacity-20 group-hover:opacity-30 blur transition-opacity duration-300"></div>
             
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+            <div className="relative bg-white rounded-2xl shadow-xl border-2 border-[#004e6c]/20 overflow-hidden">
               <div className="flex items-center">
                 {/* Search Icon */}
                 <div className="pl-5 pr-4 flex items-center">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 shadow-md">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#004e6c] to-[#006b8f] shadow-md">
                     <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -356,18 +456,18 @@ export default function ProductsPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter' && searchQuery) {
-                      // Trigger search if needed
+                      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
                     }
                   }}
                   placeholder="Хайх... (жишээ: реферат, дипломын ажил, тоглоом)"
-                  className="flex-1 py-4 text-lg bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none pr-4"
+                  className="flex-1 py-4 text-lg bg-transparent text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none pr-4"
                 />
                 
                 {/* Clear Button */}
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="p-2 mr-2 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
+                    className="p-2 mr-2 rounded-full text-[#004e6c]/60 hover:text-[#004e6c] hover:bg-[#004e6c]/10 transition-all duration-200"
                   >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -383,7 +483,7 @@ export default function ProductsPage() {
                     }
                   }}
                   disabled={!searchQuery}
-                  className="m-1.5 px-6 py-2.5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-xl hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center space-x-2"
+                  className="m-1.5 px-6 py-2.5 bg-gradient-to-r from-[#004e6c] to-[#ff6b35] text-white rounded-xl hover:from-[#006b8f] hover:to-[#ff8555] transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center space-x-2"
                 >
                   <span>Хайх</span>
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,10 +502,10 @@ export default function ProductsPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${
                     selectedCategory === cat
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                      ? 'bg-[#004e6c] text-white shadow-lg hover:bg-[#ff6b35]'
+                      : 'bg-white text-[#004e6c] border-2 border-[#004e6c]/20 hover:border-[#ff6b35]/50 hover:text-[#ff6b35]'
                   }`}
                 >
                   {cat}
@@ -416,13 +516,13 @@ export default function ProductsPage() {
             {/* View Mode and Sort */}
             <div className="flex items-center space-x-3">
               {/* View Mode Toggle */}
-              <div className="flex items-center space-x-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+              <div className="flex items-center space-x-1 bg-white border-2 border-[#004e6c]/20 rounded-xl p-1">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-colors ${
+                  className={`p-2 rounded-lg transition-colors ${
                     viewMode === 'grid'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-[#004e6c] text-white'
+                      : 'text-[#004e6c] hover:bg-[#004e6c]/10'
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,10 +531,10 @@ export default function ProductsPage() {
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-colors ${
+                  className={`p-2 rounded-lg transition-colors ${
                     viewMode === 'list'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-[#004e6c] text-white'
+                      : 'text-[#004e6c] hover:bg-[#004e6c]/10'
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -447,7 +547,7 @@ export default function ProductsPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-4 py-2 rounded-xl border-2 border-[#004e6c]/20 bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 focus:border-[#004e6c] font-medium"
               >
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -459,7 +559,7 @@ export default function ProductsPage() {
               {/* Filters Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                className="px-4 py-2 rounded-xl border-2 border-[#004e6c]/20 bg-white text-[#004e6c] hover:bg-[#004e6c] hover:text-white transition-colors flex items-center space-x-2 font-semibold"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -557,8 +657,8 @@ export default function ProductsPage() {
           )}
 
           {/* Results Count */}
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            <span className="font-semibold">{filteredProducts.length}</span> бүтээгдэхүүн олдлоо
+          <div className="text-sm text-[#004e6c]/70 font-medium">
+            <span className="font-bold text-[#004e6c]">{filteredProducts.length}</span> бүтээгдэхүүн олдлоо
           </div>
         </div>
 
@@ -586,17 +686,17 @@ export default function ProductsPage() {
                   viewMode === 'list' ? 'flex' : ''
                 } ${
                   isUnique 
-                    ? 'bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/30 dark:to-emerald-900/30' 
-                    : 'border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+                    ? 'bg-gradient-to-br from-green-50/80 to-emerald-50/80' 
+                    : 'border-2 border-[#004e6c]/10 bg-white hover:border-[#ff6b35]/30'
                 }`}
                 style={isUnique ? {
                   boxShadow: '0 10px 25px -5px rgba(34, 197, 94, 0.2), 0 10px 10px -5px rgba(34, 197, 94, 0.05)'
                 } : {}}
               >
                 {/* Product Image */}
-                <div className={`relative overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 ${
+                <div className={`relative overflow-hidden bg-gradient-to-br from-[#004e6c]/10 to-[#006b8f]/10 ${
                   viewMode === 'list' ? 'w-48 h-48 flex-shrink-0' : 'h-48'
-                } ${isUnique ? 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20' : ''}`}>
+                } ${isUnique ? 'bg-gradient-to-br from-green-50 to-emerald-50' : ''}`}>
                   <img
                     src={(product as any).image || '/placeholder.png'}
                     alt={(product as any).title}
@@ -617,14 +717,14 @@ export default function ProductsPage() {
                       </div>
                     </div>
                   )}
-                  <div className="absolute top-3 right-3 flex items-center space-x-1 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded-full">
+                  <div className="absolute top-3 right-3 flex items-center space-x-1 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-lg">
                     <span className="text-yellow-400 text-sm">⭐</span>
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    <span className="text-xs font-semibold text-[#004e6c]">
                       {parseFloat((product as any).rating) || 0}
                     </span>
                   </div>
                   <div className={`absolute ${isUnique ? 'top-12 left-3' : 'top-3 left-3'}`}>
-                    <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-md">
+                    <span className="text-xs font-bold text-white bg-[#004e6c] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] transition-colors">
                       {typeof (product as any).category === 'object' && (product as any).category?.name
                         ? (product as any).category.name
                         : typeof (product as any).category === 'string'
@@ -638,12 +738,12 @@ export default function ProductsPage() {
                 <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
                   <h4 className={`text-lg font-semibold mb-3 line-clamp-2 transition-colors ${
                     isUnique 
-                      ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400' 
-                      : 'text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                      ? 'text-green-900 group-hover:text-emerald-600' 
+                      : 'text-[#004e6c] group-hover:text-[#ff6b35]'
                   }`}>
                     {(product as any).title}
                   </h4>
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <div className="flex items-center justify-between text-sm text-[#004e6c]/70 mb-4 font-medium">
                     <span className="flex items-center space-x-1">
                       <span>📄</span>
                       <span>{(product as any).pages ? `${(product as any).pages} хуудас` : (product as any).size || 'N/A'}</span>
@@ -653,11 +753,11 @@ export default function ProductsPage() {
                       <span>{formatNumber((product as any).downloads || 0)}</span>
                     </span>
                   </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700 gap-3">
+                  <div className="flex items-center justify-between pt-4 border-t-2 border-[#004e6c]/10 gap-3">
                     <span className={`text-lg font-bold ${
                       isUnique 
-                        ? 'text-green-600 dark:text-green-400' 
-                        : 'text-blue-600 dark:text-blue-400'
+                        ? 'text-green-600' 
+                        : 'text-[#004e6c]'
                     }`}>
                       {formatNumber(parseFloat((product as any).price) || 0)}₮
                     </span>
@@ -666,10 +766,10 @@ export default function ProductsPage() {
                         e.stopPropagation()
                         router.push(`/products/${product.id}`)
                       }}
-                      className={`px-3 py-1.5 rounded-lg transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 ${
+                      className={`px-3 py-1.5 rounded-xl transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 ${
                         isUnique
                           ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-                          : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+                          : 'bg-gradient-to-r from-[#004e6c] to-[#006b8f] text-white hover:from-[#ff6b35] hover:to-[#ff8555]'
                       }`}
                     >
                       Дэлгэрэнгүй
@@ -684,10 +784,10 @@ export default function ProductsPage() {
         ) : (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h3 className="text-2xl font-bold text-[#004e6c] mb-2">
               Бүтээгдэхүүн олдсонгүй
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-[#004e6c]/70 mb-6 font-medium">
               Филтерүүдийг өөрчлөөд дахин оролдоно уу
             </p>
             <button
@@ -699,14 +799,82 @@ export default function ProductsPage() {
                 setMinRating(0)
                 setSortBy('newest')
               }}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              className="px-6 py-3 bg-[#004e6c] text-white rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Бүх филтерүүдийг цэвэрлэх
             </button>
           </div>
         )}
       </div>
-    </div>
+
+      {/* Footer */}
+      <footer className="bg-[#004e6c] mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Navigation Links Row */}
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 mb-10">
+            <button 
+              onClick={() => router.push('/terms')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Terms
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/privacy')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Privacy Policy
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/about')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              How It Works
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/pricing')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Pricing
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/help')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Help
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/mby')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Mby
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+            <button 
+              onClick={() => router.push('/search')}
+              className="text-white/90 hover:text-white transition-colors text-sm font-semibold relative group"
+            >
+              Q
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+            </button>
+          </div>
+          
+          {/* Logo at Bottom Left */}
+          <div className="flex items-center space-x-3 pt-8 border-t border-white/20">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
+              <span className="text-white font-bold text-lg">T</span>
+            </div>
+            <h5 className="text-2xl font-extrabold text-white">
+              TBARIMT
+            </h5>
+          </div>
+        </div>
+      </footer>
+    </main>
   )
 }
 

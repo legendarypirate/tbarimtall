@@ -284,41 +284,115 @@ export default function PublishPage() {
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Ачааллаж байна...</p>
-        </div>
       </div>
-    )
-  }
+    </main>
+  )
+}
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+    <main className="min-h-screen bg-white">
+      {/* Top Header - Logo, Search, Upload/Dipbard */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#004e6c]/10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">🛒</span>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                tbarimt
+          <div className="flex justify-between items-center py-5">
+            {/* Logo */}
+            <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => router.push('/')}>
+              <div className="w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center shadow-lg group-hover:bg-[#ff6b35] group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
+                <span className="text-white font-bold text-xl">T</span>
+              </div>
+              <h1 className="text-2xl font-bold text-[#004e6c] group-hover:text-[#ff6b35] transition-colors">
+                TBARIMT
               </h1>
             </div>
-            <button 
-              onClick={() => router.push('/')}
-              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
-            >
-              Нүүр хуудас
-            </button>
+            
+            {/* Search Bar */}
+            <div className="flex flex-1 max-w-md mx-4 md:mx-8">
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-[#004e6c]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      router.push('/search')
+                    }
+                  }}
+                  placeholder="Хайх..."
+                  className="block w-full pl-12 pr-4 py-3 border-2 border-[#004e6c]/20 rounded-xl bg-white text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 focus:border-[#004e6c] text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                />
+              </div>
+            </div>
+            
+            {/* Upload and Dipbard Buttons */}
+            <div className="flex items-center space-x-3">
+              <button 
+                onClick={() => router.push('/account/journalist')}
+                className="bg-[#004e6c] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Dashboard
+              </button>
+              
+              <button 
+                onClick={() => router.push('/dashboard')}
+                className="bg-[#004e6c] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Dipbard
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
+      {/* Main Navigation Bar */}
+      <nav className="bg-[#004e6c] shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
+                <span className="text-white font-bold text-sm">T</span>
+              </div>
+              <h2 className="text-lg font-bold text-white">
+                TBARIMT
+              </h2>
+            </div>
+            <div className="flex items-center space-x-8">
+              <button 
+                onClick={() => router.push('/products')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                Categories
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/about')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                How it Works
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/pricing')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                Pricing
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-[#004e6c]/20">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-3xl font-bold text-[#004e6c] mb-2">
               Шинэ контент нийтлэх
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-[#004e6c]/70 font-medium">
               Контент, зураг, файл оруулаад нийтлээрэй
             </p>
           </div>
@@ -335,11 +409,11 @@ export default function PublishPage() {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-3 rounded-lg border-2 ${
+                className={`w-full px-4 py-3 rounded-xl border-2 ${
                   errors.title
                     ? 'border-red-500 focus:border-red-500'
-                    : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
-                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors`}
+                    : 'border-[#004e6c]/20 focus:border-[#004e6c]'
+                } bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors font-medium`}
                 placeholder="Контентын гарчиг оруулна уу"
               />
               {errors.title && (
@@ -358,11 +432,11 @@ export default function PublishPage() {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={5}
-                className={`w-full px-4 py-3 rounded-lg border-2 ${
+                className={`w-full px-4 py-3 rounded-xl border-2 ${
                   errors.description
                     ? 'border-red-500 focus:border-red-500'
-                    : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
-                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors resize-none`}
+                    : 'border-[#004e6c]/20 focus:border-[#004e6c]'
+                } bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors resize-none font-medium`}
                 placeholder="Контентын тайлбар оруулна уу"
               />
               {errors.description && (
@@ -382,11 +456,11 @@ export default function PublishPage() {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border-2 ${
-                    errors.category
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
-                  } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors`}
+                className={`w-full px-4 py-3 rounded-xl border-2 ${
+                  errors.category
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-[#004e6c]/20 focus:border-[#004e6c]'
+                } bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors font-medium`}
                 >
                   <option value="">Ангилал сонгох</option>
                   {categories.map(cat => (
@@ -413,11 +487,11 @@ export default function PublishPage() {
                   onChange={handleInputChange}
                   min="0"
                   step="1000"
-                  className={`w-full px-4 py-3 rounded-lg border-2 ${
-                    errors.price
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
-                  } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors`}
+                className={`w-full px-4 py-3 rounded-xl border-2 ${
+                  errors.price
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-[#004e6c]/20 focus:border-[#004e6c]'
+                } bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors font-medium`}
                   placeholder="0"
                 />
                 {errors.price && (
@@ -440,7 +514,7 @@ export default function PublishPage() {
                   value={formData.pages}
                   onChange={handleInputChange}
                   min="0"
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-[#004e6c]/20 focus:border-[#004e6c] bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors font-medium"
                   placeholder="Жишээ: 25"
                 />
               </div>
@@ -456,7 +530,7 @@ export default function PublishPage() {
                   name="size"
                   value={formData.size}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-[#004e6c]/20 focus:border-[#004e6c] bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors font-medium"
                   placeholder="Жишээ: 2.5 GB"
                 />
               </div>
@@ -575,7 +649,7 @@ export default function PublishPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                className="flex-1 bg-gradient-to-r from-[#004e6c] to-[#ff6b35] text-white px-6 py-3 rounded-xl hover:from-[#006b8f] hover:to-[#ff8555] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
               >
                 {isLoading ? (
                   <>
@@ -592,7 +666,7 @@ export default function PublishPage() {
               <button
                 type="button"
                 onClick={() => router.push('/account/journalist')}
-                className="px-6 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-semibold"
+                className="px-6 py-3 rounded-xl border-2 border-[#004e6c]/20 text-[#004e6c] hover:bg-[#004e6c]/10 hover:border-[#ff6b35]/50 transition-all duration-300 font-semibold"
               >
                 Цуцлах
               </button>
@@ -612,11 +686,11 @@ export default function PublishPage() {
           }}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border-2 border-[#004e6c]/20"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-2xl font-bold text-[#004e6c]">
                 Онцгой болгох төлбөр
               </h3>
               {paymentStatus !== 'pending' && (
@@ -633,7 +707,7 @@ export default function PublishPage() {
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 dark:text-gray-400">Төлбөрийн дүн:</span>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  <span className="text-2xl font-bold text-[#004e6c]">
                     2,000₮
                   </span>
                 </div>
@@ -659,21 +733,21 @@ export default function PublishPage() {
 
               {isCreatingInvoice && (
                 <div className="text-center py-8">
-                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-600 dark:text-gray-400">Төлбөрийн QR код бэлдэж байна...</p>
+                  <div className="w-12 h-12 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-[#004e6c]/70 font-medium">Төлбөрийн QR код бэлдэж байна...</p>
                 </div>
               )}
 
               {(qrCode || qrText) && !paymentError && !isCreatingInvoice && (
                 <>
                   <div className="text-center">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    <h4 className="text-lg font-semibold text-[#004e6c] mb-2">
                       QPay QR код уншуулах
                     </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <p className="text-sm text-[#004e6c]/70 mb-4 font-medium">
                       QPay апп-аар QR кодыг уншуулж төлбөрөө төлнө үү
                     </p>
-                    <div className="bg-white dark:bg-gray-700 p-4 rounded-lg inline-block">
+                    <div className="bg-white p-4 rounded-xl border-2 border-[#004e6c]/20 inline-block">
                       {qrCode && !qrImageError ? (
                         <img
                           src={qrCode}
