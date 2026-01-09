@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Rubik } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 
-const inter = Inter({ subsets: ['latin'] })
+const rubik = Rubik({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Контент Дэлгүүр - Бүх төрлийн контент нэг дороос',
@@ -40,7 +40,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={rubik.className}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

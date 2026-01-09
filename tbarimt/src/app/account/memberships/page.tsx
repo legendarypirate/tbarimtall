@@ -245,35 +245,50 @@ export default function MembershipsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Ачааллаж байна...</p>
+          <div className="w-16 h-16 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <p className="text-[#004e6c] text-lg font-medium">Ачааллаж байна...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-2"
-          >
-            <span>←</span> Буцах
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Гишүүнчлэл сонгох
-          </h1>
-          <p className="text-gray-600">
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#004e6c]/10 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-5">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center space-x-2 text-[#004e6c] hover:text-[#ff6b35] transition-colors font-semibold"
+            >
+              <span>←</span>
+              <span>Буцах</span>
+            </button>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-xl">T</span>
+              </div>
+              <h1 className="text-2xl font-bold text-[#004e6c]">
+                Гишүүнчлэл сонгох
+              </h1>
+            </div>
+            <div className="w-20"></div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <p className="text-[#004e6c]/70 font-medium">
             Өөрийн хэрэгцээнд тохирох гишүүнчлэл сонгоод илүү олон файл нийтлэх боломжтой болно
           </p>
         </div>
 
         {!isSubscriptionActive && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
             <p className="text-red-800 font-semibold">
               ⚠️ Таны гишүүнчлэлийн хугацаа дууссан байна. Шинэ гишүүнчлэл сонгох шаардлагатай.
             </p>
@@ -288,34 +303,39 @@ export default function MembershipsPage() {
             return (
               <div
                 key={membership.id}
-                className={`bg-white rounded-lg shadow-lg overflow-hidden ${
-                  isCurrent ? 'ring-2 ring-blue-500' : ''
+                className={`bg-white rounded-2xl shadow-xl overflow-hidden border-2 transition-all transform hover:-translate-y-1 hover:shadow-2xl ${
+                  isCurrent 
+                    ? 'border-[#004e6c] ring-2 ring-[#004e6c]/20' 
+                    : 'border-[#004e6c]/10 hover:border-[#ff6b35]/30'
                 }`}
               >
-                <div className={`p-6 ${
+                <div className={`p-6 relative overflow-hidden ${
                   isCurrent 
-                    ? 'bg-blue-500 text-white' 
+                    ? 'bg-gradient-to-br from-[#004e6c] to-[#004e6c]/90 text-white' 
                     : isFree 
-                    ? 'bg-gray-100' 
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white'
+                    ? 'bg-gradient-to-br from-gray-100 to-gray-200 text-[#004e6c]' 
+                    : 'bg-gradient-to-br from-[#004e6c] to-[#ff6b35] text-white'
                 }`}>
-                  <h3 className="text-xl font-bold mb-2">{membership.name}</h3>
-                  <div className="text-3xl font-bold mb-2">
-                    {formatPrice(membership.price)}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
+                  <div className="relative z-10">
+                    <h3 className="text-xl font-bold mb-2">{membership.name}</h3>
+                    <div className="text-3xl font-bold mb-2">
+                      {formatPrice(membership.price)}
+                    </div>
+                    {isFree && (
+                      <p className="text-sm opacity-90 font-medium">Суурь гишүүнчлэл</p>
+                    )}
                   </div>
-                  {isFree && (
-                    <p className="text-sm opacity-90">Суурь гишүүнчлэл</p>
-                  )}
                 </div>
 
                 <div className="p-6">
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-gray-600">Нийтлэх хязгаар:</span>
-                      <span className="font-semibold">{membership.maxPosts}</span>
+                      <span className="text-[#004e6c]/70 font-medium">Нийтлэх хязгаар:</span>
+                      <span className="font-bold text-[#004e6c]">{membership.maxPosts}</span>
                     </div>
                     {membership.description && (
-                      <p className="text-sm text-gray-500 mt-2">
+                      <p className="text-sm text-[#004e6c]/60 mt-2 font-medium">
                         {membership.description}
                       </p>
                     )}
@@ -323,11 +343,11 @@ export default function MembershipsPage() {
 
                   {membership.advantages && membership.advantages.length > 0 && (
                     <div className="mb-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">Давуу талууд:</h4>
+                      <h4 className="font-semibold text-[#004e6c] mb-2">Давуу талууд:</h4>
                       <ul className="space-y-1">
                         {membership.advantages.map((advantage, idx) => (
-                          <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
-                            <span className="text-green-500">✓</span>
+                          <li key={idx} className="text-sm text-[#004e6c]/70 flex items-start gap-2 font-medium">
+                            <span className="text-[#ff6b35] font-bold">✓</span>
                             <span>{advantage}</span>
                           </li>
                         ))}
@@ -339,7 +359,7 @@ export default function MembershipsPage() {
                     <button
                       onClick={() => handleExtendMembership(membership.id)}
                       disabled={isExtending || isCreatingInvoice}
-                      className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      className="w-full bg-[#004e6c] text-white py-3 rounded-xl font-semibold hover:bg-[#ff6b35] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       {isExtending ? 'Ачааллаж байна...' : 'Сунгах'}
                     </button>
@@ -347,10 +367,10 @@ export default function MembershipsPage() {
                     <button
                       onClick={() => handleSelectMembership(membership.id)}
                       disabled={isCreatingInvoice}
-                      className={`w-full py-2 rounded-lg font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed ${
+                      className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none ${
                         isFree
                           ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-[#004e6c] text-white hover:bg-[#ff6b35]'
                       }`}
                     >
                       {isCreatingInvoice ? 'Ачааллаж байна...' : 'Сонгох'}
@@ -363,24 +383,26 @@ export default function MembershipsPage() {
         </div>
 
         {myMembership && (
-          <div className="mt-8 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">Одоогийн байдал</h2>
+          <div className="mt-8 bg-white rounded-2xl shadow-xl p-6 border-2 border-[#004e6c]/10">
+            <h2 className="text-xl font-bold mb-4 text-[#004e6c]">Одоогийн байдал</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-gray-600 text-sm">Одоогийн гишүүнчлэл</p>
-                <p className="font-semibold text-lg">
+              <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-4 border-2 border-[#004e6c]/10">
+                <p className="text-[#004e6c]/70 text-sm font-medium mb-1">Одоогийн гишүүнчлэл</p>
+                <p className="font-bold text-lg text-[#004e6c]">
                   {myMembership.membership?.name || 'FREE'}
                 </p>
               </div>
-              <div>
-                <p className="text-gray-600 text-sm">Нийтэлсэн файл</p>
-                <p className="font-semibold text-lg">
+              <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-4 border-2 border-[#004e6c]/10">
+                <p className="text-[#004e6c]/70 text-sm font-medium mb-1">Нийтэлсэн файл</p>
+                <p className="font-bold text-lg text-[#004e6c]">
                   {myMembership.publishedCount} / {myMembership.maxPosts}
                 </p>
               </div>
-              <div>
-                <p className="text-gray-600 text-sm">Хугацаа</p>
-                <p className="font-semibold text-lg">
+              <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-4 border-2 border-[#004e6c]/10">
+                <p className="text-[#004e6c]/70 text-sm font-medium mb-1">Хугацаа</p>
+                <p className={`font-bold text-lg ${
+                  myMembership.isSubscriptionActive ? 'text-[#004e6c]' : 'text-red-600'
+                }`}>
                   {myMembership.isSubscriptionActive ? 'Идэвхтэй' : 'Дууссан'}
                 </p>
               </div>
@@ -391,69 +413,89 @@ export default function MembershipsPage() {
 
       {/* Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
-            <button
-              onClick={() => {
-                setShowPaymentModal(false)
-                setQrCode(null)
-                setQrText(null)
-                setInvoiceId(null)
-                setPaymentStatus(null)
-                setPaymentError(null)
-                if (paymentPollingInterval.current) {
-                  clearInterval(paymentPollingInterval.current)
-                  paymentPollingInterval.current = null
-                }
-              }}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
-            >
-              ×
-            </button>
-
-            <h2 className="text-2xl font-bold mb-4">QPay төлбөр</h2>
-
-            {paymentError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <p className="text-red-800">{paymentError}</p>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10">
+            <div className="p-6 border-b-2 border-[#004e6c]/10">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-[#004e6c]">QPay төлбөр</h2>
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false)
+                    setQrCode(null)
+                    setQrText(null)
+                    setInvoiceId(null)
+                    setPaymentStatus(null)
+                    setPaymentError(null)
+                    if (paymentPollingInterval.current) {
+                      clearInterval(paymentPollingInterval.current)
+                      paymentPollingInterval.current = null
+                    }
+                  }}
+                  className="text-[#004e6c]/60 hover:text-[#ff6b35] transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-            )}
+            </div>
 
-            {paymentStatus === 'completed' ? (
-              <div className="text-center py-8">
-                <div className="text-green-500 text-6xl mb-4">✓</div>
-                <p className="text-xl font-semibold text-green-600">Төлбөр амжилттай төлөгдлөө!</p>
-              </div>
-            ) : (
-              <>
-                <p className="text-gray-600 mb-4">
-                  QPay апп ашиглан QR кодыг уншуулж төлбөрөө төлөөрэй.
-                </p>
+            <div className="p-6 space-y-4">
+              {paymentError && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+                  <p className="text-red-800 font-medium">{paymentError}</p>
+                </div>
+              )}
 
-                {qrCode ? (
-                  <div className="flex flex-col items-center mb-4">
-                    <img
-                      src={qrCode}
-                      alt="QPay QR Code"
-                      className="w-64 h-64 border-2 border-gray-200 rounded-lg mb-4"
-                    />
-                    {qrText && (
-                      <p className="text-sm text-gray-600 break-all text-center">{qrText}</p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-gray-100 rounded-lg p-8 mb-4 text-center">
-                    <p className="text-gray-600">QR код үүсгэж байна...</p>
-                  </div>
-                )}
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-blue-800">
-                    Төлбөр төлөгдсөний дараа автоматаар шинэчлэгдэнэ. Хэсэг хугацааны дараа хуудас шинэчлэх шаардлагагүй.
+              {paymentStatus === 'completed' ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">✅</div>
+                  <h3 className="text-xl font-bold text-[#ff6b35] mb-2">
+                    Төлбөр амжилттай төлөгдлөө!
+                  </h3>
+                  <p className="text-[#004e6c]/70 font-medium">
+                    Гишүүнчлэл амжилттай шинэчлэгдлээ.
                   </p>
                 </div>
-              </>
-            )}
+              ) : (
+                <>
+                  <p className="text-[#004e6c]/70 font-medium mb-4">
+                    QPay апп ашиглан QR кодыг уншуулж төлбөрөө төлөөрэй.
+                  </p>
+
+                  {qrCode ? (
+                    <div className="flex flex-col items-center mb-4">
+                      <img
+                        src={qrCode}
+                        alt="QPay QR Code"
+                        className="w-64 h-64 border-2 border-[#004e6c]/20 rounded-xl mb-4"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      {qrText && (
+                        <p className="text-sm text-[#004e6c]/70 break-all text-center font-medium">{qrText}</p>
+                      )}
+                      <div className="flex items-center justify-center space-x-2 text-sm text-[#ff6b35] mt-4">
+                        <div className="w-2 h-2 bg-[#ff6b35] rounded-full animate-pulse"></div>
+                        <span className="font-medium">Төлбөрийн статус шалгаж байна...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-8 mb-4 text-center border-2 border-[#004e6c]/10">
+                      <div className="w-12 h-12 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-[#004e6c]/70 font-medium">QR код үүсгэж байна...</p>
+                    </div>
+                  )}
+
+                  <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 border-2 border-[#004e6c]/20 rounded-xl p-4">
+                    <p className="text-sm text-[#004e6c]/80 font-medium">
+                      Төлбөр төлөгдсөний дараа автоматаар шинэчлэгдэнэ. Хэсэг хугацааны дараа хуудас шинэчлэх шаардлагагүй.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
