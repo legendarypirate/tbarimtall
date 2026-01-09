@@ -8,6 +8,7 @@ export const translations = {
     categories: 'Ангилал',
     howItWorks: 'Хэрхэн ажиллах вэ',
     pricing: 'Үнэ',
+    wishlist: 'Хүслийн жагсаалт',
     
     // Home page
     heroTitle: 'Контент авах, зарах',
@@ -58,6 +59,7 @@ export const translations = {
     categories: 'Categories',
     howItWorks: 'How It Works',
     pricing: 'Pricing',
+    wishlist: 'Wishlist',
     
     // Home page
     heroTitle: 'Buy and sell content',
