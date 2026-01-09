@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 
 const rubik = Rubik({ subsets: ['latin'] })
 
@@ -41,7 +42,11 @@ export default function RootLayout({
         />
       </head>
       <body className={rubik.className}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

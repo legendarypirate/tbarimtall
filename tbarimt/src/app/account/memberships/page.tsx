@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useDarkMode } from '@/hooks/useDarkMode'
 import { getActiveMemberships, getMyMembership, createMembershipInvoice, checkMembershipPaymentStatus } from '@/lib/api'
 
 interface Membership {
@@ -27,6 +28,7 @@ interface MyMembership {
 
 export default function MembershipsPage() {
   const router = useRouter()
+  const { isDark } = useDarkMode()
   const [memberships, setMemberships] = useState<Membership[]>([])
   const [myMembership, setMyMembership] = useState<MyMembership | null>(null)
   const [loading, setLoading] = useState(true)
@@ -245,33 +247,33 @@ export default function MembershipsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-          <p className="text-[#004e6c] text-lg font-medium">Ачааллаж байна...</p>
+          <div className="w-16 h-16 border-4 border-[#004e6c] dark:border-[#ff6b35] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <p className="text-[#004e6c] dark:text-gray-200 text-lg font-medium">Ачааллаж байна...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#004e6c]/10 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-[#004e6c]/10 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-5">
             <button
               onClick={() => router.back()}
-              className="flex items-center space-x-2 text-[#004e6c] hover:text-[#ff6b35] transition-colors font-semibold"
+              className="flex items-center space-x-2 text-[#004e6c] dark:text-gray-300 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors font-semibold"
             >
               <span>←</span>
               <span>Буцах</span>
             </button>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">T</span>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
+                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
               </div>
-              <h1 className="text-2xl font-bold text-[#004e6c]">
+              <h1 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                 Гишүүнчлэл сонгох
               </h1>
             </div>
@@ -282,14 +284,14 @@ export default function MembershipsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <p className="text-[#004e6c]/70 font-medium">
+          <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
             Өөрийн хэрэгцээнд тохирох гишүүнчлэл сонгоод илүү олон файл нийтлэх боломжтой болно
           </p>
         </div>
 
         {!isSubscriptionActive && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
-            <p className="text-red-800 font-semibold">
+          <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
+            <p className="text-red-800 dark:text-red-300 font-semibold">
               ⚠️ Таны гишүүнчлэлийн хугацаа дууссан байна. Шинэ гишүүнчлэл сонгох шаардлагатай.
             </p>
           </div>
@@ -303,18 +305,18 @@ export default function MembershipsPage() {
             return (
               <div
                 key={membership.id}
-                className={`bg-white rounded-2xl shadow-xl overflow-hidden border-2 transition-all transform hover:-translate-y-1 hover:shadow-2xl ${
+                className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 transition-all transform hover:-translate-y-1 hover:shadow-2xl ${
                   isCurrent 
-                    ? 'border-[#004e6c] ring-2 ring-[#004e6c]/20' 
-                    : 'border-[#004e6c]/10 hover:border-[#ff6b35]/30'
+                    ? 'border-[#004e6c] dark:border-[#006b8f] ring-2 ring-[#004e6c]/20 dark:ring-[#006b8f]/20' 
+                    : 'border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30'
                 }`}
               >
                 <div className={`p-6 relative overflow-hidden ${
                   isCurrent 
-                    ? 'bg-gradient-to-br from-[#004e6c] to-[#004e6c]/90 text-white' 
+                    ? 'bg-gradient-to-br from-[#004e6c] to-[#004e6c]/90 dark:from-[#006b8f] dark:to-[#004e6c] text-white' 
                     : isFree 
-                    ? 'bg-gradient-to-br from-gray-100 to-gray-200 text-[#004e6c]' 
-                    : 'bg-gradient-to-br from-[#004e6c] to-[#ff6b35] text-white'
+                    ? 'bg-gradient-to-br from-gray-100 dark:from-gray-700 to-gray-200 dark:to-gray-600 text-[#004e6c] dark:text-gray-200' 
+                    : 'bg-gradient-to-br from-[#004e6c] to-[#ff6b35] dark:from-[#006b8f] dark:to-[#ff8555] text-white'
                 }`}>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
                   <div className="relative z-10">
@@ -331,11 +333,11 @@ export default function MembershipsPage() {
                 <div className="p-6">
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[#004e6c]/70 font-medium">Нийтлэх хязгаар:</span>
-                      <span className="font-bold text-[#004e6c]">{membership.maxPosts}</span>
+                      <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Нийтлэх хязгаар:</span>
+                      <span className="font-bold text-[#004e6c] dark:text-gray-200">{membership.maxPosts}</span>
                     </div>
                     {membership.description && (
-                      <p className="text-sm text-[#004e6c]/60 mt-2 font-medium">
+                      <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mt-2 font-medium">
                         {membership.description}
                       </p>
                     )}
@@ -343,11 +345,11 @@ export default function MembershipsPage() {
 
                   {membership.advantages && membership.advantages.length > 0 && (
                     <div className="mb-4">
-                      <h4 className="font-semibold text-[#004e6c] mb-2">Давуу талууд:</h4>
+                      <h4 className="font-semibold text-[#004e6c] dark:text-gray-200 mb-2">Давуу талууд:</h4>
                       <ul className="space-y-1">
                         {membership.advantages.map((advantage, idx) => (
-                          <li key={idx} className="text-sm text-[#004e6c]/70 flex items-start gap-2 font-medium">
-                            <span className="text-[#ff6b35] font-bold">✓</span>
+                          <li key={idx} className="text-sm text-[#004e6c]/70 dark:text-gray-400 flex items-start gap-2 font-medium">
+                            <span className="text-[#ff6b35] dark:text-[#ff8555] font-bold">✓</span>
                             <span>{advantage}</span>
                           </li>
                         ))}
@@ -359,7 +361,7 @@ export default function MembershipsPage() {
                     <button
                       onClick={() => handleExtendMembership(membership.id)}
                       disabled={isExtending || isCreatingInvoice}
-                      className="w-full bg-[#004e6c] text-white py-3 rounded-xl font-semibold hover:bg-[#ff6b35] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-3 rounded-xl font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       {isExtending ? 'Ачааллаж байна...' : 'Сунгах'}
                     </button>
@@ -367,10 +369,10 @@ export default function MembershipsPage() {
                     <button
                       onClick={() => handleSelectMembership(membership.id)}
                       disabled={isCreatingInvoice}
-                      className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none ${
+                      className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none ${
                         isFree
-                          ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          : 'bg-[#004e6c] text-white hover:bg-[#ff6b35]'
+                          ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
                       }`}
                     >
                       {isCreatingInvoice ? 'Ачааллаж байна...' : 'Сонгох'}
@@ -383,25 +385,25 @@ export default function MembershipsPage() {
         </div>
 
         {myMembership && (
-          <div className="mt-8 bg-white rounded-2xl shadow-xl p-6 border-2 border-[#004e6c]/10">
-            <h2 className="text-xl font-bold mb-4 text-[#004e6c]">Одоогийн байдал</h2>
+          <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-2 border-[#004e6c]/10 dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-4 text-[#004e6c] dark:text-gray-200">Одоогийн байдал</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-4 border-2 border-[#004e6c]/10">
-                <p className="text-[#004e6c]/70 text-sm font-medium mb-1">Одоогийн гишүүнчлэл</p>
-                <p className="font-bold text-lg text-[#004e6c]">
+              <div className="bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-800 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 rounded-xl p-4 border-2 border-[#004e6c]/10 dark:border-gray-700">
+                <p className="text-[#004e6c]/70 dark:text-gray-400 text-sm font-medium mb-1">Одоогийн гишүүнчлэл</p>
+                <p className="font-bold text-lg text-[#004e6c] dark:text-gray-200">
                   {myMembership.membership?.name || 'FREE'}
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-4 border-2 border-[#004e6c]/10">
-                <p className="text-[#004e6c]/70 text-sm font-medium mb-1">Нийтэлсэн файл</p>
-                <p className="font-bold text-lg text-[#004e6c]">
+              <div className="bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-800 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 rounded-xl p-4 border-2 border-[#004e6c]/10 dark:border-gray-700">
+                <p className="text-[#004e6c]/70 dark:text-gray-400 text-sm font-medium mb-1">Нийтэлсэн файл</p>
+                <p className="font-bold text-lg text-[#004e6c] dark:text-gray-200">
                   {myMembership.publishedCount} / {myMembership.maxPosts}
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-4 border-2 border-[#004e6c]/10">
-                <p className="text-[#004e6c]/70 text-sm font-medium mb-1">Хугацаа</p>
+              <div className="bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-800 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 rounded-xl p-4 border-2 border-[#004e6c]/10 dark:border-gray-700">
+                <p className="text-[#004e6c]/70 dark:text-gray-400 text-sm font-medium mb-1">Хугацаа</p>
                 <p className={`font-bold text-lg ${
-                  myMembership.isSubscriptionActive ? 'text-[#004e6c]' : 'text-red-600'
+                  myMembership.isSubscriptionActive ? 'text-[#004e6c] dark:text-gray-200' : 'text-red-600 dark:text-red-400'
                 }`}>
                   {myMembership.isSubscriptionActive ? 'Идэвхтэй' : 'Дууссан'}
                 </p>
@@ -414,10 +416,10 @@ export default function MembershipsPage() {
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10">
-            <div className="p-6 border-b-2 border-[#004e6c]/10">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10 dark:border-gray-700">
+            <div className="p-6 border-b-2 border-[#004e6c]/10 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#004e6c]">QPay төлбөр</h2>
+                <h2 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">QPay төлбөр</h2>
                 <button
                   onClick={() => {
                     setShowPaymentModal(false)
@@ -431,7 +433,7 @@ export default function MembershipsPage() {
                       paymentPollingInterval.current = null
                     }
                   }}
-                  className="text-[#004e6c]/60 hover:text-[#ff6b35] transition-colors"
+                  className="text-[#004e6c]/60 dark:text-gray-400 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -442,24 +444,24 @@ export default function MembershipsPage() {
 
             <div className="p-6 space-y-4">
               {paymentError && (
-                <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
-                  <p className="text-red-800 font-medium">{paymentError}</p>
+                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
+                  <p className="text-red-800 dark:text-red-300 font-medium">{paymentError}</p>
                 </div>
               )}
 
               {paymentStatus === 'completed' ? (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-4">✅</div>
-                  <h3 className="text-xl font-bold text-[#ff6b35] mb-2">
+                  <h3 className="text-xl font-bold text-[#ff6b35] dark:text-[#ff8555] mb-2">
                     Төлбөр амжилттай төлөгдлөө!
                   </h3>
-                  <p className="text-[#004e6c]/70 font-medium">
+                  <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
                     Гишүүнчлэл амжилттай шинэчлэгдлээ.
                   </p>
                 </div>
               ) : (
                 <>
-                  <p className="text-[#004e6c]/70 font-medium mb-4">
+                  <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium mb-4">
                     QPay апп ашиглан QR кодыг уншуулж төлбөрөө төлөөрэй.
                   </p>
 
@@ -468,28 +470,28 @@ export default function MembershipsPage() {
                       <img
                         src={qrCode}
                         alt="QPay QR Code"
-                        className="w-64 h-64 border-2 border-[#004e6c]/20 rounded-xl mb-4"
+                        className="w-64 h-64 border-2 border-[#004e6c]/20 dark:border-gray-600 rounded-xl mb-4"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
                       {qrText && (
-                        <p className="text-sm text-[#004e6c]/70 break-all text-center font-medium">{qrText}</p>
+                        <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 break-all text-center font-medium">{qrText}</p>
                       )}
-                      <div className="flex items-center justify-center space-x-2 text-sm text-[#ff6b35] mt-4">
-                        <div className="w-2 h-2 bg-[#ff6b35] rounded-full animate-pulse"></div>
+                      <div className="flex items-center justify-center space-x-2 text-sm text-[#ff6b35] dark:text-[#ff8555] mt-4">
+                        <div className="w-2 h-2 bg-[#ff6b35] dark:bg-[#ff8555] rounded-full animate-pulse"></div>
                         <span className="font-medium">Төлбөрийн статус шалгаж байна...</span>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-8 mb-4 text-center border-2 border-[#004e6c]/10">
-                      <div className="w-12 h-12 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                      <p className="text-[#004e6c]/70 font-medium">QR код үүсгэж байна...</p>
+                    <div className="bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-800 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 rounded-xl p-8 mb-4 text-center border-2 border-[#004e6c]/10 dark:border-gray-700">
+                      <div className="w-12 h-12 border-4 border-[#004e6c] dark:border-[#ff6b35] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">QR код үүсгэж байна...</p>
                     </div>
                   )}
 
-                  <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 border-2 border-[#004e6c]/20 rounded-xl p-4">
-                    <p className="text-sm text-[#004e6c]/80 font-medium">
+                  <div className="bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-800 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-4">
+                    <p className="text-sm text-[#004e6c]/80 dark:text-gray-300 font-medium">
                       Төлбөр төлөгдсөний дараа автоматаар шинэчлэгдэнэ. Хэсэг хугацааны дараа хуудас шинэчлэх шаардлагагүй.
                     </p>
                   </div>

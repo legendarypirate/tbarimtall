@@ -1,0 +1,187 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useDarkMode } from '@/hooks/useDarkMode'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { getTranslation } from '@/lib/translations'
+
+interface HeaderProps {
+  searchQuery?: string
+  onSearchChange?: (query: string) => void
+}
+
+export default function Header({ searchQuery: externalSearchQuery, onSearchChange }: HeaderProps) {
+  const router = useRouter()
+  const { isDark, toggle: toggleDarkMode } = useDarkMode()
+  const { language, setLanguage } = useLanguage()
+  const [isJournalist, setIsJournalist] = useState(false)
+  const [searchQuery, setSearchQuery] = useState(externalSearchQuery || '')
+
+  useEffect(() => {
+    // Check if user is logged in as journalist
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser)
+        setIsJournalist(user.role === 'journalist')
+      } catch (e) {
+        setIsJournalist(false)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (externalSearchQuery !== undefined) {
+      setSearchQuery(externalSearchQuery)
+    }
+  }, [externalSearchQuery])
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    if (onSearchChange) {
+      onSearchChange(value)
+    }
+  }
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
+    }
+  }
+
+  return (
+    <>
+      {/* Top Header - Logo, Search, Upload/Dipbard */}
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-[#004e6c]/10 dark:border-gray-700/50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-5">
+            {/* Logo */}
+            <div className="flex items-center cursor-pointer group m-0 p-0" onClick={() => router.push('/')}>
+              <div className="h-16 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 overflow-hidden m-0 p-0">
+                <img src="/lg.png" alt="TBARIMT Logo" className="h-full w-auto object-contain" />
+              </div>
+            </div>
+
+            
+            {/* Search Bar */}
+            <div className="flex flex-1 max-w-md mx-4 md:mx-8">
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-[#004e6c]/60 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  placeholder={getTranslation(language, 'search')}
+                  className="block w-full pl-12 pr-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 placeholder-[#004e6c]/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 focus:border-[#004e6c] dark:focus:border-[#ff6b35] text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                />
+              </div>
+            </div>
+            
+            {/* Upload and Dipbard Buttons */}
+            <div className="flex items-center space-x-3">
+              {/* Language Selector */}
+              <div className="relative">
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as 'mn' | 'en')}
+                  className="px-3 py-2 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 text-sm font-semibold cursor-pointer transition-all"
+                >
+                  <option value="mn">🇲🇳 Мон</option>
+                  <option value="en">🇬🇧 Eng</option>
+                </select>
+              </div>
+              
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className="p-2.5 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200"
+                aria-label="Toggle dark mode"
+              >
+                {isDark ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+              
+              {isJournalist ? (
+                <div className="relative">
+                  <button 
+                    onClick={() => router.push('/account/journalist')}
+                    className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    <span>{getTranslation(language, 'uploadContent')}</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => {
+                    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+                    const baseUrl = API_URL.trim().endsWith('/api') 
+                      ? API_URL.trim().slice(0, -4) 
+                      : API_URL.trim()
+                    window.location.href = `${baseUrl}/api/auth/google`
+                  }}
+                  className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  {getTranslation(language, 'uploadContent')}
+                </button>
+              )}
+             
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Navigation Bar */}
+      <nav className="bg-[#004e6c] dark:bg-gray-800 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
+              </div>
+            </div>
+            <div className="flex items-center space-x-8">
+              <button 
+                onClick={() => router.push('/products')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                {getTranslation(language, 'categories')}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/about')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                {getTranslation(language, 'howItWorks')}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/pricing')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                {getTranslation(language, 'pricing')}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </>
+  )
+}
+

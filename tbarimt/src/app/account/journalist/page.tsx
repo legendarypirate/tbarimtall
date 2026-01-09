@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useDarkMode } from '@/hooks/useDarkMode'
 import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus } from '@/lib/api'
 import MembershipBar from '@/components/MembershipBar'
 
@@ -24,6 +25,7 @@ interface ProductData {
 
 export default function JournalistAccount() {
   const router = useRouter()
+  const { isDark } = useDarkMode()
   const [activeTab, setActiveTab] = useState<'products' | 'earnings' | 'analytics' | 'settings'>('products')
   const [user, setUser] = useState<any>(null)
   const [products, setProducts] = useState<ProductData[]>([])
@@ -709,10 +711,10 @@ export default function JournalistAccount() {
 
   if (!user || isLoadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-          <p className="text-[#004e6c] text-lg font-medium">Ачааллаж байна...</p>
+          <div className="w-16 h-16 border-4 border-[#004e6c] dark:border-[#ff6b35] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <p className="text-[#004e6c] dark:text-gray-200 text-lg font-medium">Ачааллаж байна...</p>
         </div>
       </div>
     )
@@ -729,29 +731,29 @@ export default function JournalistAccount() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#004e6c]/10 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-[#004e6c]/10 dark:border-gray-700/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-5">
             <button
               onClick={() => router.push('/')}
-              className="flex items-center space-x-2 text-[#004e6c] hover:text-[#ff6b35] transition-colors font-semibold"
+              className="flex items-center space-x-2 text-[#004e6c] dark:text-gray-200 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors font-semibold"
             >
               <span>←</span>
               <span>Нүүр</span>
             </button>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">T</span>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
+                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
               </div>
-              <h1 className="text-2xl font-bold text-[#004e6c]">
+              <h1 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                 Нийтлэлчийн данс
               </h1>
             </div>
             <button
               onClick={handleLogout}
-              className="text-[#004e6c] hover:text-[#ff6b35] transition-colors font-semibold"
+              className="text-[#004e6c] dark:text-gray-200 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors font-semibold"
             >
               Гарах
             </button>
@@ -764,7 +766,7 @@ export default function JournalistAccount() {
         <MembershipBar />
         
         {/* Profile Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 border-2 border-[#004e6c]/10 hover:border-[#004e6c]/20 transition-all">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#004e6c]/20 dark:hover:border-gray-600 transition-all">
           <div className="flex items-center space-x-6">
             <div className="relative">
               <img
@@ -775,30 +777,30 @@ export default function JournalistAccount() {
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-1">
-                <h2 className="text-2xl font-bold text-[#004e6c]">
+                <h2 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                   {user.fullName || user.username || 'Хэрэглэгч'}
                 </h2>
               </div>
-              <p className="text-[#004e6c]/70 mb-2 font-medium">
+              <p className="text-[#004e6c]/70 dark:text-gray-400 mb-2 font-medium">
                 @{user.username} • {user.email}
               </p>
               <div className="flex items-center space-x-1">
                 <span className="text-yellow-400">⭐</span>
-                <span className="font-semibold text-[#004e6c]">
+                <span className="font-semibold text-[#004e6c] dark:text-gray-200">
                   {stats.rating.toFixed(1)}
                 </span>
-                <span className="text-[#004e6c]/50">•</span>
-                <span className="text-[#004e6c]/70 font-medium">
+                <span className="text-[#004e6c]/50 dark:text-gray-500">•</span>
+                <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
                   {formatNumber(stats.followers)} дагагчид
                 </span>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-[#004e6c]/70 mb-1 font-medium">Онлайн данс</div>
-              <div className="text-3xl font-bold text-[#ff6b35]">
+              <div className="text-sm text-[#004e6c]/70 dark:text-gray-400 mb-1 font-medium">Онлайн данс</div>
+              <div className="text-3xl font-bold text-[#ff6b35] dark:text-[#ff8555]">
                 {((user.income !== undefined && user.income !== null) ? parseFloat(user.income) : stats.totalEarnings).toLocaleString()}₮
               </div>
-              <div className="text-sm text-[#004e6c]/60 mt-1 font-medium">
+              <div className="text-sm text-[#004e6c]/60 dark:text-gray-500 mt-1 font-medium">
                 Хүлээгдэж байна: {stats.pendingEarnings.toLocaleString()}₮
               </div>
             </div>
@@ -807,55 +809,55 @@ export default function JournalistAccount() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-6">
-          <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-[#004e6c]/15 hover:shadow-xl hover:border-[#ff6b35]/30 transition-all transform hover:-translate-y-1 text-center group relative overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border-2 border-[#004e6c]/15 dark:border-gray-700 hover:shadow-xl hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 text-center group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 transition-all"></div>
             <div className="relative z-10">
-              <div className="text-3xl font-bold text-[#004e6c] mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {stats.totalProducts}
               </div>
-              <div className="text-[#004e6c]/60 font-medium">Нийтлэл</div>
+              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium">Нийтлэл</div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-[#004e6c]/15 hover:shadow-xl hover:border-[#ff6b35]/30 transition-all transform hover:-translate-y-1 text-center group relative overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border-2 border-[#004e6c]/15 dark:border-gray-700 hover:shadow-xl hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 text-center group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 transition-all"></div>
             <div className="relative z-10">
-              <div className="text-3xl font-bold text-[#004e6c] mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {formatNumber(stats.totalViews)}
               </div>
-              <div className="text-[#004e6c]/60 font-medium">Нийт үзсэн</div>
+              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium">Нийт үзсэн</div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-[#004e6c]/15 hover:shadow-xl hover:border-[#ff6b35]/30 transition-all transform hover:-translate-y-1 text-center group relative overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border-2 border-[#004e6c]/15 dark:border-gray-700 hover:shadow-xl hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 text-center group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 transition-all"></div>
             <div className="relative z-10">
-              <div className="text-3xl font-bold text-[#004e6c] mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {formatNumber(stats.totalDownloads)}
               </div>
-              <div className="text-[#004e6c]/60 font-medium">Татсан тоо</div>
+              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium">Татсан тоо</div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-[#004e6c]/15 hover:shadow-xl hover:border-[#ff6b35]/30 transition-all transform hover:-translate-y-1 text-center group relative overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border-2 border-[#004e6c]/15 dark:border-gray-700 hover:shadow-xl hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 text-center group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 transition-all"></div>
             <div className="relative z-10">
-              <div className="text-3xl font-bold text-[#ff6b35] mb-2">
+              <div className="text-3xl font-bold text-[#ff6b35] dark:text-[#ff8555] mb-2">
                 {formatNumber(stats.totalEarnings)}₮
               </div>
-              <div className="text-[#004e6c]/60 font-medium">Файл орлого</div>
+              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium">Файл орлого</div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-2xl shadow-xl border-2 border-[#004e6c]/10">
-          <div className="border-b-2 border-[#004e6c]/10 px-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-[#004e6c]/10 dark:border-gray-700">
+          <div className="border-b-2 border-[#004e6c]/10 dark:border-gray-700 px-6">
             <div className="flex justify-between items-center">
               <div className="flex space-x-4 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab('products')}
                   className={`py-4 px-2 border-b-2 font-semibold transition-colors whitespace-nowrap ${
                     activeTab === 'products'
-                      ? 'border-[#004e6c] text-[#004e6c]'
-                      : 'border-transparent text-[#004e6c]/60 hover:text-[#004e6c]'
+                      ? 'border-[#004e6c] dark:border-[#ff6b35] text-[#004e6c] dark:text-gray-200'
+                      : 'border-transparent text-[#004e6c]/60 dark:text-gray-400 hover:text-[#004e6c] dark:hover:text-gray-200'
                   }`}
                 >
                   Миний нийтлэл ({products.length})
@@ -864,8 +866,8 @@ export default function JournalistAccount() {
                   onClick={() => setActiveTab('earnings')}
                   className={`py-4 px-2 border-b-2 font-semibold transition-colors whitespace-nowrap ${
                     activeTab === 'earnings'
-                      ? 'border-[#004e6c] text-[#004e6c]'
-                      : 'border-transparent text-[#004e6c]/60 hover:text-[#004e6c]'
+                      ? 'border-[#004e6c] dark:border-[#ff6b35] text-[#004e6c] dark:text-gray-200'
+                      : 'border-transparent text-[#004e6c]/60 dark:text-gray-400 hover:text-[#004e6c] dark:hover:text-gray-200'
                   }`}
                 >
                   Орлого
@@ -874,8 +876,8 @@ export default function JournalistAccount() {
                   onClick={() => setActiveTab('analytics')}
                   className={`py-4 px-2 border-b-2 font-semibold transition-colors whitespace-nowrap ${
                     activeTab === 'analytics'
-                      ? 'border-[#004e6c] text-[#004e6c]'
-                      : 'border-transparent text-[#004e6c]/60 hover:text-[#004e6c]'
+                      ? 'border-[#004e6c] dark:border-[#ff6b35] text-[#004e6c] dark:text-gray-200'
+                      : 'border-transparent text-[#004e6c]/60 dark:text-gray-400 hover:text-[#004e6c] dark:hover:text-gray-200'
                   }`}
                 >
                   Статистик
@@ -884,8 +886,8 @@ export default function JournalistAccount() {
                   onClick={() => setActiveTab('settings')}
                   className={`py-4 px-2 border-b-2 font-semibold transition-colors whitespace-nowrap ${
                     activeTab === 'settings'
-                      ? 'border-[#004e6c] text-[#004e6c]'
-                      : 'border-transparent text-[#004e6c]/60 hover:text-[#004e6c]'
+                      ? 'border-[#004e6c] dark:border-[#ff6b35] text-[#004e6c] dark:text-gray-200'
+                      : 'border-transparent text-[#004e6c]/60 dark:text-gray-400 hover:text-[#004e6c] dark:hover:text-gray-200'
                   }`}
                 >
                   Тохиргоо
@@ -912,14 +914,14 @@ export default function JournalistAccount() {
             {activeTab === 'products' && (
               <div className="space-y-4">
                 {products.length === 0 ? (
-                  <div className="bg-white rounded-xl p-8 border-2 border-[#004e6c]/10 text-center">
-                    <p className="text-[#004e6c]/70 font-medium">Одоогоор нийтлэл байхгүй байна</p>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border-2 border-[#004e6c]/10 dark:border-gray-700 text-center">
+                    <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Одоогоор нийтлэл байхгүй байна</p>
                   </div>
                 ) : (
                   products.map((product) => (
                   <div
                     key={product.id}
-                    className="bg-white rounded-xl p-4 border-2 border-[#004e6c]/10 hover:shadow-xl hover:border-[#004e6c]/20 transition-all transform hover:-translate-y-1"
+                    className="bg-white dark:bg-gray-800 rounded-xl p-4 border-2 border-[#004e6c]/10 dark:border-gray-700 hover:shadow-xl hover:border-[#004e6c]/20 dark:hover:border-gray-600 transition-all transform hover:-translate-y-1"
                   >
                     <div className="flex items-center space-x-4">
                       <img
@@ -932,20 +934,20 @@ export default function JournalistAccount() {
                       />
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-semibold text-[#004e6c]">
+                          <h4 className="font-semibold text-[#004e6c] dark:text-gray-200">
                             {product.title}
                           </h4>
                           <span
                             className={`text-xs px-2 py-1 rounded ${
                               product.status === 'published' || product.status === 'new'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-yellow-100 text-yellow-700'
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                             }`}
                           >
                             {product.status === 'published' ? 'Нийтлэгдсэн' : product.status === 'new' ? 'Шинэ' : 'Ноорог'}
                           </span>
                         </div>
-                        <p className="text-sm text-[#004e6c]/70 mb-2 font-medium">
+                        <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 mb-2 font-medium">
                           {typeof product.category === 'object' && product.category?.name
                             ? product.category.name
                             : typeof product.category === 'string'
@@ -953,16 +955,16 @@ export default function JournalistAccount() {
                             : 'N/A'} • {new Date(product.createdAt).toLocaleDateString('mn-MN')}
                         </p>
                         <div className="flex items-center space-x-6 text-sm">
-                          <span className="text-[#004e6c]/70 font-medium">
+                          <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
                             👁️ {formatNumber(product.views)}
                           </span>
-                          <span className="text-[#004e6c]/70 font-medium">
+                          <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
                             ⬇️ {formatNumber(product.downloads)}
                           </span>
-                          <span className="text-lg font-bold text-[#004e6c]">
+                          <span className="text-lg font-bold text-[#004e6c] dark:text-gray-200">
                             {product.price.toLocaleString()}₮
                           </span>
-                          <span className="text-[#ff6b35] font-semibold">
+                          <span className="text-[#ff6b35] dark:text-[#ff8555] font-semibold">
                             Орлого: {(product.earnings || 0).toLocaleString()}₮
                           </span>
                         </div>
@@ -1010,23 +1012,23 @@ export default function JournalistAccount() {
 
             {activeTab === 'earnings' && (
               <div className="space-y-4">
-                <div className="bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 rounded-xl p-6 border-2 border-[#004e6c]/10 mb-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#ff6b35]/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                <div className="bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-800 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 rounded-xl p-6 border-2 border-[#004e6c]/10 dark:border-gray-700 mb-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#ff6b35]/10 dark:bg-[#ff6b35]/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
                   <div className="relative z-10">
                     <div className="flex justify-between items-center">
                       <div>
-                        <div className="text-sm text-[#004e6c]/70 mb-1 font-medium">
+                        <div className="text-sm text-[#004e6c]/70 dark:text-gray-400 mb-1 font-medium">
                           Нийт орлого
                         </div>
-                        <div className="text-3xl font-bold text-[#ff6b35]">
+                        <div className="text-3xl font-bold text-[#ff6b35] dark:text-[#ff8555]">
                           {stats.totalEarnings.toLocaleString()}₮
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-[#004e6c]/70 mb-1 font-medium">
+                        <div className="text-sm text-[#004e6c]/70 dark:text-gray-400 mb-1 font-medium">
                           Хүлээгдэж байна
                         </div>
-                        <div className="text-2xl font-bold text-[#004e6c]">
+                        <div className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                           {stats.pendingEarnings.toLocaleString()}₮
                         </div>
                       </div>
@@ -1042,40 +1044,40 @@ export default function JournalistAccount() {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-[#004e6c] mb-4">
+                <h3 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
                   Орлогын хүсэлтийн түүх
                 </h3>
                 {withdrawalRequests.length === 0 ? (
-                  <div className="bg-white rounded-xl p-8 border-2 border-[#004e6c]/10 text-center">
-                    <p className="text-[#004e6c]/70 font-medium">Орлогын хүсэлт байхгүй байна</p>
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border-2 border-[#004e6c]/10 dark:border-gray-700 text-center">
+                    <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Орлогын хүсэлт байхгүй байна</p>
                   </div>
                 ) : (
                   withdrawalRequests.map((request) => (
                     <div
                       key={request.id}
-                      className="bg-white rounded-xl p-4 border-2 border-[#004e6c]/10 hover:shadow-lg hover:border-[#004e6c]/20 transition-all"
+                      className="bg-white dark:bg-gray-800 rounded-xl p-4 border-2 border-[#004e6c]/10 dark:border-gray-700 hover:shadow-lg hover:border-[#004e6c]/20 dark:hover:border-gray-600 transition-all"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-semibold text-[#004e6c] mb-1">
+                          <h4 className="font-semibold text-[#004e6c] dark:text-gray-200 mb-1">
                             Орлогын хүсэлт
                           </h4>
-                          <p className="text-sm text-[#004e6c]/70 font-medium">
+                          <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 font-medium">
                             {new Date(request.createdAt).toLocaleDateString('mn-MN')}
                           </p>
                           {request.bankName && (
-                            <p className="text-sm text-[#004e6c]/70 mt-1 font-medium">
+                            <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 mt-1 font-medium">
                               Банк: {request.bankName}
                             </p>
                           )}
                           {request.adminNotes && (
-                            <p className="text-sm text-[#004e6c]/70 mt-1 italic font-medium">
+                            <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 mt-1 italic font-medium">
                               Админий тайлбар: {request.adminNotes}
                             </p>
                           )}
                         </div>
                         <div className="text-right">
-                          <div className="text-xl font-bold text-[#ff6b35]">
+                          <div className="text-xl font-bold text-[#ff6b35] dark:text-[#ff8555]">
                             {parseFloat(request.amount).toLocaleString()}₮
                           </div>
                           <span
@@ -1108,13 +1110,13 @@ export default function JournalistAccount() {
             {activeTab === 'analytics' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-xl p-6 border-2 border-[#004e6c]/10 hover:shadow-lg transition-all">
-                    <h3 className="text-lg font-bold text-[#004e6c] mb-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border-2 border-[#004e6c]/10 dark:border-gray-700 hover:shadow-lg transition-all">
+                    <h3 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-4">
                       Хамгийн их үзсэн нийтлэл
                     </h3>
                     <div className="space-y-3">
                       {products.length === 0 ? (
-                        <p className="text-[#004e6c]/70 font-medium">Мэдээлэл байхгүй</p>
+                        <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Мэдээлэл байхгүй</p>
                       ) : (
                         products
                         .sort((a, b) => b.views - a.views)
@@ -1122,14 +1124,14 @@ export default function JournalistAccount() {
                         .map((product, index) => (
                           <div key={product.id} className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                              <span className="text-2xl font-bold text-[#004e6c]/40">
+                              <span className="text-2xl font-bold text-[#004e6c]/40 dark:text-gray-600">
                                 #{index + 1}
                               </span>
-                              <span className="text-[#004e6c] font-medium">
+                              <span className="text-[#004e6c] dark:text-gray-200 font-medium">
                                 {product.title}
                               </span>
                             </div>
-                            <span className="font-semibold text-[#004e6c]">
+                            <span className="font-semibold text-[#004e6c] dark:text-gray-200">
                               {formatNumber(product.views)}
                             </span>
                           </div>
@@ -1137,13 +1139,13 @@ export default function JournalistAccount() {
                       )}
                     </div>
                   </div>
-                  <div className="bg-white rounded-xl p-6 border-2 border-[#004e6c]/10 hover:shadow-lg transition-all">
-                    <h3 className="text-lg font-bold text-[#004e6c] mb-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border-2 border-[#004e6c]/10 dark:border-gray-700 hover:shadow-lg transition-all">
+                    <h3 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-4">
                       Хамгийн их татсан нийтлэл
                     </h3>
                     <div className="space-y-3">
                       {products.length === 0 ? (
-                        <p className="text-[#004e6c]/70 font-medium">Мэдээлэл байхгүй</p>
+                        <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Мэдээлэл байхгүй</p>
                       ) : (
                         products
                         .sort((a, b) => b.downloads - a.downloads)
@@ -1151,14 +1153,14 @@ export default function JournalistAccount() {
                         .map((product, index) => (
                           <div key={product.id} className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                              <span className="text-2xl font-bold text-[#004e6c]/40">
+                              <span className="text-2xl font-bold text-[#004e6c]/40 dark:text-gray-600">
                                 #{index + 1}
                               </span>
-                              <span className="text-[#004e6c] font-medium">
+                              <span className="text-[#004e6c] dark:text-gray-200 font-medium">
                                 {product.title}
                               </span>
                             </div>
-                            <span className="font-semibold text-[#ff6b35]">
+                            <span className="font-semibold text-[#ff6b35] dark:text-[#ff8555]">
                               {formatNumber(product.downloads)}
                             </span>
                           </div>
@@ -1173,38 +1175,38 @@ export default function JournalistAccount() {
             {activeTab === 'settings' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl font-bold text-[#004e6c] mb-4">
+                  <h3 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
                     Профайл
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold text-[#004e6c] mb-2">
+                      <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                         Нэр
                       </label>
                       <input
                         type="text"
                         defaultValue={user.fullName || user.username || ''}
-                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 rounded-xl bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 focus:border-[#004e6c] transition-colors"
+                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 focus:border-[#004e6c] dark:focus:border-[#ff6b35] transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-[#004e6c] mb-2">
+                      <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                         Имэйл
                       </label>
                       <input
                         type="email"
                         defaultValue={user.email || ''}
-                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 rounded-xl bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 focus:border-[#004e6c] transition-colors"
+                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 focus:border-[#004e6c] dark:focus:border-[#ff6b35] transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-[#004e6c] mb-2">
+                      <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                         Хэрэглэгчийн нэр
                       </label>
                       <input
                         type="text"
                         defaultValue={user.username || ''}
-                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 rounded-xl bg-white text-[#004e6c]/60 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c]/60 dark:text-gray-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         disabled
                       />
                     </div>
@@ -1229,21 +1231,21 @@ export default function JournalistAccount() {
           />
           
           {/* Slide-in Panel */}
-          <div className={`fixed inset-y-0 right-0 w-full md:w-[600px] lg:w-[700px] bg-white z-50 shadow-2xl overflow-y-auto transition-transform duration-300 ease-out ${
+          <div className={`fixed inset-y-0 right-0 w-full md:w-[600px] lg:w-[700px] bg-white dark:bg-gray-800 z-50 shadow-2xl overflow-y-auto transition-transform duration-300 ease-out ${
             isPanelOpen ? 'translate-x-0' : 'translate-x-full'
           }`}>
-            <div className="sticky top-0 bg-white border-b-2 border-[#004e6c]/10 px-6 py-4 flex justify-between items-center z-10">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b-2 border-[#004e6c]/10 dark:border-gray-700 px-6 py-4 flex justify-between items-center z-10">
               <div>
-                <h3 className="text-2xl font-bold text-[#004e6c]">
+                <h3 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                   {editingProduct ? 'Контент засах' : 'Шинэ контент нийтлэх'}
                 </h3>
-                <p className="text-sm text-[#004e6c]/70 mt-1 font-medium">
+                <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 mt-1 font-medium">
                   {editingProduct ? 'Контентын мэдээллийг засна уу' : 'Контент, зураг, файл оруулаад нийтлээрэй'}
                 </p>
               </div>
               <button
                 onClick={handleCloseModal}
-                className="text-[#004e6c]/60 hover:text-[#ff6b35] text-3xl leading-none w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#004e6c]/5 transition-colors"
+                className="text-[#004e6c]/60 dark:text-gray-400 hover:text-[#ff6b35] dark:hover:text-[#ff8555] text-3xl leading-none w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-gray-700 transition-colors"
               >
                 ×
               </button>
@@ -1252,14 +1254,14 @@ export default function JournalistAccount() {
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Error message */}
               {errors.submit && (
-                <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">
-                  <p className="text-sm text-red-700 font-medium">{errors.submit}</p>
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
+                  <p className="text-sm text-red-700 dark:text-red-400 font-medium">{errors.submit}</p>
                 </div>
               )}
               
               {/* Title */}
               <div>
-                <label htmlFor="title" className="block text-sm font-semibold text-[#004e6c] mb-2">
+                <label htmlFor="title" className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                   Гарчиг <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1270,9 +1272,9 @@ export default function JournalistAccount() {
                   onChange={handleInputChange}
                   className={`w-full px-4 py-3 rounded-xl border-2 ${
                     errors.title
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-[#004e6c]/20 focus:border-[#004e6c]'
-                  } bg-white text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors`}
+                      ? 'border-red-500 dark:border-red-500 focus:border-red-500'
+                      : 'border-[#004e6c]/20 dark:border-gray-700 focus:border-[#004e6c] dark:focus:border-[#ff6b35]'
+                  } bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 placeholder-[#004e6c]/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 transition-colors`}
                   placeholder="Контентын гарчиг оруулна уу"
                 />
                 {errors.title && (
@@ -1282,7 +1284,7 @@ export default function JournalistAccount() {
 
               {/* Description */}
               <div>
-                <label htmlFor="description" className="block text-sm font-semibold text-[#004e6c] mb-2">
+                <label htmlFor="description" className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                   Тайлбар <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -1293,9 +1295,9 @@ export default function JournalistAccount() {
                   rows={5}
                   className={`w-full px-4 py-3 rounded-xl border-2 ${
                     errors.description
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-[#004e6c]/20 focus:border-[#004e6c]'
-                  } bg-white text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors resize-none`}
+                      ? 'border-red-500 dark:border-red-500 focus:border-red-500'
+                      : 'border-[#004e6c]/20 dark:border-gray-700 focus:border-[#004e6c] dark:focus:border-[#ff6b35]'
+                  } bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 placeholder-[#004e6c]/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 transition-colors resize-none`}
                   placeholder="Контентын тайлбар оруулна уу"
                 />
                 {errors.description && (
@@ -1307,7 +1309,7 @@ export default function JournalistAccount() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Category */}
                 <div>
-                  <label htmlFor="categoryId" className="block text-sm font-semibold text-[#004e6c] mb-2">
+                  <label htmlFor="categoryId" className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                     Ангилал <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -1318,9 +1320,9 @@ export default function JournalistAccount() {
                     disabled={isLoadingCategories}
                     className={`w-full px-4 py-3 rounded-xl border-2 ${
                       errors.categoryId
-                        ? 'border-red-500 focus:border-red-500'
-                        : 'border-[#004e6c]/20 focus:border-[#004e6c]'
-                    } bg-white text-[#004e6c] focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                        ? 'border-red-500 dark:border-red-500 focus:border-red-500'
+                        : 'border-[#004e6c]/20 dark:border-gray-700 focus:border-[#004e6c] dark:focus:border-[#ff6b35]'
+                    } bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <option value="">
                       {isLoadingCategories ? 'Ангилал ачааллаж байна...' : 'Ангилал сонгох'}
@@ -1338,7 +1340,7 @@ export default function JournalistAccount() {
 
                 {/* Price */}
                 <div>
-                  <label htmlFor="price" className="block text-sm font-semibold text-[#004e6c] mb-2">
+                  <label htmlFor="price" className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                     Үнэ (₮) <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1351,9 +1353,9 @@ export default function JournalistAccount() {
                     step="1000"
                     className={`w-full px-4 py-3 rounded-xl border-2 ${
                       errors.price
-                        ? 'border-red-500 focus:border-red-500'
-                        : 'border-[#004e6c]/20 focus:border-[#004e6c]'
-                    } bg-white text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 transition-colors`}
+                        ? 'border-red-500 dark:border-red-500 focus:border-red-500'
+                        : 'border-[#004e6c]/20 dark:border-gray-700 focus:border-[#004e6c] dark:focus:border-[#ff6b35]'
+                    } bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 placeholder-[#004e6c]/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 transition-colors`}
                     placeholder="0"
                   />
                   {errors.price && (
@@ -1587,15 +1589,15 @@ export default function JournalistAccount() {
       {/* Withdrawal Request Modal */}
       {showWithdrawalModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border-2 border-[#004e6c]/10">
-            <div className="p-6 border-b-2 border-[#004e6c]/10">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border-2 border-[#004e6c]/10 dark:border-gray-700">
+            <div className="p-6 border-b-2 border-[#004e6c]/10 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#004e6c]">
+                <h2 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                   Орлогын хүсэлт илгээх
                 </h2>
                 <button
                   onClick={() => setShowWithdrawalModal(false)}
-                  className="text-[#004e6c]/60 hover:text-[#ff6b35] transition-colors"
+                  className="text-[#004e6c]/60 dark:text-gray-400 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1726,10 +1728,10 @@ export default function JournalistAccount() {
       {/* Wallet Recharge Modal */}
       {showWalletRechargeModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10">
-            <div className="p-6 border-b-2 border-[#004e6c]/10">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10 dark:border-gray-700">
+            <div className="p-6 border-b-2 border-[#004e6c]/10 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#004e6c]">
+                <h2 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                   Данс цэнэглэх
                 </h2>
                 <button
@@ -1745,7 +1747,7 @@ export default function JournalistAccount() {
                     setWalletRechargeInvoiceId(null)
                     setWalletRechargeStatus('pending')
                   }}
-                  className="text-[#004e6c]/60 hover:text-[#ff6b35] transition-colors"
+                  className="text-[#004e6c]/60 dark:text-gray-400 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1835,10 +1837,10 @@ export default function JournalistAccount() {
       {/* Unique Product Payment Modal */}
       {showUniqueModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10">
-            <div className="p-6 border-b-2 border-[#004e6c]/10">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10 dark:border-gray-700">
+            <div className="p-6 border-b-2 border-[#004e6c]/10 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#004e6c]">
+                <h2 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                   Онцгой болгох төлбөр
                 </h2>
                 <button
@@ -1854,7 +1856,7 @@ export default function JournalistAccount() {
                     setInvoiceId(null)
                     setPaymentStatus('pending')
                   }}
-                  className="text-[#004e6c]/60 hover:text-[#ff6b35] transition-colors"
+                  className="text-[#004e6c]/60 dark:text-gray-400 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

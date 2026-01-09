@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useDarkMode } from '@/hooks/useDarkMode'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,7 @@ const getBaseApiUrl = () => {
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { isDark } = useDarkMode()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,24 +42,24 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#004e6c]/5 via-white to-[#ff6b35]/5 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-900 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 border-2 border-[#004e6c]/20">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border-2 border-[#004e6c]/20 dark:border-gray-700">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-2xl mb-4 shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-2xl mb-4 shadow-lg">
               <span className="text-3xl">🛒</span>
             </div>
-            <h1 className="text-3xl font-bold text-[#004e6c] mb-2">
+            <h1 className="text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2">
               Нэвтрэх
             </h1>
-            <p className="text-[#004e6c]/70 font-medium">
+            <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
               Контент нийтлэхэд Google-аар нэвтрэнэ үү
             </p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
-              <p className="text-sm text-red-600 font-medium">{error}</p>
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
+              <p className="text-sm text-red-600 dark:text-red-300 font-medium">{error}</p>
             </div>
           )}
 

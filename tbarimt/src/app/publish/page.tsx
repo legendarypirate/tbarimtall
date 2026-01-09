@@ -297,8 +297,8 @@ export default function PublishPage() {
           <div className="flex justify-between items-center py-5">
             {/* Logo */}
             <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => router.push('/')}>
-              <div className="w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center shadow-lg group-hover:bg-[#ff6b35] group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                <span className="text-white font-bold text-xl">T</span>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 overflow-hidden">
+                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-2xl font-bold text-[#004e6c] group-hover:text-[#ff6b35] transition-colors">
                 TBARIMT
@@ -351,8 +351,8 @@ export default function PublishPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
-                <span className="text-white font-bold text-sm">T</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
               </div>
               <h2 className="text-lg font-bold text-white">
                 TBARIMT

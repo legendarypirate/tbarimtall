@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { getCategoryById, getCategoryProducts } from '@/lib/api'
+import { getCategoryIcon } from '@/lib/categoryIcon'
 
 export const dynamic = 'force-dynamic'
 
@@ -279,7 +280,7 @@ export default function CategoryPage() {
         {/* Category Header */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-4 mb-4">
-            <span className="text-6xl">{category.icon || '📁'}</span>
+            <span className="text-6xl">{getCategoryIcon(category.icon)}</span>
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
                 {category.name}

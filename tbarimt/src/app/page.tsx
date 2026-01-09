@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { getTranslation } from '@/lib/translations'
 import { getCategories, getFeaturedProducts, getTopJournalists } from '@/lib/api'
+import { getCategoryIcon } from '@/lib/categoryIcon'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 
 // Default categories data (fallback)
 const defaultCategories = [
@@ -194,9 +199,9 @@ type Product = {
 export default function Home() {
   const router = useRouter()
   const { isDark, toggle: toggleDarkMode } = useDarkMode()
+  const { language } = useLanguage()
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
   const [openDropdown, setOpenDropdown] = useState<number | null>(null)
-  const [isJournalist, setIsJournalist] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [categories, setCategories] = useState(defaultCategories)
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>(defaultFeaturedProducts)
@@ -204,16 +209,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in as journalist
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser)
-        setIsJournalist(user.role === 'journalist')
-      } catch (e) {
-        setIsJournalist(false)
-      }
-    }
 
     // Fetch data from API
     const fetchData = async () => {
@@ -322,143 +317,18 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#004e6c] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-          <p className="text-[#004e6c] text-lg font-medium">Ачааллаж байна...</p>
+          <div className="w-16 h-16 border-4 border-[#004e6c] dark:border-[#ff6b35] border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <p className="text-[#004e6c] dark:text-gray-200 text-lg font-medium">{getTranslation(language, 'loading')}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Top Header - Logo, Search, Upload/Dipbard */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#004e6c]/10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-5">
-            {/* Logo */}
-            <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => router.push('/')}>
-              <div className="w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center shadow-lg group-hover:bg-[#ff6b35] group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                <span className="text-white font-bold text-xl">T</span>
-              </div>
-              <h1 className="text-2xl font-bold text-[#004e6c] group-hover:text-[#ff6b35] transition-colors">
-                TBARIMT
-              </h1>
-            </div>
-            
-            {/* Search Bar */}
-            <div className="flex flex-1 max-w-md mx-4 md:mx-8">
-              <div className="relative w-full">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-[#004e6c]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && searchQuery) {
-                      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
-                    }
-                  }}
-                  placeholder="Хайх..."
-                  className="block w-full pl-12 pr-4 py-3 border-2 border-[#004e6c]/20 rounded-xl bg-white text-[#004e6c] placeholder-[#004e6c]/40 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 focus:border-[#004e6c] text-sm font-medium transition-all shadow-sm hover:shadow-md"
-                />
-              </div>
-            </div>
-            
-            {/* Upload and Dipbard Buttons */}
-            <div className="flex items-center space-x-3">
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className="p-2.5 rounded-xl text-[#004e6c] hover:bg-[#004e6c]/10 transition-all duration-200"
-                aria-label="Toggle dark mode"
-              >
-                {isDark ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
-              
-              {isJournalist ? (
-                <div className="relative">
-                  <button 
-                    onClick={() => router.push('/account/journalist')}
-                    className="bg-[#004e6c] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                  >
-                    <span>                  Нийтлэл оруулах                    </span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={() => {
-                    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-                    const baseUrl = API_URL.trim().endsWith('/api') 
-                      ? API_URL.trim().slice(0, -4) 
-                      : API_URL.trim()
-                    window.location.href = `${baseUrl}/api/auth/google`
-                  }}
-                  className="bg-[#004e6c] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  Нийтлэл оруулах
-                </button>
-              )}
-             
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Navigation Bar */}
-      <nav className="bg-[#004e6c] shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
-                <span className="text-white font-bold text-sm">T</span>
-              </div>
-              <h2 className="text-lg font-bold text-white">
-                TBARIMT
-              </h2>
-            </div>
-            <div className="flex items-center space-x-8">
-              <button 
-                onClick={() => router.push('/products')}
-                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
-              >
-                Ангилал
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
-              </button>
-              <button 
-                onClick={() => router.push('/about')}
-                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
-              >
-                Хэрхэн ажиллах вэ
-                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
-              </button>
-              <button 
-                onClick={() => router.push('/pricing')}
-                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
-              >
-                Үнэ
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <main className="min-h-screen bg-white dark:bg-gray-900">
+      <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       {/* Hero Section */}
       <section className="relative w-full py-24 md:py-32 overflow-hidden">
@@ -487,9 +357,9 @@ export default function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
-              Контент авах, зарах
+              {getTranslation(language, 'heroTitle')}
               <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
-                аюулгүй
+                {getTranslation(language, 'heroSubtitle')}
               </span>
             </h2>
           
@@ -498,15 +368,15 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-5 justify-center">
               <button 
                 onClick={() => router.push('/products')}
-                className="bg-[#004e6c] text-white px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] transition-all duration-300 shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+                className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
               >
-                Бүх контент үзэх
+                {getTranslation(language, 'viewAllContent')}
               </button>
               <button 
-                onClick={() => isJournalist ? router.push('/account/journalist') : router.push('/products')}
-                className="bg-white text-[#004e6c] border-2 border-[#004e6c] px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#004e6c] hover:text-white hover:border-[#ff6b35] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                onClick={() => router.push('/products')}
+                className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c] dark:border-gray-600 px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#004e6c] dark:hover:bg-[#006b8f] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
               >
-                Өөрийн контент оруулах
+                {getTranslation(language, 'addYourContent')}
               </button>
             </div>
           </div>
@@ -517,264 +387,193 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 -mt-12 relative z-20">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Users Stat */}
-          <div className="bg-white border border-[#004e6c]/15 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
                 10,742
               </div>
-              <div className="text-[#004e6c]/60 font-medium text-sm">
-                Users
+              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'users')}
               </div>
             </div>
           </div>
 
           {/* Creators Stat */}
-          <div className="bg-white border border-[#004e6c]/15 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
                 1,204
               </div>
-              <div className="text-[#004e6c]/60 font-medium text-sm">
-                Creators
+              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'creators')}
               </div>
             </div>
           </div>
 
           {/* Contents Stat */}
-          <div className="bg-white border border-[#004e6c]/15 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
                 9,300
               </div>
-              <div className="text-[#004e6c]/60 font-medium text-sm">
-                Contents
+              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'contents')}
               </div>
             </div>
           </div>
 
           {/* Earned Stat */}
-          <div className="bg-white border border-[#004e6c]/15 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
                 T116,400
               </div>
-              <div className="text-[#004e6c]/60 font-medium text-sm">
-                Earned
+              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'earned')}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Popular Categories Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white">
-        <div className="flex justify-between items-center mb-12">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-[#004e6c]">
-            Stats Row
+      {/* All Categories Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
+        <div className="flex justify-between items-center mb-8">
+          <h3 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200">
+            {getTranslation(language, 'allCategories')}
           </h3>
-          <div className="text-sm font-semibold text-[#004e6c]/70 hover:text-[#ff6b35] transition-colors cursor-pointer">
-            2534t Manbaris &gt;&gt;
-          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {categories.slice(0, 4).map((category, index) => {
-            // Category names matching the design
-            const categoryNames = ['Business', 'Design', 'Software', 'Marketing']
-            const categoryPrices = ['41k', '73k', '173k', '50k']
-            const categoryDescriptions = [
-              'Paettamiary zолон...',
-              'Pueciadoream...',
-              'Fer/Crotams...',
-              'Poettoer omaricruteselare...'
-            ]
-            
-            // Icon components for each category
-            const categoryIcons = [
-              // Business/Education icon
-              <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>,
-              // Design/Graphics icon
-              <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-              </svg>,
-              // Software/Code icon
-              <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>,
-              // Marketing/Business icon
-              <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            ]
-            
-            // Background gradients for each category
-            const categoryBackgrounds = [
-              'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700',
-              'bg-gradient-to-br from-purple-500 via-pink-500 to-rose-600',
-              'bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700',
-              'bg-gradient-to-br from-orange-500 via-amber-600 to-yellow-600'
-            ]
-            
+        <div className="flex flex-wrap gap-3">
+          {/* All Categories Button */}
+          <button
+            onClick={() => {
+              setSelectedCategory(null)
+              setSearchQuery('')
+            }}
+            className={`px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 ${
+              selectedCategory === null
+                ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-lg'
+                : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 hover:shadow-md'
+            }`}
+          >
+            <span>{getTranslation(language, 'all')}</span>
+          </button>
+          
+          {/* Category Buttons */}
+          {categories.map((category) => {
             return (
-              <div
+              <button
                 key={category.id}
-                onClick={() => router.push(`/category/${category.id}`)}
-                className="bg-white border-2 border-[#004e6c]/20 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-3 hover:border-[#004e6c]/40 group"
+                onClick={() => {
+                  setSelectedCategory(category.id)
+                  router.push(`/category/${category.id}`)
+                }}
+                className={`px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 ${
+                  selectedCategory === category.id
+                    ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-lg'
+                    : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 hover:shadow-md'
+                }`}
               >
-                {/* Category Image with Icon and Tangible Background */}
-                <div className={`w-full h-40 ${categoryBackgrounds[index]} flex items-center justify-center relative overflow-hidden`}>
-                  {/* Pattern overlay for texture */}
-                  <div className="absolute inset-0 opacity-20" style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h22v20h2V0h2v20h2V0h2v20h2V0h2v20h2v2H20v-1.5zM0 20h2v20H0V20zm4 0h2v20H4V20zm4 0h2v20H8V20zm4 0h2v20h-2V20zm4 0h2v20h-2V20zm4 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2zm0 4h20v2H20v-2z'/%3E%3C/g%3E%3C/svg%3E")`,
-                  }}></div>
-                  
-                  {/* Decorative circles */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-xl -ml-12 -mb-12"></div>
-                  
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  
-                  {/* Icon */}
-                  <div className="relative z-10 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 border-2 border-white/30">
-                    {categoryIcons[index]}
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  {/* Title */}
-                  <h4 className="text-xl font-bold text-[#004e6c] mb-3 group-hover:text-[#ff6b35] transition-colors">
-                    {categoryNames[index] || category.name}
-                  </h4>
-                  
-                  {/* Description */}
-                  <p className="text-sm text-[#004e6c]/70 mb-4 line-clamp-2 font-medium">
-                    {categoryDescriptions[index] || 'Premium digital content'}
-                  </p>
-                  
-                  {/* Rating - 4 stars */}
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <svg
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < 4
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-[#004e6c]/20'
-                        }`}
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  
-                  {/* Price */}
-                  <div className="text-2xl font-extrabold text-[#004e6c] group-hover:text-[#ff6b35] transition-colors">
-                    〒{categoryPrices[index] || '0k'}
-                  </div>
-                </div>
-              </div>
+                <span className="flex-shrink-0 text-xl">
+                  {getCategoryIcon(category.icon)}
+                </span>
+                <span>{category.name}</span>
+              </button>
             )
           })}
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="relative w-full py-12 overflow-hidden bg-gray-200">
+      <section className="relative w-full py-12 overflow-hidden bg-gray-200 dark:bg-gray-800">
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* TBARIMT Logo - Centered Above */}
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-8 h-8 bg-[#004e6c] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">T</span>
+            <div className="flex items-center justify-center">
+              <div className="h-20 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
               </div>
-              <h2 className="text-2xl font-semibold text-[#004e6c]">
-                TBARIMT
-              </h2>
             </div>
           </div>
 
           {/* Features Grid - 2x2 Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
             {/* Feature 1: Secure & Verified */}
-            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 transition-all duration-200">
-              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] transition-colors duration-200">
+            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
+              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-medium text-[#004e6c]">
-                  Аюулгүй ба Баталгаажсан
+                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
+                  {getTranslation(language, 'secureAndVerified')}
                 </h3>
               </div>
             </div>
 
             {/* Feature 2: Earn More Revenue */}
-            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 transition-all duration-200">
-              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] transition-colors duration-200">
+            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
+              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-medium text-[#004e6c]">
-                  Илүү Орлого Олох
+                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
+                  {getTranslation(language, 'earnMoreRevenue')}
                 </h3>
               </div>
             </div>
 
             {/* Feature 3: Bromes Center */}
-            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 transition-all duration-200">
-              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] transition-colors duration-200">
+            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
+              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-medium text-[#004e6c]">
-                  Бромес Төв
+                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
+                  {getTranslation(language, 'bromesCenter')}
                 </h3>
               </div>
             </div>
 
             {/* Feature 4: Diverse Content Marketplace */}
-            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 transition-all duration-200">
-              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] transition-colors duration-200">
+            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
+              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 002 2 2 2 0 002-2v-1a2 2 0 012-2h2.945M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-medium text-[#004e6c]">
-                  Олон Төрлийн Контентын Зах Зээл
+                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
+                  {getTranslation(language, 'diverseContentMarketplace')}
                 </h3>
               </div>
             </div>
@@ -783,34 +582,34 @@ export default function Home() {
       </section>
 
       {/* CTA Banner Section */}
-      <section className="relative w-full py-24 overflow-hidden bg-[#004e6c]">
+      <section className="relative w-full py-24 overflow-hidden bg-[#004e6c] dark:bg-gray-800">
         {/* Abstract background graphics */}
         <div className="absolute inset-0 overflow-hidden opacity-20">
           <div className="absolute top-0 left-0 w-96 h-96 bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 dark:bg-gray-600/10 rounded-full blur-3xl"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-4xl lg:text-5xl font-extrabold text-white mb-6">
-            Яагаад TBARIMT гэж
+          <h2 className="text-4xl md:text-4xl lg:text-5xl font-extrabold text-white dark:text-gray-200 mb-6">
+            {getTranslation(language, 'whyTitle')}
           </h2>
-          <p className="text-xl md:text-1xl text-white/90 mb-10 max-w-1xl mx-auto font-medium">
-            Контентоо оруулаад мөнгө олж эхэл!
+          <p className="text-xl md:text-1xl text-white/90 dark:text-gray-300 mb-10 max-w-1xl mx-auto font-medium">
+            {getTranslation(language, 'whyDescription')}
           </p>
           <button 
-            onClick={() => isJournalist ? router.push('/account/journalist') : router.push('/products')}
-            className="bg-[#ff6b35] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+            onClick={() => router.push('/products')}
+            className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
           >
-            Join for Free
+            {getTranslation(language, 'joinForFree')}
           </button>
         </div>
       </section>
 
       {/* Featured Products Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
         <div className="flex justify-between items-center mb-12">
-          <h3 className="text-xl md:text-2xl font-medium text-[#004e6c]">
-            Онцлох бүтээгдэхүүн
+          <h3 className="text-xl md:text-2xl font-medium text-[#004e6c] dark:text-gray-200">
+            {getTranslation(language, 'featuredProducts')}
           </h3>
           {(selectedCategory || searchQuery) && (
             <button
@@ -818,9 +617,9 @@ export default function Home() {
                 setSelectedCategory(null)
                 setSearchQuery('')
               }}
-              className="text-[#004e6c] hover:text-[#ff6b35] font-semibold text-lg underline decoration-2 underline-offset-4 transition-colors"
+              className="text-[#004e6c] dark:text-gray-300 hover:text-[#ff6b35] dark:hover:text-[#ff8555] font-semibold text-lg underline decoration-2 underline-offset-4 transition-colors"
             >
-              Бүгдийг харуулах
+              {getTranslation(language, 'showAll')}
             </button>
           )}
         </div>
@@ -829,10 +628,10 @@ export default function Home() {
             <div
               key={product.id}
               onClick={() => router.push(`/products/${product.uuid || product.id}`)}
-              className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-[#004e6c]/10 transform hover:-translate-y-3 hover:border-[#004e6c]/30 group cursor-pointer"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 transform hover:-translate-y-3 hover:border-[#004e6c]/30 dark:hover:border-gray-600 group cursor-pointer"
             >
               {/* Product Image */}
-              <div className="relative h-52 overflow-hidden bg-gradient-to-br from-[#004e6c]/10 to-[#006b8f]/10">
+              <div className="relative h-52 overflow-hidden bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700/20 to-[#006b8f]/10 dark:to-gray-600/20">
                 <img
                   src={product.image}
                   alt={product.title}
@@ -842,15 +641,15 @@ export default function Home() {
                     target.style.display = 'none';
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="absolute top-4 right-4 flex items-center space-x-1.5 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 dark:from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute top-4 right-4 flex items-center space-x-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
                   <span className="text-yellow-400 text-sm">⭐</span>
-                  <span className="text-xs font-bold text-[#004e6c]">
+                  <span className="text-xs font-bold text-[#004e6c] dark:text-gray-200">
                     {product.rating}
                   </span>
                 </div>
                 <div className="absolute top-4 left-4">
-                  <span className="text-xs font-bold text-white bg-[#004e6c] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] transition-colors">
+                  <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
                     {typeof product.category === 'object' && product.category?.name
                       ? product.category.name
                       : typeof product.category === 'string'
@@ -860,21 +659,21 @@ export default function Home() {
                 </div>
               </div>
               <div className="p-6">
-                <h4 className="text-lg font-bold text-[#004e6c] mb-4 line-clamp-2 group-hover:text-[#ff6b35] transition-colors min-h-[3.5rem]">
+                <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-4 line-clamp-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors min-h-[3.5rem]">
                   {product.title}
                 </h4>
-                <div className="flex items-center justify-between text-sm text-[#004e6c]/70 mb-5 font-medium">
+                <div className="flex items-center justify-between text-sm text-[#004e6c]/70 dark:text-gray-400 mb-5 font-medium">
                   <span className="flex items-center space-x-2">
                     <span>📄</span>
-                    <span>{product.pages ? `${product.pages} хуудас` : product.size}</span>
+                    <span>{product.pages ? `${product.pages} ${getTranslation(language, 'pages')}` : product.size}</span>
                   </span>
                   <span className="flex items-center space-x-2">
                     <span>⬇️</span>
                     <span>{product.downloads}</span>
                   </span>
                 </div>
-                <div className="flex items-center justify-between pt-5 border-t-2 border-[#004e6c]/10 gap-3">
-                  <span className="text-2xl font-extrabold text-[#004e6c] group-hover:text-[#ff6b35] transition-colors">
+                <div className="flex items-center justify-between pt-5 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
+                  <span className="text-2xl font-extrabold text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                     {product.price.toLocaleString()}₮
                   </span>
                   <button 
@@ -882,8 +681,8 @@ export default function Home() {
                       e.stopPropagation()
                       router.push(`/products/${product.id}`)
                     }}
-                    className="bg-[#004e6c] text-white w-10 h-10 rounded-xl hover:bg-[#ff6b35] transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center group"
-                    aria-label="Дэлгэрэнгүй"
+                    className="bg-[#004e6c] dark:bg-[#006b8f] text-white w-10 h-10 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center group"
+                    aria-label={getTranslation(language, 'details')}
                   >
                     <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -898,9 +697,9 @@ export default function Home() {
           <div className="text-center mt-14">
             <button
               onClick={() => router.push('/products')}
-              className="bg-[#004e6c] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1 inline-flex items-center space-x-3"
+              className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1 inline-flex items-center space-x-3"
             >
-              <span>Бүх контент харах</span>
+              <span>{getTranslation(language, 'viewAllContentButton')}</span>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -909,120 +708,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#004e6c] mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Column 1: Logo */}
-            <div className="flex flex-col">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
-                  <span className="text-white font-bold text-lg">T</span>
-                </div>
-                <h5 className="text-2xl font-extrabold text-white">
-                  TBARIMT
-                </h5>
-              </div>
-              <p className="text-white/70 text-sm">
-                Your trusted platform for digital content and services.
-              </p>
-            </div>
-
-            {/* Column 2: Menu Items */}
-            <div className="flex flex-col">
-              <h6 className="text-white font-semibold mb-4">Legal</h6>
-              <ul className="space-y-3">
-                <li>
-                  <button 
-                    onClick={() => router.push('/terms')}
-                    className="text-white/70 hover:text-white transition-colors text-sm"
-                  >
-                    Terms
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => router.push('/privacy')}
-                    className="text-white/70 hover:text-white transition-colors text-sm"
-                  >
-                    Privacy Policy
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => router.push('/about')}
-                    className="text-white/70 hover:text-white transition-colors text-sm"
-                  >
-                    How It Works
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 3: Menu Items */}
-            <div className="flex flex-col">
-              <h6 className="text-white font-semibold mb-4">Resources</h6>
-              <ul className="space-y-3">
-                <li>
-                  <button 
-                    onClick={() => router.push('/pricing')}
-                    className="text-white/70 hover:text-white transition-colors text-sm"
-                  >
-                    Pricing
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => router.push('/help')}
-                    className="text-white/70 hover:text-white transition-colors text-sm"
-                  >
-                    Help
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => router.push('/mby')}
-                    className="text-white/70 hover:text-white transition-colors text-sm"
-                  >
-                    Mby
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => router.push('/search')}
-                    className="text-white/70 hover:text-white transition-colors text-sm"
-                  >
-                    Search
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 4: Contact Info */}
-            <div className="flex flex-col">
-              <h6 className="text-white font-semibold mb-4">Contact</h6>
-              <ul className="space-y-3">
-                <li className="text-white/70 text-sm">
-                  Email: info@tbarimt.com
-                </li>
-                <li className="text-white/70 text-sm">
-                  Phone: +976 7000 5060
-                </li>
-                <li className="text-white/70 text-sm">
-                  Address: Ulaanbaatar, Mongolia
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Bottom Border */}
-          <div className="mt-12 pt-8 border-t border-white/20">
-            <p className="text-white/60 text-sm text-center">
-              © {new Date().getFullYear()} TBARIMT. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   )
 }
