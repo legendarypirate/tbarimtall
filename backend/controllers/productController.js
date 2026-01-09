@@ -274,7 +274,11 @@ exports.getFeaturedProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 8;
 
     const products = await Product.findAll({
-      where: { isActive: true },
+      where: { 
+        isActive: true,
+        isUnique: true,
+        status: 'published'
+      },
       include: [
         { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
         { model: User, as: 'author', attributes: ['id', 'username', 'fullName', 'avatar'] }
