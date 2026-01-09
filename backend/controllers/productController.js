@@ -196,7 +196,8 @@ exports.getProductById = async (req, res) => {
       product = await Product.findOne({
         where: { 
           uuid: id,
-          status: 'published' // Only show published products (consistent with getAllProducts)
+          status: 'published', // Only show published products (consistent with getAllProducts)
+          isActive: true // Only show active products
         },
         include: [
           { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
@@ -225,7 +226,8 @@ exports.getProductById = async (req, res) => {
       product = await Product.findOne({
         where: {
           id: id,
-          status: 'published' // Only show published products (consistent with getAllProducts)
+          status: 'published', // Only show published products (consistent with getAllProducts)
+          isActive: true // Only show active products
         },
         include: [
           { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },

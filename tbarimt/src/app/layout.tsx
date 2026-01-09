@@ -3,6 +3,7 @@ import { Rubik } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { LanguageProvider } from '@/contexts/LanguageContext'
+import { Toaster } from 'react-hot-toast'
 
 const rubik = Rubik({ subsets: ['latin'] })
 
@@ -45,6 +46,32 @@ export default function RootLayout({
         <ThemeProvider>
           <LanguageProvider>
             {children}
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: '#004e6c',
+                  color: '#fff',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                  },
+                },
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
           </LanguageProvider>
         </ThemeProvider>
       </body>

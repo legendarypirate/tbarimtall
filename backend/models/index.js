@@ -11,6 +11,7 @@ const Banner = require('./Banner');
 const RolePermission = require('./RolePermission');
 const Membership = require('./Membership');
 const DownloadToken = require('./DownloadToken');
+const Wishlist = require('./Wishlist');
 
 // Define associations
 User.hasMany(Product, { foreignKey: 'authorId', as: 'products' });
@@ -46,6 +47,11 @@ DownloadToken.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 DownloadToken.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 DownloadToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasMany(Wishlist, { foreignKey: 'userId', as: 'wishlists' });
+Wishlist.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Product.hasMany(Wishlist, { foreignKey: 'productId', as: 'wishlists' });
+Wishlist.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+
 module.exports = {
   sequelize,
   User,
@@ -59,6 +65,7 @@ module.exports = {
   Banner,
   RolePermission,
   Membership,
-  DownloadToken
+  DownloadToken,
+  Wishlist
 };
 

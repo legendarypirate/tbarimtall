@@ -392,3 +392,44 @@ export async function checkMembershipPaymentStatus(invoiceId: string) {
   return fetchAPI(`/qpay/membership/check/${invoiceId}`);
 }
 
+// Wishlist
+export async function addToWishlist(productId: number | string) {
+  return fetchAPI('/wishlist', {
+    method: 'POST',
+    body: JSON.stringify({ productId }),
+  });
+}
+
+export async function removeFromWishlist(productId: number | string) {
+  return fetchAPI(`/wishlist/${productId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getWishlist(params?: {
+  page?: number;
+  limit?: number;
+}) {
+  const queryParams = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+  }
+  const query = queryParams.toString();
+  return fetchAPI(`/wishlist${query ? `?${query}` : ''}`);
+}
+
+export async function checkWishlist(productId: number | string) {
+  return fetchAPI(`/wishlist/check/${productId}`);
+}
+
+export async function getWishlistStatus(productIds: (number | string)[]) {
+  return fetchAPI('/wishlist/status', {
+    method: 'POST',
+    body: JSON.stringify({ productIds }),
+  });
+}
+

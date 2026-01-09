@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { getCategoryById, getCategoryProducts } from '@/lib/api'
 import { getCategoryIcon } from '@/lib/categoryIcon'
+import WishlistHeartIcon from '@/components/WishlistHeartIcon'
 
 export const dynamic = 'force-dynamic'
 
@@ -344,11 +345,22 @@ export default function CategoryPage() {
                         target.style.display = 'none';
                       }}
                     />
-                    <div className="absolute top-3 right-3 flex items-center space-x-1 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded-full">
-                      <span className="text-yellow-400 text-sm">⭐</span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        {parseFloat((product as any).rating) || 0}
-                      </span>
+                    {/* Star Rating and Wishlist Icon - positioned together on the right */}
+                    <div className="absolute top-3 right-3 flex items-center space-x-2">
+                      {/* Wishlist Heart Icon */}
+                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-1.5 rounded-full shadow-lg">
+                        <WishlistHeartIcon 
+                          productId={(product as any).uuid || (product as any).id} 
+                          size="sm"
+                        />
+                      </div>
+                      {/* Star Rating */}
+                      <div className="flex items-center space-x-1 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded-full">
+                        <span className="text-yellow-400 text-sm">⭐</span>
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          {parseFloat((product as any).rating) || 0}
+                        </span>
+                      </div>
                     </div>
                     <div className="absolute top-3 left-3">
                       <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-md">

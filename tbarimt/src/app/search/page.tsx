@@ -6,6 +6,7 @@ import { useDarkMode } from '@/hooks/useDarkMode'
 import { searchProducts } from '@/lib/api'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import WishlistHeartIcon from '@/components/WishlistHeartIcon'
 
 export const dynamic = 'force-dynamic'
 
@@ -368,11 +369,22 @@ function SearchContent() {
                         target.style.display = 'none';
                       }}
                     />
-                  <div className="absolute top-3 right-3 flex items-center space-x-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-lg">
-                    <span className="text-yellow-400 text-sm">⭐</span>
-                    <span className="text-xs font-semibold text-[#004e6c] dark:text-gray-200">
-                      {parseFloat((product as any).rating) || 0}
-                    </span>
+                  {/* Star Rating and Wishlist Icon - positioned together on the right */}
+                  <div className="absolute top-3 right-3 flex items-center space-x-2">
+                    {/* Wishlist Heart Icon */}
+                    <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-1.5 rounded-full shadow-lg">
+                      <WishlistHeartIcon 
+                        productId={(product as any).uuid || (product as any).id} 
+                        size="sm"
+                      />
+                    </div>
+                    {/* Star Rating */}
+                    <div className="flex items-center space-x-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-lg">
+                      <span className="text-yellow-400 text-sm">⭐</span>
+                      <span className="text-xs font-semibold text-[#004e6c] dark:text-gray-200">
+                        {parseFloat((product as any).rating) || 0}
+                      </span>
+                    </div>
                   </div>
                   <div className="absolute top-3 left-3">
                     <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">

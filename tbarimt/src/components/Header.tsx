@@ -85,6 +85,18 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
             
             {/* Upload and Dipbard Buttons */}
             <div className="flex items-center space-x-3">
+              {/* Wishlist Icon Button */}
+              <button
+                onClick={() => router.push('/wishlist')}
+                className="p-2.5 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200 relative"
+                aria-label={getTranslation(language, 'wishlist') || 'Wishlist'}
+                title={getTranslation(language, 'wishlist') || 'Wishlist'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </button>
+              
               {/* Language Selector */}
               <div className="relative">
                 <select

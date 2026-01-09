@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice, payWithWallet, getCurrentUser } from '@/lib/api'
+import WishlistHeartIcon from '@/components/WishlistHeartIcon'
 
 export const dynamic = 'force-dynamic'
 
@@ -886,9 +887,17 @@ export default function ProductDetail() {
           {/* Right Column - Purchase Card */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-gray-700 sticky top-24">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                {product.title}
-              </h2>
+              <div className="flex items-start justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex-1 pr-4">
+                  {product.title}
+                </h2>
+                <div className="flex-shrink-0">
+                  <WishlistHeartIcon 
+                    productId={product.uuid || product.id} 
+                    size="lg"
+                  />
+                </div>
+              </div>
               
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between items-center">
@@ -951,8 +960,18 @@ export default function ProductDetail() {
                 🛒 Одоо худалдаж авах
               </button>
 
-              <button className="w-full border-2 border-blue-600 text-blue-600 dark:text-blue-400 py-3 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-gray-700 transition-all">
-                ❤️ Хүслийн жагсаалтад нэмэх
+              <button 
+                onClick={(e) => {
+                  e.preventDefault()
+                  // The WishlistHeartIcon will handle the click
+                }}
+                className="w-full flex items-center justify-center border-2 border-blue-600 text-blue-600 dark:text-blue-400 py-3 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-gray-700 transition-all"
+              >
+                <WishlistHeartIcon 
+                  productId={product.uuid || product.id} 
+                  size="md"
+                />
+                <span className="ml-2">Хүслийн жагсаалтад нэмэх</span>
               </button>
             </div>
           </div>

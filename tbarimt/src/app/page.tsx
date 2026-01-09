@@ -9,6 +9,7 @@ import { getCategories, getFeaturedProducts, getTopJournalists } from '@/lib/api
 import { getCategoryIcon } from '@/lib/categoryIcon'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import WishlistHeartIcon from '@/components/WishlistHeartIcon'
 
 // Default categories data (fallback)
 const defaultCategories = [
@@ -642,13 +643,25 @@ export default function Home() {
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 dark:from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="absolute top-4 right-4 flex items-center space-x-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-                  <span className="text-yellow-400 text-sm">⭐</span>
-                  <span className="text-xs font-bold text-[#004e6c] dark:text-gray-200">
-                    {product.rating}
-                  </span>
+                {/* Star Rating and Wishlist Icon - positioned together on the right */}
+                <div className="absolute top-4 right-4 flex items-center space-x-2">
+                  {/* Wishlist Heart Icon */}
+                  <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 rounded-full shadow-lg">
+                    <WishlistHeartIcon 
+                      productId={product.uuid || product.id} 
+                      size="md"
+                    />
+                  </div>
+                  {/* Star Rating */}
+                  <div className="flex items-center space-x-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                    <span className="text-yellow-400 text-sm">⭐</span>
+                    <span className="text-xs font-bold text-[#004e6c] dark:text-gray-200">
+                      {product.rating}
+                    </span>
+                  </div>
                 </div>
-                <div className="absolute top-4 left-4">
+                {/* Category Badge - positioned at bottom left */}
+                <div className="absolute bottom-4 left-4">
                   <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
                     {typeof product.category === 'object' && product.category?.name
                       ? product.category.name
