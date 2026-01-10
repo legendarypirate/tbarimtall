@@ -433,3 +433,20 @@ export async function getWishlistStatus(productIds: (number | string)[]) {
   });
 }
 
+// Copyright Reports
+export async function createCopyrightReport(data: {
+  productId: number | string;
+  comment: string;
+  phone?: string;
+}) {
+  return fetchAPI('/copyright-reports', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+// FAQs
+export async function getFAQs() {
+  return fetchAPI('/faqs');
+}
+

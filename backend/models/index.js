@@ -8,10 +8,12 @@ const Order = require('./Order');
 const Review = require('./Review');
 const WithdrawalRequest = require('./WithdrawalRequest');
 const Banner = require('./Banner');
+const FAQ = require('./FAQ');
 const RolePermission = require('./RolePermission');
 const Membership = require('./Membership');
 const DownloadToken = require('./DownloadToken');
 const Wishlist = require('./Wishlist');
+const CopyrightReport = require('./CopyrightReport');
 
 // Define associations
 User.hasMany(Product, { foreignKey: 'authorId', as: 'products' });
@@ -52,6 +54,12 @@ Wishlist.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Product.hasMany(Wishlist, { foreignKey: 'productId', as: 'wishlists' });
 Wishlist.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 
+Product.hasMany(CopyrightReport, { foreignKey: 'productId', as: 'copyrightReports' });
+CopyrightReport.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+User.hasMany(CopyrightReport, { foreignKey: 'userId', as: 'copyrightReports' });
+CopyrightReport.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+CopyrightReport.belongsTo(User, { foreignKey: 'processedBy', as: 'processedByUser' });
+
 module.exports = {
   sequelize,
   User,
@@ -63,9 +71,11 @@ module.exports = {
   Review,
   WithdrawalRequest,
   Banner,
+  FAQ,
   RolePermission,
   Membership,
   DownloadToken,
-  Wishlist
+  Wishlist,
+  CopyrightReport
 };
 

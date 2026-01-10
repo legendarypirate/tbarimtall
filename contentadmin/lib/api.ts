@@ -165,6 +165,31 @@ export const categoriesApi = {
   },
 };
 
+// Subcategories API
+export const subcategoriesApi = {
+  getAll: async (categoryId?: string | number) => {
+    const query = categoryId ? `?categoryId=${categoryId}` : '';
+    return apiCall(`/api/admin/subcategories${query}`);
+  },
+  create: async (subcategoryData: { categoryId: number; name: string; description?: string; isActive?: boolean }) => {
+    return apiCall('/api/admin/subcategories', {
+      method: 'POST',
+      body: JSON.stringify(subcategoryData),
+    });
+  },
+  update: async (id: string | number, subcategoryData: { categoryId?: number; name?: string; description?: string; isActive?: boolean }) => {
+    return apiCall(`/api/admin/subcategories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(subcategoryData),
+    });
+  },
+  delete: async (id: string | number) => {
+    return apiCall(`/api/admin/subcategories/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 // Orders API
 export const ordersApi = {
   getAll: async (params?: { page?: number; limit?: number; status?: string }) => {
@@ -291,6 +316,33 @@ export const membershipsApi = {
   },
   delete: async (id: string | number) => {
     return apiCall(`/api/admin/memberships/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// FAQs API
+export const faqsApi = {
+  getAll: async () => {
+    return apiCall('/api/admin/faqs');
+  },
+  getById: async (id: string | number) => {
+    return apiCall(`/api/admin/faqs/${id}`);
+  },
+  create: async (faqData: { question: { mn: string; en: string }; answer: { mn: string; en: string }; order?: number; isActive?: boolean }) => {
+    return apiCall('/api/admin/faqs', {
+      method: 'POST',
+      body: JSON.stringify(faqData),
+    });
+  },
+  update: async (id: string | number, faqData: { question?: { mn: string; en: string }; answer?: { mn: string; en: string }; order?: number; isActive?: boolean }) => {
+    return apiCall(`/api/admin/faqs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(faqData),
+    });
+  },
+  delete: async (id: string | number) => {
+    return apiCall(`/api/admin/faqs/${id}`, {
       method: 'DELETE',
     });
   },

@@ -322,87 +322,10 @@ export default function ProductsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Top Controls */}
         <div className="mb-6 space-y-4">
-          {/* Search Bar */}
-          <div className="relative group">
-            {/* Animated background gradient */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#004e6c] via-[#006b8f] to-[#ff6b35] rounded-2xl opacity-20 group-hover:opacity-30 blur transition-opacity duration-300"></div>
-            
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-[#004e6c]/20 dark:border-gray-700 overflow-hidden">
-              <div className="flex items-center">
-                {/* Search Icon */}
-                <div className="pl-5 pr-4 flex items-center">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] shadow-md">
-                    <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                </div>
-                
-                {/* Input Field */}
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && searchQuery) {
-                      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
-                    }
-                  }}
-                  placeholder="Хайх... (жишээ: реферат, дипломын ажил, тоглоом)"
-                  className="flex-1 py-4 text-lg bg-transparent text-[#004e6c] dark:text-gray-200 placeholder-[#004e6c]/40 dark:placeholder-gray-500 focus:outline-none pr-4"
-                />
-                
-                {/* Clear Button */}
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="p-2 mr-2 rounded-full text-[#004e6c]/60 dark:text-gray-400 hover:text-[#004e6c] dark:hover:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200"
-                  >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-                
-                {/* Search Button */}
-                <button
-                  onClick={() => {
-                    if (searchQuery) {
-                      router.push(`/search?q=${encodeURIComponent(searchQuery)}`)
-                    }
-                  }}
-                  disabled={!searchQuery}
-                  className="m-1.5 px-6 py-2.5 bg-gradient-to-r from-[#004e6c] to-[#ff6b35] dark:from-[#006b8f] dark:to-[#ff8555] text-white rounded-xl hover:from-[#006b8f] hover:to-[#ff8555] dark:hover:from-[#004e6c] dark:hover:to-[#ff6b35] transition-all duration-300 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center space-x-2"
-                >
-                  <span>Хайх</span>
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Controls Row */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            {/* Category Filter */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-lg hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
-                      : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#ff6b35]/50 dark:hover:border-[#ff8555]/50 hover:text-[#ff6b35] dark:hover:text-[#ff8555]'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            {/* View Mode and Sort */}
+          {/* Filter Section */}
+         
+          {/* View Mode and Sort Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-end">
             <div className="flex items-center space-x-3">
               {/* View Mode Toggle */}
               <div className="flex items-center space-x-1 bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-1">
@@ -458,7 +381,24 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* Advanced Filters Panel */}
+          {/* Category Filter - Full Width */}
+          <div className="w-full">
+            <div className="flex flex-wrap gap-2 w-full">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-lg hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
+                      : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#ff6b35]/50 dark:hover:border-[#ff8555]/50 hover:text-[#ff6b35] dark:hover:text-[#ff8555]'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
           {showFilters && (
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
               {/* Price Range */}
@@ -545,6 +485,8 @@ export default function ProductsPage() {
             </div>
           )}
 
+          {/* Advanced Filters Panel */}
+         
           {/* Results Count */}
           <div className="text-sm text-[#004e6c]/70 dark:text-gray-400 font-medium">
             <span className="font-bold text-[#004e6c] dark:text-gray-200">{filteredProducts.length}</span> бүтээгдэхүүн олдлоо

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getTranslation } from '@/lib/translations'
+import AuthModal from './AuthModal'
 
 interface HeaderProps {
   searchQuery?: string
@@ -17,6 +18,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
   const { language, setLanguage } = useLanguage()
   const [isJournalist, setIsJournalist] = useState(false)
   const [searchQuery, setSearchQuery] = useState(externalSearchQuery || '')
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   useEffect(() => {
     // Check if user is logged in as journalist
@@ -139,18 +141,20 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   </button>
                 </div>
               ) : (
-                <button 
-                  onClick={() => {
-                    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-                    const baseUrl = API_URL.trim().endsWith('/api') 
-                      ? API_URL.trim().slice(0, -4) 
-                      : API_URL.trim()
-                    window.location.href = `${baseUrl}/api/auth/google`
-                  }}
-                  className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  {getTranslation(language, 'uploadContent')}
-                </button>
+                <>
+                  <button 
+                    onClick={() => setShowAuthModal(true)}
+                    className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    {getTranslation(language, 'uploadContent')}
+                  </button>
+                  <AuthModal
+                    isOpen={showAuthModal}
+                    onClose={() => setShowAuthModal(false)}
+                    onSelectGoogle={() => setShowAuthModal(false)}
+                    onSelectFacebook={() => setShowAuthModal(false)}
+                  />
+                </>
               )}
              
             </div>
@@ -163,9 +167,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
-                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
-              </div>
+             
             </div>
             <div className="flex items-center space-x-8">
               <button 
@@ -187,6 +189,13 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                 className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
               >
                 {getTranslation(language, 'pricing')}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
+              <button 
+                onClick={() => router.push('/faq')}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              >
+                {getTranslation(language, 'faq')}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
             </div>

@@ -1,5 +1,9 @@
+// Ensure environment variables are loaded
+require('dotenv').config();
+
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
 const crypto = require('crypto');
 const { User } = require('../models');
 
@@ -106,6 +110,111 @@ if (hasGoogleCredentials) {
   console.log('Google OAuth strategy initialized');
 } else {
   console.log('Google OAuth credentials not found. Google OAuth strategy skipped.');
+}
+
+// Facebook OAuth strategy
+const hasFacebookCredentials = 
+  process.env.FACEBOOK_APP_ID && 
+  typeof process.env.FACEBOOK_APP_ID === 'string' &&
+  process.env.FACEBOOK_APP_ID.trim() !== '' &&
+  process.env.FACEBOOK_APP_SECRET && 
+  typeof process.env.FACEBOOK_APP_SECRET === 'string' &&
+  process.env.FACEBOOK_APP_SECRET.trim() !== '';
+
+// Construct Facebook callback URL dynamically
+const getFacebookCallbackURL = () => {
+  // If explicitly set, use it
+  if (process.env.FACEBOOK_CALLBACK_URL) {
+    return process.env.FACEBOOK_CALLBACK_URL;
+  }
+  
+  // Otherwise, construct from API_URL or BACKEND_URL
+  const baseUrl = process.env.API_URL || process.env.BACKEND_URL;
+  if (baseUrl) {
+    // Remove trailing /api if present to avoid double /api/api/
+    const normalizedUrl = baseUrl.trim().endsWith('/api') 
+      ? baseUrl.trim().slice(0, -4) 
+      : baseUrl.trim();
+    return `${normalizedUrl}/api/auth/facebook/callback`;
+  }
+  
+  // Fallback to localhost for development
+  const port = process.env.PORT || 3001;
+  return `http://localhost:${port}/api/auth/facebook/callback`;
+};
+
+if (hasFacebookCredentials) {
+  const callbackURL = getFacebookCallbackURL();
+  console.log('Facebook OAuth callback URL:', callbackURL);
+  
+  passport.use(
+    new FacebookStrategy(
+      {
+        clientID: process.env.FACEBOOK_APP_ID,
+        clientSecret: process.env.FACEBOOK_APP_SECRET,
+        callbackURL: callbackURL,
+        profileFields: ['id', 'displayName', 'email', 'picture.type(large)']
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          // Check if user already exists with this Facebook ID
+          const { Op } = require('sequelize');
+          let user = await User.findOne({
+            where: {
+              [Op.or]: [
+                { email: profile.emails && profile.emails[0] ? profile.emails[0].value : null },
+                { username: profile.id }
+              ]
+            }
+          });
+
+          if (user) {
+            // Update user with Facebook ID and ensure they have journalist role
+            const updateData = {};
+            
+            if (!user.username.includes('facebook_')) {
+              updateData.username = `facebook_${profile.id}`;
+            }
+            
+            if (profile.photos && profile.photos[0]?.value) {
+              updateData.avatar = profile.photos[0].value;
+            }
+            
+            // Update role to journalist if user doesn't already have admin role
+            if (user.role !== 'admin' && user.role !== 'journalist') {
+              updateData.role = 'journalist';
+            }
+            
+            if (Object.keys(updateData).length > 0) {
+              await user.update(updateData);
+              await user.reload();
+            }
+            
+            return done(null, user);
+          }
+
+          // Create new user with journalist role
+          const email = profile.emails && profile.emails[0] ? profile.emails[0].value : `facebook_${profile.id}@facebook.com`;
+          user = await User.create({
+            username: `facebook_${profile.id}`,
+            email: email,
+            fullName: profile.displayName || 'User',
+            password: crypto.randomBytes(32).toString('hex'), // Random password since OAuth
+            role: 'journalist', // Assign journalist role for Facebook auth users
+            avatar: profile.photos && profile.photos[0]?.value ? profile.photos[0].value : null,
+            isActive: true,
+          });
+
+          return done(null, user);
+        } catch (error) {
+          return done(error, null);
+        }
+      }
+    )
+  );
+  console.log('Facebook OAuth strategy initialized');
+} else {
+  console.log('Facebook OAuth credentials not found. Facebook OAuth strategy skipped.');
 }
 
 passport.serializeUser((user, done) => {

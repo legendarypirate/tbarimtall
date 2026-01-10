@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
-import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice, payWithWallet, getCurrentUser } from '@/lib/api'
+import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice, payWithWallet, getCurrentUser, createCopyrightReport } from '@/lib/api'
 import WishlistHeartIcon from '@/components/WishlistHeartIcon'
 
 export const dynamic = 'force-dynamic'
@@ -124,7 +124,15 @@ export default function ProductDetail() {
   const [isDownloaded, setIsDownloaded] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userBalance, setUserBalance] = useState<number>(0)
+  const [userPhone, setUserPhone] = useState<string>('')
   const [isProcessingWalletPayment, setIsProcessingWalletPayment] = useState(false)
+  const [isFaqModalOpen, setIsFaqModalOpen] = useState(false)
+  const [isCopyrightReportModalOpen, setIsCopyrightReportModalOpen] = useState(false)
+  const [copyrightReportComment, setCopyrightReportComment] = useState('')
+  const [copyrightReportPhone, setCopyrightReportPhone] = useState('')
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false)
+  const [reportError, setReportError] = useState<string | null>(null)
+  const [reportSuccess, setReportSuccess] = useState(false)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -156,12 +164,14 @@ export default function ProductDetail() {
           if (userResponse.user) {
             setIsAuthenticated(true)
             setUserBalance(parseFloat(userResponse.user.income || 0))
+            setUserPhone(userResponse.user.phone || '')
           }
         }
       } catch (error) {
         // User not authenticated or error
         setIsAuthenticated(false)
         setUserBalance(0)
+        setUserPhone('')
       }
     }
     checkAuth()
@@ -946,7 +956,15 @@ export default function ProductDetail() {
 
               <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-lg text-gray-600 dark:text-gray-400">Үнэ:</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg text-gray-600 dark:text-gray-400">Үнэ:</span>
+                    <button
+                      onClick={() => setIsFaqModalOpen(true)}
+                      className="text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors font-medium"
+                    >
+                      ❓ Түгээмэл асуулт хариулт
+                    </button>
+                  </div>
                   <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">
                     {formatNumber(parseFloat(product.price) || 0)}₮
                   </span>
@@ -972,6 +990,22 @@ export default function ProductDetail() {
                   size="md"
                 />
                 <span className="ml-2">Хүслийн жагсаалтад нэмэх</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsCopyrightReportModalOpen(true)
+                  // Pre-fill phone if user is authenticated and has phone
+                  if (isAuthenticated && userPhone) {
+                    setCopyrightReportPhone(userPhone)
+                  } else {
+                    setCopyrightReportPhone('')
+                  }
+                }}
+                className="w-full flex items-center justify-center border-2 border-red-600 text-red-600 dark:text-red-400 py-3 rounded-xl font-semibold hover:bg-red-50 dark:hover:bg-gray-700 transition-all mt-2"
+              >
+                <span className="mr-2">⚠️</span>
+                <span>Зохиогчийн эрхийн мэдэгдэл</span>
               </button>
             </div>
           </div>
@@ -1391,6 +1425,262 @@ export default function ProductDetail() {
                 <p className="text-gray-600 dark:text-gray-400">
                   Татаж авах холбоос бэлдэж байна...
                 </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* FAQ Modal */}
+      {isFaqModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setIsFaqModalOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                ❓ Түгээмэл асуулт хариулт
+              </h3>
+              <button
+                onClick={() => setIsFaqModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Бүтээгдэхүүнийг хэрхэн худалдаж авах вэ?
+                </h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Бүтээгдэхүүнийг худалдаж авахын тулд "Одоо худалдаж авах" товчийг дараад QPay эсвэл хэтэвчээр төлбөр төлөх боломжтой. Төлбөр төлсний дараа файлыг татаж авах боломжтой болно.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Төлбөр төлсний дараа файлыг хэр удаан татаж авах боломжтой вэ?
+                </h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Төлбөр төлсний дараа татаж авах холбоос 10 минутын хугацаанд хүчинтэй байна. Энэ хугацаанд файлыг татаж авах боломжтой. Холбоос нь нэг удаа ашиглах боломжтой.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Хэрэв файлыг татаж авах боломжгүй болсон бол яах вэ?
+                </h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Хэрэв татаж авах холбоосын хугацаа дууссан эсвэл алдаа гарсан бол бидэнтэй холбогдоно уу. Бид танд туслах болно.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Бүтээгдэхүүнийг буцаах боломжтой юу?
+                </h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Бүтээгдэхүүнийг худалдаж авсны дараа буцаах боломжгүй. Гэхдээ хэрэв техникийн асуудал гарсан бол бидэнтэй холбогдоно уу.
+                </p>
+              </div>
+
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Ямар төлбөрийн арга хэрэглэж болох вэ?
+                </h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Та QPay, хэтэвч эсвэл банкны шилжүүлэгээр төлбөр төлөх боломжтой. Хэрэв таны хэтэвчэнд хангалттай мөнгө байгаа бол хэтэвчээр шууд худалдаж авах боломжтой.
+                </p>
+              </div>
+
+              <div className="pb-4">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Бүтээгдэхүүний чанар хэрхэн баталгаажсан вэ?
+                </h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Бүх бүтээгдэхүүн манай системд баталгаажсан зохиогчдын бүтээлүүд юм. Бүтээгдэхүүний үнэлгээ, тайлбар зэргийг үзэж чанарыг үнэлэх боломжтой.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setIsFaqModalOpen(false)}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all"
+              >
+                Хаах
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copyright Report Modal */}
+      {isCopyrightReportModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            if (!isSubmittingReport) {
+              setIsCopyrightReportModalOpen(false)
+              setCopyrightReportComment('')
+              setCopyrightReportPhone('')
+              setReportError(null)
+              setReportSuccess(false)
+            }
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                ⚠️ Зохиогчийн эрхийн мэдэгдэл
+              </h3>
+              <button
+                onClick={() => {
+                  if (!isSubmittingReport) {
+                    setIsCopyrightReportModalOpen(false)
+                    setCopyrightReportComment('')
+                    setCopyrightReportPhone('')
+                    setReportError(null)
+                    setReportSuccess(false)
+                  }
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                disabled={isSubmittingReport}
+              >
+                ×
+              </button>
+            </div>
+
+            {reportSuccess ? (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">✅</div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Мэдэгдэл илгээгдлээ
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Таны мэдэгдлийг хүлээн авлаа. Бид шалгаж үзэх болно.
+                </p>
+                <button
+                  onClick={() => {
+                    setIsCopyrightReportModalOpen(false)
+                    setCopyrightReportComment('')
+                    setCopyrightReportPhone('')
+                    setReportError(null)
+                    setReportSuccess(false)
+                  }}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all"
+                >
+                  Хаах
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Бүтээгдэхүүн:
+                  </label>
+                  <p className="text-gray-900 dark:text-white font-semibold">
+                    {product.title}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Утасны дугаар <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={copyrightReportPhone}
+                    onChange={(e) => setCopyrightReportPhone(e.target.value)}
+                    placeholder="99112233"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isSubmittingReport}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Тайлбар <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={copyrightReportComment}
+                    onChange={(e) => setCopyrightReportComment(e.target.value)}
+                    placeholder="Зохиогчийн эрхийн мэдэгдлийн тайлбар..."
+                    rows={5}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    disabled={isSubmittingReport}
+                  />
+                </div>
+
+                {reportError && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <p className="text-red-800 dark:text-red-200 text-sm">{reportError}</p>
+                  </div>
+                )}
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    onClick={async () => {
+                      if (!copyrightReportComment.trim()) {
+                        setReportError('Тайлбар шаардлагатай')
+                        return
+                      }
+
+                      if (!copyrightReportPhone.trim()) {
+                        setReportError('Утасны дугаар шаардлагатай')
+                        return
+                      }
+
+                      try {
+                        setIsSubmittingReport(true)
+                        setReportError(null)
+
+                        const reportProductId = product.id || product.uuid || productId
+                        await createCopyrightReport({
+                          productId: typeof reportProductId === 'string' ? parseInt(reportProductId) || reportProductId : reportProductId,
+                          comment: copyrightReportComment.trim(),
+                          phone: copyrightReportPhone.trim()
+                        })
+
+                        setReportSuccess(true)
+                      } catch (error: any) {
+                        console.error('Error submitting copyright report:', error)
+                        setReportError(error.message || 'Мэдэгдэл илгээхэд алдаа гарлаа')
+                      } finally {
+                        setIsSubmittingReport(false)
+                      }
+                    }}
+                    disabled={isSubmittingReport}
+                    className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-xl font-semibold hover:from-red-700 hover:to-red-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmittingReport ? 'Илгээж байна...' : 'Илгээх'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!isSubmittingReport) {
+                        setIsCopyrightReportModalOpen(false)
+                        setCopyrightReportComment('')
+                        setCopyrightReportPhone('')
+                        setReportError(null)
+                        setReportSuccess(false)
+                      }
+                    }}
+                    disabled={isSubmittingReport}
+                    className="flex-1 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Цуцлах
+                  </button>
+                </div>
               </div>
             )}
           </div>

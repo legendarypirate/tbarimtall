@@ -358,13 +358,19 @@ export default function MembershipsPage() {
                   )}
 
                   {isCurrent ? (
-                    <button
-                      onClick={() => handleExtendMembership(membership.id)}
-                      disabled={isExtending || isCreatingInvoice}
-                      className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-3 rounded-xl font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none"
-                    >
-                      {isExtending ? 'Ачааллаж байна...' : 'Сунгах'}
-                    </button>
+                    !isFree ? (
+                      <button
+                        onClick={() => handleExtendMembership(membership.id)}
+                        disabled={isExtending || isCreatingInvoice}
+                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-3 rounded-xl font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none"
+                      >
+                        {isExtending ? 'Ачааллаж байна...' : 'Сунгах'}
+                      </button>
+                    ) : (
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 py-3 rounded-xl font-semibold text-center">
+                        Сонгогдсон
+                      </div>
+                    )
                   ) : (
                     <button
                       onClick={() => handleSelectMembership(membership.id)}

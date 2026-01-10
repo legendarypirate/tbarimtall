@@ -49,5 +49,26 @@ const requireSuperAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, authorize, requireSuperAdmin };
+// Optional authentication - sets req.user if token is present, but doesn't fail if token is missing
+const optionalAuthenticate = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+      const user = await User.findByPk(decoded.userId);
+      
+      if (user && user.isActive) {
+        req.user = user;
+      }
+    }
+    
+    next();
+  } catch (error) {
+    // If token is invalid, just continue without setting req.user
+    next();
+  }
+};
+
+module.exports = { authenticate, authorize, requireSuperAdmin, optionalAuthenticate };
 

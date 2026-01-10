@@ -30,6 +30,35 @@ async function getQPayToken() {
   }
 }
 
+// Helper function to format QR image with data URL prefix if needed
+function formatQrImage(qrImage) {
+  if (!qrImage) return null;
+  
+  // If it already has a data URL prefix or is a URL, return as is
+  if (qrImage.startsWith('data:') || qrImage.startsWith('http://') || qrImage.startsWith('https://') || qrImage.startsWith('/')) {
+    return qrImage;
+  }
+  
+  // Check if it's a base64 PNG (starts with iVBORw0KGgo)
+  if (qrImage.startsWith('iVBORw0KGgo')) {
+    return 'data:image/png;base64,' + qrImage;
+  }
+  
+  // Check if it's a base64 JPEG (starts with /9j/)
+  if (qrImage.startsWith('/9j/')) {
+    return 'data:image/jpeg;base64,' + qrImage;
+  }
+  
+  // If it doesn't match known patterns but looks like base64, assume PNG
+  // Base64 strings are typically alphanumeric with +, /, and = characters
+  if (/^[A-Za-z0-9+/=]+$/.test(qrImage)) {
+    return 'data:image/png;base64,' + qrImage;
+  }
+  
+  // Return as is if we can't determine the format
+  return qrImage;
+}
+
 // Create QPay invoice
 exports.createInvoice = async (req, res) => {
   try {
@@ -188,14 +217,14 @@ exports.createInvoice = async (req, res) => {
       paymentMethod: 'qpay',
       status: 'pending',
       invoiceId: invoiceData.invoice_id,
-      qrImage: invoiceData.qr_image || null,
+      qrImage: formatQrImage(invoiceData.qr_image) || null,
       qrText: invoiceData.qr_text || null
     });
 
     // Get order with relations - include UUID for frontend display
     const orderWithRelations = await Order.findByPk(order.id, {
       include: [
-        { model: User, as: 'user', attributes: ['id', 'username', 'email', 'fullName'] },
+        { model: User, as: 'user', attributes: ['id', 'email', 'fullName'] },
         { model: Product, as: 'product', attributes: ['id', 'uuid', 'title', 'price'] }
       ]
     });
@@ -211,12 +240,15 @@ exports.createInvoice = async (req, res) => {
       } : null
     };
 
+    // Format QR image with data URL prefix if needed
+    const formattedQrImage = formatQrImage(invoiceData.qr_image);
+    
     res.json({
       success: true,
       order: responseOrder,
       invoice: {
         invoice_id: invoiceData.invoice_id,
-        qr_image: invoiceData.qr_image,
+        qr_image: formattedQrImage,
         qr_text: invoiceData.qr_text,
         qr_code: invoiceData.qr_code,
         urls: invoiceData.urls
@@ -242,7 +274,7 @@ exports.checkPaymentStatus = async (req, res) => {
       where: { invoiceId },
       attributes: { include: ['id', 'userId', 'productId', 'amount', 'paymentMethod', 'status', 'transactionId', 'invoiceId', 'qrImage', 'qrText', 'createdAt', 'updatedAt'] },
       include: [
-        { model: User, as: 'user', attributes: ['id', 'username', 'email', 'fullName'] },
+        { model: User, as: 'user', attributes: ['id', 'email', 'fullName'] },
         { model: Product, as: 'product', attributes: ['id', 'uuid', 'title', 'price'] }
       ]
     });
@@ -739,16 +771,19 @@ exports.createWalletRechargeInvoice = async (req, res) => {
       paymentMethod: 'qpay',
       status: 'pending',
       invoiceId: invoiceData.invoice_id,
-      qrImage: invoiceData.qr_image || null,
+      qrImage: formatQrImage(invoiceData.qr_image) || null,
       qrText: invoiceData.qr_text || null
     });
 
+    // Format QR image with data URL prefix if needed
+    const formattedQrImage = formatQrImage(invoiceData.qr_image);
+    
     res.json({
       success: true,
       order: order.toJSON(),
       invoice: {
         invoice_id: invoiceData.invoice_id,
-        qr_image: invoiceData.qr_image,
+        qr_image: formattedQrImage,
         qr_text: invoiceData.qr_text,
         qr_code: invoiceData.qr_code,
         urls: invoiceData.urls
@@ -841,16 +876,19 @@ exports.createMembershipInvoice = async (req, res) => {
       paymentMethod: 'qpay',
       status: 'pending',
       invoiceId: invoiceData.invoice_id,
-      qrImage: invoiceData.qr_image || null,
+      qrImage: formatQrImage(invoiceData.qr_image) || null,
       qrText: invoiceData.qr_text || null
     });
 
+    // Format QR image with data URL prefix if needed
+    const formattedQrImage = formatQrImage(invoiceData.qr_image);
+    
     res.json({
       success: true,
       order: order.toJSON(),
       invoice: {
         invoice_id: invoiceData.invoice_id,
-        qr_image: invoiceData.qr_image,
+        qr_image: formattedQrImage,
         qr_text: invoiceData.qr_text,
         qr_code: invoiceData.qr_code,
         urls: invoiceData.urls
@@ -1252,7 +1290,7 @@ exports.getOrderByInvoice = async (req, res) => {
       where: { invoiceId },
       attributes: { include: ['id', 'userId', 'productId', 'amount', 'paymentMethod', 'status', 'transactionId', 'invoiceId', 'qrImage', 'qrText', 'createdAt', 'updatedAt'] },
       include: [
-        { model: User, as: 'user', attributes: ['id', 'username', 'email', 'fullName'] },
+        { model: User, as: 'user', attributes: ['id', 'email', 'fullName'] },
         { model: Product, as: 'product', attributes: ['id', 'uuid', 'title', 'price'] }
       ]
     });
@@ -1302,6 +1340,11 @@ exports.getOrderByInvoice = async (req, res) => {
       }
     } else if (orderData.productId) {
       orderData.productId = parseInt(orderData.productId);
+    }
+    
+    // Format QR image if it exists
+    if (orderData.qrImage) {
+      orderData.qrImage = formatQrImage(orderData.qrImage);
     }
 
     res.json({

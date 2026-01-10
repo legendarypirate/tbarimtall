@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, Users, Settings, Clock, ShoppingCart, FolderOpen, ChevronDown, ChevronRight } from "lucide-react";
+import { Home, Users, Settings, Clock, ShoppingCart, FolderOpen, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const links = [
@@ -29,6 +29,11 @@ const links = [
     ]
   },
   { 
+    href: "/admin/reports", 
+    label: "Мэдэгдэл", 
+    icon: AlertTriangle,
+  },
+  { 
     href: "/admin/settings", 
     label: "Тохиргоо", 
     icon: Settings,
@@ -37,6 +42,8 @@ const links = [
       { href: "/admin/settings/banner-manage", label: "Banner Manage" },
       { href: "/admin/settings/role-access", label: "Role Access" },
       { href: "/admin/settings/membership", label: "Membership" },
+      { href: "/admin/settings/faq", label: "FAQ" },
+
     ]
   },
 ];

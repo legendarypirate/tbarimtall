@@ -864,6 +864,107 @@ exports.deleteCategory = async (req, res) => {
   }
 };
 
+// Subcategories CRUD
+exports.getAllSubcategoriesAdmin = async (req, res) => {
+  try {
+    const { categoryId } = req.query;
+    const where = {};
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+    
+    const subcategories = await Subcategory.findAll({
+      where,
+      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'icon'] }],
+      order: [['createdAt', 'DESC']]
+    });
+    res.json({ subcategories });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.createSubcategory = async (req, res) => {
+  try {
+    const { categoryId, name, description, isActive } = req.body;
+
+    // Validate category exists
+    const category = await Category.findByPk(categoryId);
+    if (!category) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    const subcategory = await Subcategory.create({
+      categoryId,
+      name,
+      description: description || null,
+      isActive: isActive !== undefined ? isActive : true
+    });
+
+    const subcategoryWithCategory = await Subcategory.findByPk(subcategory.id, {
+      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'icon'] }]
+    });
+
+    res.status(201).json({ subcategory: subcategoryWithCategory });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateSubcategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subcategory = await Subcategory.findByPk(id);
+
+    if (!subcategory) {
+      return res.status(404).json({ error: 'Subcategory not found' });
+    }
+
+    // If categoryId is being updated, validate it exists
+    if (req.body.categoryId) {
+      const category = await Category.findByPk(req.body.categoryId);
+      if (!category) {
+        return res.status(404).json({ error: 'Category not found' });
+      }
+    }
+
+    await subcategory.update(req.body);
+
+    const subcategoryWithCategory = await Subcategory.findByPk(subcategory.id, {
+      include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'icon'] }]
+    });
+
+    res.json({ subcategory: subcategoryWithCategory });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.deleteSubcategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subcategory = await Subcategory.findByPk(id);
+
+    if (!subcategory) {
+      return res.status(404).json({ error: 'Subcategory not found' });
+    }
+
+    // Check if subcategory has products
+    const productsCount = await Product.count({ where: { subcategoryId: id } });
+    if (productsCount > 0) {
+      return res.status(400).json({ 
+        error: `Cannot delete subcategory. There are ${productsCount} product(s) associated with this subcategory. Please remove or reassign the products first.` 
+      });
+    }
+
+    await subcategory.destroy();
+    res.json({ message: 'Subcategory deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting subcategory:', error);
+    res.status(500).json({ error: error.message || 'Failed to delete subcategory' });
+  }
+};
+
 // Orders/Payments CRUD
 exports.getAllOrders = async (req, res) => {
   try {

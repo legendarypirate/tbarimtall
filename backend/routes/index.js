@@ -9,9 +9,11 @@ const searchRoutes = require('./search');
 const adminRoutes = require('./admin');
 const withdrawalRoutes = require('./withdrawals');
 const bannerRoutes = require('./banners');
+const faqRoutes = require('./faqs');
 const membershipRoutes = require('./memberships');
 const qpayRoutes = require('./qpay');
 const wishlistRoutes = require('./wishlist');
+const copyrightReportRoutes = require('./copyrightReports');
 
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
@@ -21,9 +23,11 @@ router.use('/search', searchRoutes);
 router.use('/admin', adminRoutes);
 router.use('/withdrawals', withdrawalRoutes);
 router.use('/banners', bannerRoutes);
+router.use('/faqs', faqRoutes);
 router.use('/memberships', membershipRoutes);
 router.use('/qpay', qpayRoutes);
 router.use('/wishlist', wishlistRoutes);
+router.use('/copyright-reports', copyrightReportRoutes);
 
 module.exports = router;
 

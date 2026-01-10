@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Edit, Trash2, Plus, Loader2, Search, FolderOpen } from "lucide-react";
-import { categoriesApi } from "@/lib/api";
+import { Edit, Trash2, Plus, Loader2, Search, FolderOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { categoriesApi, subcategoriesApi } from "@/lib/api";
 
 // Category type based on your API
 export interface CategoryData {
@@ -29,6 +29,87 @@ export interface SubcategoryData {
   categoryId: number;
   description?: string | null;
   isActive: boolean;
+}
+
+// Subcategory Form Component
+function SubcategoryForm({
+  subcategory,
+  categoryId,
+  onSubmit,
+  onCancel,
+  isLoading
+}: {
+  subcategory?: SubcategoryData;
+  categoryId: number;
+  onSubmit: (subcategoryData: Omit<SubcategoryData, "id" | "categoryId">) => Promise<void>;
+  onCancel: () => void;
+  isLoading: boolean;
+}) {
+  const [form, setForm] = useState<Omit<SubcategoryData, "id" | "categoryId">>({
+    name: subcategory?.name || "",
+    description: subcategory?.description || "",
+    isActive: subcategory?.isActive ?? true,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(form);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="subcategory-name">Дэд ангиллын нэр *</Label>
+        <Input
+          id="subcategory-name"
+          value={form.name}
+          onChange={(e) => setForm({...form, name: e.target.value})}
+          placeholder="Жишээ: Монгол хэл"
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="subcategory-description">Тайлбар</Label>
+        <Textarea
+          id="subcategory-description"
+          value={form.description || ""}
+          onChange={(e) => setForm({...form, description: e.target.value})}
+          placeholder="Дэд ангиллын тайлбар..."
+          rows={3}
+        />
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="subcategory-isActive"
+          checked={form.isActive}
+          onChange={(e) => setForm({...form, isActive: e.target.checked})}
+          className="rounded border-gray-300"
+        />
+        <Label htmlFor="subcategory-isActive" className="cursor-pointer">
+          Идэвхтэй
+        </Label>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+          Цуцлах
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Хадгалж байна...
+            </>
+          ) : (
+            subcategory ? "Хадгалах" : "Үүсгэх"
+          )}
+        </Button>
+      </div>
+    </form>
+  );
 }
 
 // Category Form Component
@@ -131,6 +212,9 @@ export default function CategoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{open: boolean, categoryId?: number}>({open: false});
+  const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [subcategoryDialog, setSubcategoryDialog] = useState<{open: boolean, categoryId?: number, subcategory?: SubcategoryData}>({open: false});
+  const [subcategoryDeleteDialog, setSubcategoryDeleteDialog] = useState<{open: boolean, subcategoryId?: number}>({open: false});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -230,6 +314,89 @@ export default function CategoryPage() {
       const errorMessage = err instanceof Error ? err.message : 'Ангилал устгахад алдаа гарлаа';
       setError(errorMessage);
       // Keep dialog open on error so user can see the error message
+    } finally {
+      setIsFormLoading(false);
+    }
+  };
+
+  // Toggle category expansion to show/hide subcategories
+  const toggleCategoryExpansion = (categoryId: number) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  // Create subcategory via API
+  const createSubcategory = async (categoryId: number, subcategoryData: Omit<SubcategoryData, "id" | "categoryId">) => {
+    try {
+      setIsFormLoading(true);
+      setError(null);
+      setSuccess(null);
+      
+      await subcategoriesApi.create({
+        categoryId,
+        name: subcategoryData.name,
+        description: subcategoryData.description || undefined,
+        isActive: subcategoryData.isActive,
+      });
+
+      setSuccess('Дэд ангилал амжилттай үүслээ');
+      setSubcategoryDialog({open: false, categoryId: undefined, subcategory: undefined});
+      fetchCategories();
+    } catch (err) {
+      console.error('Error creating subcategory:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create subcategory');
+    } finally {
+      setIsFormLoading(false);
+    }
+  };
+
+  // Update subcategory via API
+  const updateSubcategory = async (subcategoryData: Omit<SubcategoryData, "id" | "categoryId">) => {
+    if (!subcategoryDialog.subcategory) return;
+
+    try {
+      setIsFormLoading(true);
+      setError(null);
+      setSuccess(null);
+      
+      await subcategoriesApi.update(subcategoryDialog.subcategory.id, {
+        name: subcategoryData.name,
+        description: subcategoryData.description || undefined,
+        isActive: subcategoryData.isActive,
+      });
+
+      setSuccess('Дэд ангилал амжилттай шинэчлэгдлээ');
+      setSubcategoryDialog({open: false, categoryId: undefined, subcategory: undefined});
+      fetchCategories();
+    } catch (err) {
+      console.error('Error updating subcategory:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update subcategory');
+    } finally {
+      setIsFormLoading(false);
+    }
+  };
+
+  // Delete subcategory via API
+  const deleteSubcategory = async (id: number) => {
+    try {
+      setIsFormLoading(true);
+      setError(null);
+      setSuccess(null);
+      
+      await subcategoriesApi.delete(id);
+      
+      setSuccess('Дэд ангилал амжилттай устгагдлаа');
+      setSubcategoryDeleteDialog({open: false, subcategoryId: undefined});
+      fetchCategories();
+    } catch (err) {
+      console.error('Error deleting subcategory:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Дэд ангилал устгахад алдаа гарлаа';
+      setError(errorMessage);
     } finally {
       setIsFormLoading(false);
     }
@@ -342,11 +509,83 @@ export default function CategoryPage() {
                     {category.description}
                   </p>
                 )}
-                {category.subcategories && category.subcategories.length > 0 && (
-                  <p className="text-xs text-gray-500 mb-4">
-                    {category.subcategories.length} дэд ангилал
-                  </p>
-                )}
+                
+                {/* Subcategories Section */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      onClick={() => toggleCategoryExpansion(category.id)}
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                    >
+                      {expandedCategories.has(category.id) ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      <span>
+                        {category.subcategories?.length || 0} дэд ангилал
+                      </span>
+                    </button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSubcategoryDialog({open: true, categoryId: category.id})}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Нэмэх
+                    </Button>
+                  </div>
+                  
+                  {expandedCategories.has(category.id) && (
+                    <div className="mt-2 space-y-2 border-t pt-2">
+                      {category.subcategories && category.subcategories.length > 0 ? (
+                        category.subcategories.map((subcategory) => (
+                          <div
+                            key={subcategory.id}
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded-md hover:bg-gray-100"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm">{subcategory.name}</span>
+                                <Badge variant={subcategory.isActive ? "default" : "secondary"} className="text-xs">
+                                  {subcategory.isActive ? "Идэвхтэй" : "Идэвхгүй"}
+                                </Badge>
+                              </div>
+                              {subcategory.description && (
+                                <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                                  {subcategory.description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex gap-1 ml-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSubcategoryDialog({open: true, categoryId: category.id, subcategory})}
+                                className="h-7 w-7 p-0"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSubcategoryDeleteDialog({open: true, subcategoryId: subcategory.id})}
+                                className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center py-2">
+                          Дэд ангилал байхгүй
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -423,6 +662,69 @@ export default function CategoryPage() {
               onClick={() => {
                 if (deleteDialog.categoryId) {
                   deleteCategory(deleteDialog.categoryId);
+                }
+              }}
+              disabled={isFormLoading}
+            >
+              {isFormLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Устгаж байна...
+                </>
+              ) : (
+                "Устгах"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create/Edit Subcategory Dialog */}
+      <Dialog open={subcategoryDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setSubcategoryDialog({open: false, categoryId: undefined, subcategory: undefined});
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {subcategoryDialog.subcategory ? "Дэд ангилал засах" : "Шинэ дэд ангилал үүсгэх"}
+            </DialogTitle>
+          </DialogHeader>
+          {subcategoryDialog.categoryId && (
+            <SubcategoryForm
+              subcategory={subcategoryDialog.subcategory}
+              categoryId={subcategoryDialog.categoryId}
+              onSubmit={subcategoryDialog.subcategory ? updateSubcategory : (data) => createSubcategory(subcategoryDialog.categoryId!, data)}
+              onCancel={() => setSubcategoryDialog({open: false, categoryId: undefined, subcategory: undefined})}
+              isLoading={isFormLoading}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Subcategory Confirmation Dialog */}
+      <Dialog open={subcategoryDeleteDialog.open} onOpenChange={(open) => setSubcategoryDeleteDialog({open})}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Дэд ангилал устгах</DialogTitle>
+          </DialogHeader>
+          <p className="py-4">
+            Та энэ дэд ангиллыг устгахдаа итгэлтэй байна уу? Энэ үйлдлийг буцаах боломжгүй.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSubcategoryDeleteDialog({open: false})}
+              disabled={isFormLoading}
+            >
+              Цуцлах
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (subcategoryDeleteDialog.subcategoryId) {
+                  deleteSubcategory(subcategoryDeleteDialog.subcategoryId);
                 }
               }}
               disabled={isFormLoading}

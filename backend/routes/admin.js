@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const bannerController = require('../controllers/bannerController');
+const faqController = require('../controllers/faqController');
 const rolePermissionController = require('../controllers/rolePermissionController');
 const membershipController = require('../controllers/membershipController');
 const { authenticate, authorize, requireSuperAdmin } = require('../middleware/auth');
@@ -38,6 +39,12 @@ router.post('/categories', adminController.createCategory);
 router.put('/categories/:id', adminController.updateCategory);
 router.delete('/categories/:id', adminController.deleteCategory);
 
+// Subcategories CRUD
+router.get('/subcategories', adminController.getAllSubcategoriesAdmin);
+router.post('/subcategories', adminController.createSubcategory);
+router.put('/subcategories/:id', adminController.updateSubcategory);
+router.delete('/subcategories/:id', adminController.deleteSubcategory);
+
 // Orders/Payments CRUD
 router.get('/orders', adminController.getAllOrders);
 router.get('/orders/qpay', adminController.getQPayOrders);
@@ -48,6 +55,13 @@ router.get('/banners', bannerController.getAllBannersAdmin);
 router.post('/banners', bannerController.createBanner);
 router.put('/banners/:id', bannerController.updateBanner);
 router.delete('/banners/:id', bannerController.deleteBanner);
+
+// FAQs CRUD
+router.get('/faqs', faqController.getAllFAQsAdmin);
+router.get('/faqs/:id', faqController.getFAQById);
+router.post('/faqs', faqController.createFAQ);
+router.put('/faqs/:id', faqController.updateFAQ);
+router.delete('/faqs/:id', faqController.deleteFAQ);
 
 // Role Permissions CRUD (Super Admin only)
 router.get('/role-permissions', requireSuperAdmin, rolePermissionController.getAllRolePermissions);

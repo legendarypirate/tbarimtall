@@ -8,6 +8,7 @@ export const translations = {
     categories: 'Ангилал',
     howItWorks: 'Хэрхэн ажиллах вэ',
     pricing: 'Үнэ',
+    faq: 'Түгээмэл асуулт хариулт',
     wishlist: 'Хүслийн жагсаалт',
     
     // Home page
@@ -39,6 +40,13 @@ export const translations = {
     whyDescription: 'Контентоо оруулаад мөнгө олж эхэл!',
     joinForFree: 'Join for Free',
     
+    // Membership
+    membershipPlans: 'Гишүүнчлэлийн төлөвлөгөө',
+    chooseMembershipPlan: 'Өөрийн хэрэгцээнд тохирох гишүүнчлэлийн төлөвлөгөөг сонгоно уу',
+    selectPlan: 'Төлөвлөгөө сонгох',
+    maxPosts: 'Хамгийн ихдээ нийтлэл',
+    popular: 'АЛДАРТАЙ',
+    
     // Footer
     footerDescription: 'Your trusted platform for digital content and services.',
     legal: 'Legal',
@@ -59,6 +67,7 @@ export const translations = {
     categories: 'Categories',
     howItWorks: 'How It Works',
     pricing: 'Pricing',
+    faq: 'FAQ',
     wishlist: 'Wishlist',
     
     // Home page
@@ -89,6 +98,13 @@ export const translations = {
     whyTitle: 'Why',
     whyDescription: 'Upload your content and start earning!',
     joinForFree: 'Join for Free',
+    
+    // Membership
+    membershipPlans: 'Membership Plans',
+    chooseMembershipPlan: 'Choose the perfect membership plan for your needs',
+    selectPlan: 'Select Plan',
+    maxPosts: 'Max Posts',
+    popular: 'POPULAR',
     
     // Footer
     footerDescription: 'Your trusted platform for digital content and services.',

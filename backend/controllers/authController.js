@@ -193,3 +193,32 @@ exports.googleCallback = async (req, res) => {
   }
 };
 
+// Facebook OAuth callback handler
+exports.facebookCallback = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`);
+    }
+
+    const user = req.user;
+    const token = generateToken(user.id);
+
+    // Redirect to frontend with token
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const redirectUrl = `${frontendUrl}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      avatar: user.avatar,
+      isSuperAdmin: user.isSuperAdmin || false
+    }))}`;
+
+    res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('Facebook OAuth callback error:', error);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=server_error`);
+  }
+};
+
