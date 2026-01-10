@@ -2,11 +2,28 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const bannerController = require('../controllers/bannerController');
+const heroSliderController = require('../controllers/heroSliderController');
 const faqController = require('../controllers/faqController');
 const rolePermissionController = require('../controllers/rolePermissionController');
 const membershipController = require('../controllers/membershipController');
 const { authenticate, authorize, requireSuperAdmin } = require('../middleware/auth');
-const { uploadProduct } = require('../config/multer');
+const { uploadProduct, uploadImage } = require('../config/multer');
+const multer = require('multer');
+
+// Create multer instance for hero slider images (memory storage for Cloudinary)
+const uploadHeroSliderImage = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit for images
+  }
+});
 
 // All admin routes require authentication and admin role
 router.use(authenticate);
@@ -55,6 +72,12 @@ router.get('/banners', bannerController.getAllBannersAdmin);
 router.post('/banners', bannerController.createBanner);
 router.put('/banners/:id', bannerController.updateBanner);
 router.delete('/banners/:id', bannerController.deleteBanner);
+
+// Hero Sliders CRUD
+router.get('/hero-sliders', heroSliderController.getAllHeroSlidersAdmin);
+router.post('/hero-sliders', uploadHeroSliderImage.single('image'), heroSliderController.createHeroSlider);
+router.put('/hero-sliders/:id', uploadHeroSliderImage.single('image'), heroSliderController.updateHeroSlider);
+router.delete('/hero-sliders/:id', heroSliderController.deleteHeroSlider);
 
 // FAQs CRUD
 router.get('/faqs', faqController.getAllFAQsAdmin);

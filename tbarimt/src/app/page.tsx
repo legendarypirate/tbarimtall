@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getTranslation } from '@/lib/translations'
-import { getCategories, getFeaturedProducts, getTopJournalists, getActiveMemberships } from '@/lib/api'
+import { getCategories, getFeaturedProducts, getTopJournalists, getActiveMemberships, getHeroSliders } from '@/lib/api'
 import { getCategoryIcon } from '@/lib/categoryIcon'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import WishlistHeartIcon from '@/components/WishlistHeartIcon'
+import AuthModal from '@/components/AuthModal'
 
 // Default categories data (fallback)
 const defaultCategories = [
@@ -208,7 +209,24 @@ export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>(defaultFeaturedProducts)
   const [topBloggers, setTopBloggers] = useState<any[]>([])
   const [memberships, setMemberships] = useState<any[]>([])
+  const [heroSliders, setHeroSliders] = useState<any[]>([])
+  const [currentSlide, setCurrentSlide] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isJournalist, setIsJournalist] = useState(false)
+
+  useEffect(() => {
+    // Check if user is logged in as journalist
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser)
+        setIsJournalist(user.role === 'journalist')
+      } catch (e) {
+        setIsJournalist(false)
+      }
+    }
+  }, [])
 
   useEffect(() => {
 
@@ -216,11 +234,12 @@ export default function Home() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [categoriesRes, productsRes, journalistsRes, membershipsRes] = await Promise.all([
+        const [categoriesRes, productsRes, journalistsRes, membershipsRes, slidersRes] = await Promise.all([
           getCategories().catch(() => ({ categories: defaultCategories })),
           getFeaturedProducts(8).catch(() => ({ products: defaultFeaturedProducts })),
           getTopJournalists(4).catch(() => ({ journalists: [] })),
-          getActiveMemberships().catch(() => ({ memberships: [] }))
+          getActiveMemberships().catch(() => ({ memberships: [] })),
+          getHeroSliders().catch(() => ({ sliders: [] }))
         ])
 
         if (categoriesRes.categories) {
@@ -261,6 +280,9 @@ export default function Home() {
         if (membershipsRes.memberships && Array.isArray(membershipsRes.memberships)) {
           setMemberships(membershipsRes.memberships)
         }
+        if (slidersRes.sliders && Array.isArray(slidersRes.sliders)) {
+          setHeroSliders(slidersRes.sliders)
+        }
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
@@ -270,6 +292,24 @@ export default function Home() {
 
     fetchData()
   }, [])
+
+  // Auto-advance carousel
+  useEffect(() => {
+    if (heroSliders.length <= 1) return
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSliders.length)
+    }, 5000) // Change slide every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [heroSliders.length])
+
+  // Reset current slide when sliders change
+  useEffect(() => {
+    if (heroSliders.length > 0 && currentSlide >= heroSliders.length) {
+      setCurrentSlide(0)
+    }
+  }, [heroSliders.length, currentSlide])
 
   useEffect(() => {
     // Close dropdown when clicking outside
@@ -336,54 +376,98 @@ export default function Home() {
     <main className="min-h-screen bg-white dark:bg-gray-900">
       <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      {/* Hero Section */}
-      <section className="relative w-full py-24 md:py-32 overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
-          }}
-        >
-          {/* Dark overlay for better text readability */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#004e6c]/85 via-[#004e6c]/75 to-[#004e6c]/85"></div>
-        </div>
-        
-        {/* Abstract background graphics */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-[#004e6c]/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#004e6c]/10 rounded-full blur-3xl"></div>
-        </div>
-        {/* Pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.05]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}></div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
-              {getTranslation(language, 'heroTitle')}
-              <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
-                {getTranslation(language, 'heroSubtitle')}
-              </span>
-            </h2>
+      {/* Hero Section - Carousel Slider */}
+      <section className="relative w-full overflow-hidden">
+        {/* Carousel Container */}
+        <div className="relative w-full h-[480px] md:h-[560px]">
+          {/* Default slide (shown when no sliders exist) */}
+          {heroSliders.length === 0 ? (
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
+              style={{
+                backgroundImage: `url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
+              }}
+            >
+              {/* Dark overlay for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#004e6c]/85 via-[#004e6c]/75 to-[#004e6c]/85"></div>
+            </div>
+          ) : (
+            <>
+              {/* Slider Images */}
+              {heroSliders.map((slider, index) => (
+                <div
+                  key={slider.id}
+                  className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${
+                    index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                  }`}
+                  style={{
+                    backgroundImage: `url('${slider.imageUrl}')`,
+                  }}
+                >
+                  {/* Dark overlay for better text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#004e6c]/85 via-[#004e6c]/75 to-[#004e6c]/85"></div>
+                </div>
+              ))}
+            </>
+          )}
           
+          {/* Abstract background graphics */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-20 left-10 w-96 h-96 bg-[#004e6c]/20 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#004e6c]/10 rounded-full blur-3xl"></div>
+          </div>
+          {/* Pattern overlay */}
+          <div className="absolute inset-0 opacity-[0.05]" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}></div>
+          
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
+            <div className="text-center">
+              {/* Dynamic Title and Subtitle from slider or default */}
+              {heroSliders.length > 0 && heroSliders[currentSlide] ? (
+                <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
+                  {heroSliders[currentSlide].title || getTranslation(language, 'heroTitle')}
+                  {heroSliders[currentSlide].subtitle ? (
+                    <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
+                      {heroSliders[currentSlide].subtitle}
+                    </span>
+                  ) : (
+                    <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
+                      {getTranslation(language, 'heroSubtitle')}
+                    </span>
+                  )}
+                </h2>
+              ) : (
+                <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
+                  {getTranslation(language, 'heroTitle')}
+                  <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
+                    {getTranslation(language, 'heroSubtitle')}
+                  </span>
+                </h2>
+              )}
             
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-5 justify-center">
-              <button 
-                onClick={() => router.push('/products')}
-                className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
-              >
-                {getTranslation(language, 'viewAllContent')}
-              </button>
-              <button 
-                onClick={() => router.push('/products')}
-                className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c] dark:border-gray-600 px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#004e6c] dark:hover:bg-[#006b8f] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-              >
-                {getTranslation(language, 'addYourContent')}
-              </button>
+              {/* Action Buttons - Same for all slides */}
+              <div className="flex flex-col sm:flex-row gap-5 justify-center">
+                <button 
+                  onClick={() => router.push('/products')}
+                  className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+                >
+                  {getTranslation(language, 'viewAllContent')}
+                </button>
+                <button 
+                  onClick={() => {
+                    if (isJournalist) {
+                      router.push('/account/journalist')
+                    } else {
+                      setShowAuthModal(true)
+                    }
+                  }}
+                  className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c] dark:border-gray-600 px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#004e6c] dark:hover:bg-[#006b8f] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                >
+                  {getTranslation(language, 'addYourContent')}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -456,7 +540,7 @@ export default function Home() {
                 </svg>
               </div>
               <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
-                T116,400
+                ₮ 120,116,400
               </div>
               <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
                 {getTranslation(language, 'earned')}
@@ -602,12 +686,29 @@ export default function Home() {
           <p className="text-xl md:text-1xl text-white/90 dark:text-gray-300 mb-10 max-w-1xl mx-auto font-medium">
             {getTranslation(language, 'whyDescription')}
           </p>
-          <button 
-            onClick={() => router.push('/products')}
-            className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
-          >
-            {getTranslation(language, 'joinForFree')}
-          </button>
+          {isJournalist ? (
+            <button 
+              onClick={() => router.push('/account/journalist')}
+              className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+            >
+              {getTranslation(language, 'joinForFree')}
+            </button>
+          ) : (
+            <>
+              <button 
+                onClick={() => setShowAuthModal(true)}
+                className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+              >
+                {getTranslation(language, 'joinForFree')}
+              </button>
+              <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onSelectGoogle={() => setShowAuthModal(false)}
+                onSelectFacebook={() => setShowAuthModal(false)}
+              />
+            </>
+          )}
         </div>
       </section>
 

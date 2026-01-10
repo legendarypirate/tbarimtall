@@ -14,6 +14,7 @@ const membershipRoutes = require('./memberships');
 const qpayRoutes = require('./qpay');
 const wishlistRoutes = require('./wishlist');
 const copyrightReportRoutes = require('./copyrightReports');
+const heroSliderRoutes = require('./heroSliders');
 
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
@@ -28,6 +29,7 @@ router.use('/memberships', membershipRoutes);
 router.use('/qpay', qpayRoutes);
 router.use('/wishlist', wishlistRoutes);
 router.use('/copyright-reports', copyrightReportRoutes);
+router.use('/hero-sliders', heroSliderRoutes);
 
 module.exports = router;
 

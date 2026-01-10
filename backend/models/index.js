@@ -14,6 +14,7 @@ const Membership = require('./Membership');
 const DownloadToken = require('./DownloadToken');
 const Wishlist = require('./Wishlist');
 const CopyrightReport = require('./CopyrightReport');
+const HeroSlider = require('./HeroSlider');
 
 // Define associations
 User.hasMany(Product, { foreignKey: 'authorId', as: 'products' });
@@ -76,6 +77,7 @@ module.exports = {
   Membership,
   DownloadToken,
   Wishlist,
-  CopyrightReport
+  CopyrightReport,
+  HeroSlider
 };
 

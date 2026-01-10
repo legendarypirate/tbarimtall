@@ -134,6 +134,9 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                     onClick={() => router.push('/account/journalist')}
                     className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
                     <span>{getTranslation(language, 'uploadContent')}</span>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -178,14 +181,14 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
               <button 
-                onClick={() => router.push('/about')}
+                onClick={() => router.push('/howitworks')}
                 className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
               >
                 {getTranslation(language, 'howItWorks')}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
               <button 
-                onClick={() => router.push('/pricing')}
+                onClick={() => router.push('/membership')}
                 className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
               >
                 {getTranslation(language, 'pricing')}

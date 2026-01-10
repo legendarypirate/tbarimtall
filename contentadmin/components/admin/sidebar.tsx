@@ -40,6 +40,7 @@ const links = [
     children: [
       { href: "/admin/settings/category", label: "Category" },
       { href: "/admin/settings/banner-manage", label: "Banner Manage" },
+      { href: "/admin/settings/hero-slider", label: "Hero Slider" },
       { href: "/admin/settings/role-access", label: "Role Access" },
       { href: "/admin/settings/membership", label: "Membership" },
       { href: "/admin/settings/faq", label: "FAQ" },

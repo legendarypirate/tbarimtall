@@ -254,6 +254,130 @@ export const bannersApi = {
   },
 };
 
+// Hero Sliders API
+export const heroSlidersApi = {
+  getAll: async () => {
+    return apiCall('/api/hero-sliders');
+  },
+  getAllAdmin: async () => {
+    return apiCall('/api/admin/hero-sliders');
+  },
+  getById: async (id: string | number) => {
+    return apiCall(`/api/hero-sliders/${id}`);
+  },
+  create: async (sliderData: { image?: File; imageUrl?: string; title?: string; subtitle?: string; order?: number; isActive?: boolean }) => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const url = `${API_BASE_URL}/api/admin/hero-sliders`;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    const formData = new FormData();
+    
+    // Add image file if provided
+    if (sliderData.image) {
+      formData.append('image', sliderData.image);
+    } else if (sliderData.imageUrl) {
+      formData.append('imageUrl', sliderData.imageUrl);
+    }
+    
+    // Add other fields
+    if (sliderData.title !== undefined) formData.append('title', sliderData.title);
+    if (sliderData.subtitle !== undefined) formData.append('subtitle', sliderData.subtitle);
+    if (sliderData.order !== undefined) formData.append('order', sliderData.order.toString());
+    if (sliderData.isActive !== undefined) formData.append('isActive', sliderData.isActive.toString());
+
+    const headers: Record<string, string> = {};
+    // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `API error: ${response.statusText || response.status}`;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          errorMessage = error.message || error.error || errorMessage;
+        } else {
+          const text = await response.text();
+          if (text) {
+            errorMessage = text;
+          }
+        }
+      } catch (parseError) {
+        errorMessage = `API error: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
+  update: async (id: string | number, sliderData: { image?: File; imageUrl?: string; title?: string; subtitle?: string; order?: number; isActive?: boolean }) => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const url = `${API_BASE_URL}/api/admin/hero-sliders/${id}`;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    const formData = new FormData();
+    
+    // Add image file if provided
+    if (sliderData.image) {
+      formData.append('image', sliderData.image);
+    } else if (sliderData.imageUrl !== undefined) {
+      formData.append('imageUrl', sliderData.imageUrl);
+    }
+    
+    // Add other fields
+    if (sliderData.title !== undefined) formData.append('title', sliderData.title);
+    if (sliderData.subtitle !== undefined) formData.append('subtitle', sliderData.subtitle);
+    if (sliderData.order !== undefined) formData.append('order', sliderData.order.toString());
+    if (sliderData.isActive !== undefined) formData.append('isActive', sliderData.isActive.toString());
+
+    const headers: Record<string, string> = {};
+    // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `API error: ${response.statusText || response.status}`;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          errorMessage = error.message || error.error || errorMessage;
+        } else {
+          const text = await response.text();
+          if (text) {
+            errorMessage = text;
+          }
+        }
+      } catch (parseError) {
+        errorMessage = `API error: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
+  delete: async (id: string | number) => {
+    return apiCall(`/api/admin/hero-sliders/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 // Role Permissions API
 export const rolePermissionsApi = {
   getAll: async (params?: { page?: number; limit?: number; search?: string }) => {

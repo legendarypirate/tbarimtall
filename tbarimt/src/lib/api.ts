@@ -185,6 +185,11 @@ export async function getBanners() {
   return fetchAPI('/banners');
 }
 
+// Hero Sliders
+export async function getHeroSliders() {
+  return fetchAPI('/hero-sliders');
+}
+
 // Journalist account
 export async function getMyProducts(params?: {
   page?: number;
