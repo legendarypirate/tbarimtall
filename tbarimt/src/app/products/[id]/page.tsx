@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
-import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice, payWithWallet, getCurrentUser, createCopyrightReport } from '@/lib/api'
+import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice, payWithWallet, getCurrentUser, createCopyrightReport, getRecommendedProducts } from '@/lib/api'
 import WishlistHeartIcon from '@/components/WishlistHeartIcon'
 
 export const dynamic = 'force-dynamic'
@@ -133,6 +133,8 @@ export default function ProductDetail() {
   const [isSubmittingReport, setIsSubmittingReport] = useState(false)
   const [reportError, setReportError] = useState<string | null>(null)
   const [reportSuccess, setReportSuccess] = useState(false)
+  const [recommendedProducts, setRecommendedProducts] = useState<any[]>([])
+  const [loadingRecommended, setLoadingRecommended] = useState(false)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -151,6 +153,29 @@ export default function ProductDetail() {
 
     if (productId) {
       fetchProduct()
+    }
+  }, [productId])
+
+  // Fetch recommended products
+  useEffect(() => {
+    const fetchRecommended = async () => {
+      if (!productId) return
+      
+      try {
+        setLoadingRecommended(true)
+        const response = await getRecommendedProducts(productId, 8)
+        if (response.products && Array.isArray(response.products)) {
+          setRecommendedProducts(response.products)
+        }
+      } catch (error) {
+        console.error('Error fetching recommended products:', error)
+      } finally {
+        setLoadingRecommended(false)
+      }
+    }
+
+    if (productId) {
+      fetchRecommended()
     }
   }, [productId])
 
@@ -956,15 +981,7 @@ export default function ProductDetail() {
 
               <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
                 <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg text-gray-600 dark:text-gray-400">Үнэ:</span>
-                    <button
-                      onClick={() => setIsFaqModalOpen(true)}
-                      className="text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors font-medium"
-                    >
-                      ❓ Түгээмэл асуулт хариулт
-                    </button>
-                  </div>
+                  
                   <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">
                     {formatNumber(parseFloat(product.price) || 0)}₮
                   </span>
@@ -1011,6 +1028,140 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Recommended Products Section */}
+      {recommendedProducts.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-12">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+            Санал болгох контентууд
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {recommendedProducts.map((recProduct) => {
+              const isUnique = recProduct.isUnique === true;
+              return (
+                <div
+                  key={recProduct.id}
+                  className={`rounded-2xl transition-all duration-300 transform hover:-translate-y-3 ${
+                    isUnique 
+                      ? 'p-0.5 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 shadow-lg hover:shadow-2xl' 
+                      : ''
+                  }`}
+                >
+                  <div
+                    onClick={() => router.push(`/products/${recProduct.uuid || recProduct.id}`)}
+                    className={`rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer ${
+                      isUnique 
+                        ? 'bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/20 dark:to-emerald-900/20' 
+                        : 'border-2 border-[#004e6c]/10 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-[#004e6c]/30 dark:hover:border-gray-600'
+                    }`}
+                    style={isUnique ? {
+                      boxShadow: '0 10px 25px -5px rgba(34, 197, 94, 0.2), 0 10px 10px -5px rgba(34, 197, 94, 0.05)'
+                    } : {}}
+                  >
+                    {/* Product Image */}
+                    <div className={`relative h-48 overflow-hidden ${
+                      isUnique 
+                        ? 'bg-gradient-to-br from-green-50 dark:from-green-900/20 to-emerald-50 dark:to-emerald-900/20' 
+                        : 'bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700/20 to-[#006b8f]/10 dark:to-gray-600/20'
+                    }`}>
+                      <img
+                        src={recProduct.image || '/placeholder.png'}
+                        alt={recProduct.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 dark:from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      {/* Unique Badge */}
+                      {isUnique && (
+                        <div className="absolute top-3 left-3 z-10">
+                          <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span className="text-xs font-bold">UNIQUE</span>
+                          </div>
+                        </div>
+                      )}
+                      {/* Star Rating and Wishlist Icon */}
+                      <div className={`absolute ${isUnique ? 'top-12 right-4' : 'top-4 right-4'} flex items-center space-x-2`}>
+                        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 rounded-full shadow-lg">
+                          <WishlistHeartIcon 
+                            productId={recProduct.uuid || recProduct.id} 
+                            size="md"
+                          />
+                        </div>
+                        <div className="flex items-center space-x-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                          <span className="text-yellow-400 text-sm">⭐</span>
+                          <span className="text-xs font-bold text-[#004e6c] dark:text-gray-200">
+                            {parseFloat(recProduct.rating) || 0}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Category Badge */}
+                      <div className={`absolute ${isUnique ? 'top-12 left-4' : 'bottom-4 left-4'}`}>
+                        <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
+                          {typeof recProduct.category === 'object' && recProduct.category?.name
+                            ? recProduct.category.name
+                            : typeof recProduct.category === 'string'
+                            ? recProduct.category
+                            : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h4 className={`text-base font-bold mb-3 line-clamp-2 transition-colors min-h-[3rem] ${
+                        isUnique 
+                          ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400' 
+                          : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
+                      }`}>
+                        {recProduct.title}
+                      </h4>
+                      <div className="flex items-center justify-between text-sm text-[#004e6c]/70 dark:text-gray-400 mb-4 font-medium">
+                        <span className="flex items-center space-x-2">
+                          <span>📄</span>
+                          <span>{recProduct.pages ? `${recProduct.pages} хуудас` : recProduct.size || 'N/A'}</span>
+                        </span>
+                        <span className="flex items-center space-x-2">
+                          <span>⬇️</span>
+                          <span>{formatNumber(recProduct.downloads || 0)}</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
+                        <span className={`text-xl font-extrabold transition-colors ${
+                          isUnique 
+                            ? 'text-green-600 dark:text-green-400' 
+                            : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
+                        }`}>
+                          {formatNumber(parseFloat(recProduct.price) || 0)}₮
+                        </span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/products/${recProduct.uuid || recProduct.id}`)
+                          }}
+                          className={`w-10 h-10 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center group ${
+                            isUnique
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+                              : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
+                          }`}
+                          aria-label="Дэлгэрэнгүй"
+                        >
+                          <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Image Modal */}
       {isImageModalOpen && (

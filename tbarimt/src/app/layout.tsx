@@ -10,6 +10,9 @@ const rubik = Rubik({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Контент Дэлгүүр - Бүх төрлийн контент нэг дороос',
   description: 'Реферат, дипломын ажил, тоглоом, програм хангамж болон бусад бүх төрлийн контент',
+  icons: {
+    icon: '/tbarimt.jpeg',
+  },
 }
 
 export default function RootLayout({

@@ -8,6 +8,7 @@ const { cacheMiddleware } = require('../middleware/cache');
 router.get('/', productController.getAllProducts);
 // Cache featured products for 2 minutes (frequently accessed on homepage)
 router.get('/featured', cacheMiddleware(2 * 60 * 1000), productController.getFeaturedProducts);
+router.get('/recommended', productController.getRecommendedProducts);
 router.get('/my-products', authenticate, productController.getMyProducts);
 router.get('/my-statistics', authenticate, productController.getMyStatistics);
 router.get('/download/:token', productController.downloadProduct);

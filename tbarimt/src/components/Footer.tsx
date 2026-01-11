@@ -105,7 +105,7 @@ export default function Footer() {
                 {getTranslation(language, 'email')}: info@tbarimt.com
               </li>
               <li className="text-white/70 dark:text-gray-400 text-sm">
-                {getTranslation(language, 'phone')}: +976 7000 5060
+                {getTranslation(language, 'phone')}: +976 93000022
               </li>
               <li className="text-white/70 dark:text-gray-400 text-sm">
                 {getTranslation(language, 'address')}: Ulaanbaatar, Mongolia

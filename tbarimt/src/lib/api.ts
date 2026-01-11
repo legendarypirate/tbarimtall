@@ -73,6 +73,10 @@ export async function getFeaturedProducts(limit: number = 8) {
   return fetchAPI(`/products/featured?limit=${limit}`);
 }
 
+export async function getRecommendedProducts(productId: string | number, limit: number = 8) {
+  return fetchAPI(`/products/recommended?productId=${productId}&limit=${limit}`);
+}
+
 // Categories
 export async function getCategories() {
   return fetchAPI('/categories');

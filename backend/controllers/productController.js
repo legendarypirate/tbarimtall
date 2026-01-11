@@ -296,6 +296,97 @@ exports.getFeaturedProducts = async (req, res) => {
   }
 };
 
+exports.getRecommendedProducts = async (req, res) => {
+  try {
+    const { productId, limit = 8 } = req.query;
+    
+    if (!productId) {
+      return res.status(400).json({ error: 'Product ID is required' });
+    }
+
+    // Find the current product to get its category
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    let currentProduct;
+    
+    if (uuidRegex.test(productId)) {
+      currentProduct = await Product.findOne({
+        where: { uuid: productId, status: 'published', isActive: true }
+      });
+    } else {
+      currentProduct = await Product.findOne({
+        where: { id: productId, status: 'published', isActive: true }
+      });
+    }
+
+    if (!currentProduct) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Build where clause to exclude current product
+    const where = {
+      status: 'published',
+      isActive: true,
+      id: { [Op.ne]: currentProduct.id },
+      uuid: { [Op.ne]: currentProduct.uuid }
+    };
+
+    // If product has a category, prioritize products from same category
+    if (currentProduct.categoryId) {
+      where.categoryId = currentProduct.categoryId;
+    }
+
+    // Get recommended products
+    // First get products from same category, then others
+    const categoryId = currentProduct.categoryId || 0;
+    const recommendedProducts = await Product.findAll({
+      where,
+      include: [
+        { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
+        { model: Subcategory, as: 'subcategory', attributes: ['id', 'name'], required: false },
+        { model: User, as: 'author', attributes: ['id', 'username', 'fullName', 'avatar'] }
+      ],
+      order: [
+        // Use table-qualified column reference to avoid ambiguity with JOINs
+        // Sequelize aliases the main table, so we reference it via the model's table name
+        [sequelize.literal(`CASE WHEN "Product"."categoryId" = ${categoryId} THEN 0 ELSE 1 END`), 'ASC'],
+        [['rating', 'DESC']],
+        [['downloads', 'DESC']],
+        [['views', 'DESC']]
+      ],
+      limit: parseInt(limit)
+    });
+
+    // If we don't have enough products from same category, fill with other products
+    if (recommendedProducts.length < parseInt(limit) && currentProduct.categoryId) {
+      const additionalProducts = await Product.findAll({
+        where: {
+          status: 'published',
+          isActive: true,
+          categoryId: { [Op.ne]: currentProduct.categoryId },
+          id: { [Op.ne]: currentProduct.id },
+          uuid: { [Op.ne]: currentProduct.uuid }
+        },
+        include: [
+          { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
+          { model: Subcategory, as: 'subcategory', attributes: ['id', 'name'], required: false },
+          { model: User, as: 'author', attributes: ['id', 'username', 'fullName', 'avatar'] }
+        ],
+        order: [['rating', 'DESC'], ['downloads', 'DESC']],
+        limit: parseInt(limit) - recommendedProducts.length
+      });
+
+      recommendedProducts.push(...additionalProducts);
+    }
+
+    // Sanitize products and convert image paths to URLs
+    const sanitizedProducts = recommendedProducts.map(product => sanitizeProduct(product));
+
+    res.json({ products: sanitizedProducts });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.createProduct = async (req, res) => {
   try {
     // Check membership limits before creating product
