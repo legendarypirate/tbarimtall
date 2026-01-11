@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus } from '@/lib/api'
 import MembershipBar from '@/components/MembershipBar'
+import TermsAndConditionsModal from '@/components/TermsAndConditionsModal'
 
 // Interface for product data
 interface ProductData {
@@ -85,12 +86,23 @@ export default function JournalistAccount() {
   const [walletRechargeStatus, setWalletRechargeStatus] = useState<'pending' | 'completed' | 'failed'>('pending')
   const [isCreatingWalletInvoice, setIsCreatingWalletInvoice] = useState(false)
   const [walletRechargePollingInterval, setWalletRechargePollingInterval] = useState<NodeJS.Timeout | null>(null)
+  const [showTermsModal, setShowTermsModal] = useState(false)
 
   useEffect(() => {
     // Get user from localStorage
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser)
+      
+      // CRITICAL: Check if terms are accepted before allowing access
+      if (!parsedUser.termsAccepted) {
+        // User hasn't accepted terms, show terms modal instead of redirecting
+        setUser(parsedUser) // Set user so modal can access user data
+        setShowTermsModal(true)
+        setIsLoadingData(false) // Stop loading to show terms modal
+        return
+      }
+      
       if (parsedUser.role === 'journalist' || parsedUser.role === 'viewer') {
         setUser(parsedUser)
         fetchData(parsedUser)
@@ -1921,6 +1933,34 @@ export default function JournalistAccount() {
           </div>
         </div>
       )}
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={() => {
+          // If user closes modal without accepting, redirect to home
+          router.push('/')
+        }}
+        onAccept={() => {
+          setShowTermsModal(false)
+          // Refresh user data and update user state
+          const storedUser = localStorage.getItem('user')
+          const token = localStorage.getItem('token')
+          if (storedUser && token) {
+            try {
+              const user = JSON.parse(storedUser)
+              // Update user state with terms accepted
+              setUser({ ...user, termsAccepted: true })
+              // Fetch data for the user
+              fetchData({ ...user, termsAccepted: true })
+            } catch (e) {
+              // If parsing fails, redirect to home
+              router.push('/')
+            }
+          }
+        }}
+        showAcceptButton={true}
+      />
     </div>
   )
 }

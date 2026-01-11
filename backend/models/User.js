@@ -102,6 +102,16 @@ const User = sequelize.define('User', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
     comment: 'Count of published products (status=published and isActive=true)'
+  },
+  privacyAccepted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Whether user has accepted the privacy policy'
+  },
+  termsAccepted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Whether user has accepted the terms and conditions'
   }
 }, {
   tableName: 'users',

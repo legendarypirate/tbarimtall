@@ -10,6 +10,8 @@ const { authenticate } = require('../middleware/auth');
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/profile', authenticate, authController.getProfile);
+router.post('/accept-privacy-policy', authenticate, authController.acceptPrivacyPolicy);
+router.post('/accept-terms', authenticate, authController.acceptTerms);
 
 // Google OAuth routes - only register if Google OAuth is configured
 const hasGoogleCredentials = 

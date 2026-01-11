@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
+import TermsAndConditionsModal from '@/components/TermsAndConditionsModal'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const { isDark } = useDarkMode()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showTermsModal, setShowTermsModal] = useState(false)
 
   useEffect(() => {
     const errorParam = searchParams.get('error')
@@ -123,9 +125,15 @@ export default function LoginPage() {
           <div className="mt-8 pt-6 border-t-2 border-[#004e6c]/10">
             <p className="text-xs text-center text-[#004e6c]/70 font-medium">
               Нэвтэрснээр та манай{' '}
-              <a href="#" className="text-[#004e6c] hover:text-[#ff6b35] hover:underline font-semibold">
+              <button 
+                onClick={(e) => {
+                  e.preventDefault()
+                  setShowTermsModal(true)
+                }}
+                className="text-[#004e6c] hover:text-[#ff6b35] hover:underline font-semibold"
+              >
                 Үйлчилгээний нөхцөл
-              </a>{' '}
+              </button>{' '}
               болон{' '}
               <a href="#" className="text-[#004e6c] hover:text-[#ff6b35] hover:underline font-semibold">
                 Нууцлалын бодлого
@@ -135,6 +143,12 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
     </main>
   )
 }

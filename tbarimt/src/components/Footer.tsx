@@ -1,12 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getTranslation, formatTranslation } from '@/lib/translations'
+import TermsAndConditionsModal from './TermsAndConditionsModal'
 
 export default function Footer() {
   const router = useRouter()
-  const { language } = useLanguage()
+  const { language, setLanguage } = useLanguage()
+  const [showTermsModal, setShowTermsModal] = useState(false)
 
   return (
     <footer className="bg-[#004e6c] dark:bg-gray-900 mt-20">
@@ -30,7 +33,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <button 
-                  onClick={() => router.push('/terms')}
+                  onClick={() => setShowTermsModal(true)}
                   className="text-white/70 dark:text-gray-400 hover:text-white dark:hover:text-gray-200 transition-colors text-sm"
                 >
                   {getTranslation(language, 'terms')}
@@ -94,20 +97,47 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 4: Contact Info */}
+          {/* Column 4: Contact Info & Language */}
           <div className="flex flex-col">
             <h6 className="text-white dark:text-gray-200 font-semibold mb-4">{getTranslation(language, 'contact')}</h6>
-            <ul className="space-y-3">
+            <ul className="space-y-3 mb-6">
               <li className="text-white/70 dark:text-gray-400 text-sm">
-                Email: info@tbarimt.com
+                {getTranslation(language, 'email')}: info@tbarimt.com
               </li>
               <li className="text-white/70 dark:text-gray-400 text-sm">
-                Phone: +976 7000 5060
+                {getTranslation(language, 'phone')}: +976 7000 5060
               </li>
               <li className="text-white/70 dark:text-gray-400 text-sm">
-                Address: Ulaanbaatar, Mongolia
+                {getTranslation(language, 'address')}: Ulaanbaatar, Mongolia
               </li>
             </ul>
+            
+            {/* Language Selection */}
+            <div className="flex flex-col">
+              <h6 className="text-white dark:text-gray-200 font-semibold mb-4">{getTranslation(language, 'language')}</h6>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setLanguage('mn')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    language === 'mn'
+                      ? 'bg-[#ff6b35] dark:bg-[#ff8555] text-white shadow-lg'
+                      : 'bg-white/10 dark:bg-gray-800 text-white/70 dark:text-gray-400 hover:bg-white/20 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {getTranslation(language, 'mongolian')}
+                </button>
+                <button
+                  onClick={() => setLanguage('en')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    language === 'en'
+                      ? 'bg-[#ff6b35] dark:bg-[#ff8555] text-white shadow-lg'
+                      : 'bg-white/10 dark:bg-gray-800 text-white/70 dark:text-gray-400 hover:bg-white/20 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {getTranslation(language, 'english')}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -118,6 +148,12 @@ export default function Footer() {
           </p>
         </div>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
     </footer>
   )
 }

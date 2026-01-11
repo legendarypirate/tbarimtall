@@ -89,7 +89,11 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
             <div className="flex items-center space-x-3">
               {/* Wishlist Icon Button */}
               <button
-                onClick={() => router.push('/wishlist')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  router.push('/wishlist')
+                }}
                 className="p-2.5 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200 relative"
                 aria-label={getTranslation(language, 'wishlist') || 'Wishlist'}
                 title={getTranslation(language, 'wishlist') || 'Wishlist'}
@@ -113,7 +117,11 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
               
               {/* Dark Mode Toggle */}
               <button
-                onClick={toggleDarkMode}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  toggleDarkMode()
+                }}
                 className="p-2.5 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200"
                 aria-label="Toggle dark mode"
               >
@@ -131,7 +139,11 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
               {isJournalist ? (
                 <div className="relative">
                   <button 
-                    onClick={() => router.push('/account/journalist')}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      router.push('/account/journalist')
+                    }}
                     className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +158,11 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
               ) : (
                 <>
                   <button 
-                    onClick={() => setShowAuthModal(true)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setShowAuthModal(true)
+                    }}
                     className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
                     {getTranslation(language, 'uploadContent')}
@@ -174,28 +190,44 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
             </div>
             <div className="flex items-center space-x-8">
               <button 
-                onClick={() => router.push('/products')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  router.push('/products')
+                }}
                 className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
               >
                 {getTranslation(language, 'categories')}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
               <button 
-                onClick={() => router.push('/howitworks')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  router.push('/howitworks')
+                }}
                 className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
               >
                 {getTranslation(language, 'howItWorks')}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
               <button 
-                onClick={() => router.push('/membership')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  router.push('/membership')
+                }}
                 className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
               >
                 {getTranslation(language, 'pricing')}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
               <button 
-                onClick={() => router.push('/faq')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  router.push('/faq')
+                }}
                 className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
               >
                 {getTranslation(language, 'faq')}

@@ -46,7 +46,9 @@ exports.register = async (req, res) => {
         fullName: user.fullName,
         role: user.role,
         avatar: user.avatar,
-        isSuperAdmin: user.isSuperAdmin || false
+        isSuperAdmin: user.isSuperAdmin || false,
+        privacyAccepted: user.privacyAccepted || false,
+        termsAccepted: user.termsAccepted || false
       }
     });
   } catch (error) {
@@ -80,7 +82,9 @@ exports.login = async (req, res) => {
         fullName: user.fullName,
         role: user.role,
         avatar: user.avatar,
-        isSuperAdmin: user.isSuperAdmin || false
+        isSuperAdmin: user.isSuperAdmin || false,
+        privacyAccepted: user.privacyAccepted || false,
+        termsAccepted: user.termsAccepted || false
       }
     });
   } catch (error) {
@@ -156,10 +160,74 @@ exports.getProfile = async (req, res) => {
     const userData = user.toJSON();
     // Return the income value directly from the users table
     userData.income = parseFloat(user.income || 0);
+    userData.privacyAccepted = user.privacyAccepted || false;
+    userData.termsAccepted = user.termsAccepted || false;
     console.log(userData);
     res.json({ user: userData });
   } catch (error) {
     console.error('[getProfile Error]', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Accept privacy policy
+exports.acceptPrivacyPolicy = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.privacyAccepted = true;
+    await user.save();
+
+    res.json({
+      message: 'Privacy policy accepted successfully',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        avatar: user.avatar,
+        isSuperAdmin: user.isSuperAdmin || false,
+        privacyAccepted: user.privacyAccepted
+      }
+    });
+  } catch (error) {
+    console.error('[acceptPrivacyPolicy Error]', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Accept terms and conditions
+exports.acceptTerms = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.termsAccepted = true;
+    await user.save();
+
+    res.json({
+      message: 'Terms and conditions accepted successfully',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        avatar: user.avatar,
+        isSuperAdmin: user.isSuperAdmin || false,
+        termsAccepted: user.termsAccepted
+      }
+    });
+  } catch (error) {
+    console.error('[acceptTerms Error]', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -183,7 +251,9 @@ exports.googleCallback = async (req, res) => {
       fullName: user.fullName,
       role: user.role,
       avatar: user.avatar,
-      isSuperAdmin: user.isSuperAdmin || false
+      isSuperAdmin: user.isSuperAdmin || false,
+      privacyAccepted: user.privacyAccepted || false,
+      termsAccepted: user.termsAccepted || false
     }))}`;
 
     res.redirect(redirectUrl);
@@ -212,7 +282,9 @@ exports.facebookCallback = async (req, res) => {
       fullName: user.fullName,
       role: user.role,
       avatar: user.avatar,
-      isSuperAdmin: user.isSuperAdmin || false
+      isSuperAdmin: user.isSuperAdmin || false,
+      privacyAccepted: user.privacyAccepted || false,
+      termsAccepted: user.termsAccepted || false
     }))}`;
 
     res.redirect(redirectUrl);

@@ -1,16 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getTranslation } from '@/lib/translations'
-import { getCategories, getFeaturedProducts, getTopJournalists, getActiveMemberships, getHeroSliders } from '@/lib/api'
+import { getCategories, getFeaturedProducts, getTopJournalists, getActiveMemberships, getHeroSliders, createMembershipInvoice, checkMembershipPaymentStatus } from '@/lib/api'
 import { getCategoryIcon } from '@/lib/categoryIcon'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import WishlistHeartIcon from '@/components/WishlistHeartIcon'
 import AuthModal from '@/components/AuthModal'
+import TermsAndConditionsModal from '@/components/TermsAndConditionsModal'
 
 // Default categories data (fallback)
 const defaultCategories = [
@@ -201,7 +202,7 @@ type Product = {
 export default function Home() {
   const router = useRouter()
   const { isDark, toggle: toggleDarkMode } = useDarkMode()
-  const { language } = useLanguage()
+  const { language, setLanguage } = useLanguage()
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
   const [openDropdown, setOpenDropdown] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -213,20 +214,167 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false)
   const [isJournalist, setIsJournalist] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const [qrText, setQrText] = useState<string | null>(null)
+  const [invoiceId, setInvoiceId] = useState<string | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | null>(null)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
+  const paymentPollingInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Check if user is logged in as journalist
+    // Check if user is logged in as journalist and has accepted terms
     const storedUser = localStorage.getItem('user')
-    if (storedUser) {
+    const token = localStorage.getItem('token')
+    if (storedUser && token) {
       try {
         const user = JSON.parse(storedUser)
-        setIsJournalist(user.role === 'journalist')
+        // User must be journalist AND have accepted terms
+        setIsJournalist(user.role === 'journalist' && user.termsAccepted === true)
       } catch (e) {
         setIsJournalist(false)
       }
+    } else {
+      setIsJournalist(false)
+    }
+    
+    // Reset auth modal state on mount to prevent stale state after navigation
+    setShowAuthModal(false)
+    
+    // Clear OAuth flow flag if it exists (user came back from OAuth or interrupted flow)
+    // This prevents issues when user starts OAuth but doesn't complete it
+    if (typeof window !== 'undefined') {
+      const oauthFlag = sessionStorage.getItem('oauth_flow_started')
+      const oauthTimestamp = sessionStorage.getItem('oauth_flow_timestamp')
+      
+      // Check if we're on the callback page - if not, clear the flag
+      // This handles the case where user started OAuth but left without completing
+      if (!window.location.pathname.includes('/auth/callback')) {
+        // If OAuth flag exists and it's been more than 10 minutes, clear it
+        // This prevents stale flags from causing issues
+        if (oauthFlag && oauthTimestamp) {
+          const timestamp = parseInt(oauthTimestamp, 10)
+          const now = Date.now()
+          const tenMinutes = 10 * 60 * 1000 // 10 minutes in milliseconds
+          
+          if (now - timestamp > tenMinutes) {
+            sessionStorage.removeItem('oauth_flow_started')
+            sessionStorage.removeItem('oauth_flow_timestamp')
+          }
+        } else if (oauthFlag) {
+          // If flag exists but no timestamp, clear it (old format)
+          sessionStorage.removeItem('oauth_flow_started')
+        }
+      }
     }
   }, [])
+
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    if (typeof window === 'undefined') return false
+    const token = localStorage.getItem('token')
+    return !!token
+  }
+
+  // Start polling for payment status
+  const startPaymentPolling = (invoiceId: string) => {
+    if (paymentPollingInterval.current) {
+      clearInterval(paymentPollingInterval.current)
+    }
+
+    const checkPayment = async () => {
+      try {
+        const response = await checkMembershipPaymentStatus(invoiceId)
+        if (response.success && response.order) {
+          if (response.order.status === 'completed' || response.order.status === 'paid') {
+            setPaymentStatus('completed')
+            if (paymentPollingInterval.current) {
+              clearInterval(paymentPollingInterval.current)
+              paymentPollingInterval.current = null
+            }
+            // Refresh page after 2 seconds to show updated membership
+            setTimeout(() => {
+              window.location.reload()
+            }, 2000)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error)
+      }
+    }
+
+    const interval = setInterval(checkPayment, 3000) // Check every 3 seconds
+    paymentPollingInterval.current = interval
+  }
+
+  // Handle membership selection
+  const handleMembershipSelect = async (membership: any) => {
+    const isFree = typeof membership.price === 'number' ? membership.price === 0 : parseFloat(String(membership.price)) === 0
+    
+    // Free membership is not clickable
+    if (isFree) {
+      return
+    }
+
+    // Check if user is authenticated
+    if (!isAuthenticated()) {
+      setShowAuthModal(true)
+      return
+    }
+
+    // User is authenticated, create invoice
+    try {
+      setIsCreatingInvoice(true)
+      setPaymentError(null)
+
+      const response = await createMembershipInvoice({
+        membershipId: membership.id,
+        extendOnly: false
+      })
+
+      if (response.success && response.invoice) {
+        setInvoiceId(response.invoice.invoice_id)
+        
+        // Fix QR code: if it's a base64 string without prefix, add it
+        let qrImage = response.invoice.qr_image || response.invoice.qr_code
+        if (qrImage) {
+          // Check if it's a base64 string without data URL prefix
+          if (qrImage.startsWith('iVBORw0KGgo') || qrImage.startsWith('/9j/')) {
+            // It's a base64 PNG or JPEG without prefix
+            const prefix = qrImage.startsWith('iVBORw0KGgo') ? 'data:image/png;base64,' : 'data:image/jpeg;base64,'
+            qrImage = prefix + qrImage
+          } else if (!qrImage.startsWith('data:') && !qrImage.startsWith('http://') && !qrImage.startsWith('https://') && !qrImage.startsWith('/')) {
+            // If it doesn't start with data:, http://, https://, or /, assume it's base64
+            qrImage = 'data:image/png;base64,' + qrImage
+          }
+        }
+        
+        // Only set QR code if it's a valid data URL or HTTP URL
+        if (qrImage && (qrImage.startsWith('data:') || qrImage.startsWith('http://') || qrImage.startsWith('https://'))) {
+          setQrCode(qrImage)
+        } else {
+          setQrCode(null)
+          console.error('Invalid QR code format:', qrImage?.substring(0, 50))
+        }
+        setQrText(response.invoice.qr_text)
+        setShowPaymentModal(true)
+        setPaymentStatus('pending')
+        
+        // Start polling for payment status
+        startPaymentPolling(response.invoice.invoice_id)
+      } else {
+        throw new Error('Failed to create invoice')
+      }
+    } catch (error: any) {
+      console.error('Error creating membership invoice:', error)
+      setPaymentError(error.message || 'Төлбөрийн хуудас үүсгэхэд алдаа гарлаа')
+    } finally {
+      setIsCreatingInvoice(false)
+    }
+  }
 
   useEffect(() => {
 
@@ -266,15 +414,20 @@ export default function Home() {
           setFeaturedProducts(productsRes.products)
         }
         if (journalistsRes.journalists && Array.isArray(journalistsRes.journalists)) {
-          // Format followers number to display format (e.g., 12500 -> "12.5K")
-          const formattedJournalists = journalistsRes.journalists.map((j: any) => ({
-            ...j,
-            followers: typeof j.followers === 'number' 
-              ? j.followers >= 1000 
-                ? (j.followers / 1000).toFixed(1) + 'K'
-                : j.followers.toString()
-              : j.followers
-          }))
+          // Ensure all numeric values default to 0 if null/undefined
+          // Keep followers as number for proper formatting in display
+          const formattedJournalists = journalistsRes.journalists.map((j: any) => {
+            const followers = typeof j.followers === 'number' ? j.followers : (parseInt(j.followers) || 0)
+            const posts = typeof j.posts === 'number' ? j.posts : (parseInt(j.posts) || 0)
+            const rating = typeof j.rating === 'number' ? j.rating : (parseFloat(j.rating) || 0)
+            
+            return {
+              ...j,
+              followers: followers,
+              posts: posts,
+              rating: rating
+            }
+          })
           setTopBloggers(formattedJournalists)
         }
         if (membershipsRes.memberships && Array.isArray(membershipsRes.memberships)) {
@@ -456,12 +609,37 @@ export default function Home() {
                   {getTranslation(language, 'viewAllContent')}
                 </button>
                 <button 
-                  onClick={() => {
-                    if (isJournalist) {
-                      router.push('/account/journalist')
-                    } else {
-                      setShowAuthModal(true)
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    // Clear any stale OAuth flags before opening modal
+                    if (sessionStorage.getItem('oauth_flow_started')) {
+                      sessionStorage.removeItem('oauth_flow_started')
+                      sessionStorage.removeItem('oauth_flow_timestamp')
                     }
+                    
+                    // Check if user is authenticated
+                    const token = localStorage.getItem('token')
+                    const storedUser = localStorage.getItem('user')
+                    
+                    if (token && storedUser) {
+                      try {
+                        const user = JSON.parse(storedUser)
+                        // Check if user has accepted terms
+                        if (!user.termsAccepted) {
+                          // User is authenticated but hasn't accepted terms - show terms modal
+                          setShowTermsModal(true)
+                          return
+                        }
+                        // User is authenticated and has accepted terms - navigate to journalist page
+                        router.push('/account/journalist')
+                        return
+                      } catch (e) {
+                        // If parsing fails, continue to show auth modal
+                      }
+                    }
+                    // If not authenticated, show auth modal
+                    setShowAuthModal(true)
                   }}
                   className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c] dark:border-gray-600 px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#004e6c] dark:hover:bg-[#006b8f] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
@@ -686,6 +864,7 @@ export default function Home() {
           <p className="text-xl md:text-1xl text-white/90 dark:text-gray-300 mb-10 max-w-1xl mx-auto font-medium">
             {getTranslation(language, 'whyDescription')}
           </p>
+
           {isJournalist ? (
             <button 
               onClick={() => router.push('/account/journalist')}
@@ -696,24 +875,96 @@ export default function Home() {
           ) : (
             <>
               <button 
-                onClick={() => setShowAuthModal(true)}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  // Clear any stale OAuth flags before opening modal
+                  if (sessionStorage.getItem('oauth_flow_started')) {
+                    sessionStorage.removeItem('oauth_flow_started')
+                    sessionStorage.removeItem('oauth_flow_timestamp')
+                  }
+                  
+                  // Check if user is authenticated
+                  const token = localStorage.getItem('token')
+                  const storedUser = localStorage.getItem('user')
+                  
+                  if (token && storedUser) {
+                    try {
+                      const user = JSON.parse(storedUser)
+                      // Check if user has accepted terms
+                      if (!user.termsAccepted) {
+                        // User is authenticated but hasn't accepted terms - show terms modal
+                        setShowTermsModal(true)
+                        return
+                      }
+                      // User is authenticated and has accepted terms - navigate to journalist page
+                      router.push('/account/journalist')
+                      return
+                    } catch (e) {
+                      // If parsing fails, continue to show auth modal
+                    }
+                  }
+                  
+                  // If not authenticated, show auth modal
+                  setShowAuthModal(true)
+                }}
                 className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
               >
                 {getTranslation(language, 'joinForFree')}
               </button>
               <AuthModal
                 isOpen={showAuthModal}
-                onClose={() => setShowAuthModal(false)}
-                onSelectGoogle={() => setShowAuthModal(false)}
-                onSelectFacebook={() => setShowAuthModal(false)}
+                onClose={() => {
+                  setShowAuthModal(false)
+                  // Clear OAuth flag when modal is closed
+                  if (sessionStorage.getItem('oauth_flow_started')) {
+                    sessionStorage.removeItem('oauth_flow_started')
+                    sessionStorage.removeItem('oauth_flow_timestamp')
+                  }
+                }}
+                onSelectGoogle={() => {
+                  setShowAuthModal(false)
+                }}
+                onSelectFacebook={() => {
+                  setShowAuthModal(false)
+                }}
               />
             </>
           )}
         </div>
       </section>
 
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={() => {
+          setShowTermsModal(false)
+        }}
+        onAccept={() => {
+          setShowTermsModal(false)
+          // Refresh user data and update isJournalist state
+          const storedUser = localStorage.getItem('user')
+          const token = localStorage.getItem('token')
+          if (storedUser && token) {
+            try {
+              const user = JSON.parse(storedUser)
+              // Update isJournalist state
+              setIsJournalist(user.role === 'journalist' && user.termsAccepted === true)
+              // If user is journalist and has accepted terms, redirect to journalist page
+              if (user.role === 'journalist' && user.termsAccepted) {
+                router.push('/account/journalist')
+              }
+            } catch (e) {
+              // If parsing fails, do nothing
+            }
+          }
+        }}
+        showAcceptButton={true}
+      />
+
       {/* Featured Products Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
+      <section className="bg-gray-200 dark:bg-gray-800 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-12">
           <h3 className="text-xl md:text-2xl font-medium text-[#004e6c] dark:text-gray-200">
             {getTranslation(language, 'featuredProducts')}
@@ -870,7 +1121,106 @@ export default function Home() {
             </button>
           </div>
         )}
+        </div>
       </section>
+
+      {/* Top Journalists Section */}
+      {topBloggers.length > 0 && (
+        <section className="bg-white dark:bg-gray-900 py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+                {getTranslation(language, 'topJournalists')}
+              </h2>
+              <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
+                {getTranslation(language, 'topJournalistsDescription')}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {topBloggers.slice(0, 4).map((journalist: any) => {
+                const getAvatarUrl = () => {
+                  if (journalist.avatar) return journalist.avatar
+                  const seed = journalist.name || journalist.username || journalist.userId || 'default'
+                  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+                }
+                
+                return (
+                  <div
+                    key={journalist.userId || journalist.id}
+                    onClick={() => router.push(`/journalist/${journalist.userId || journalist.id}`)}
+                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 hover:shadow-2xl cursor-pointer group"
+                  >
+                    <div className="p-6 text-center">
+                      <div className="relative inline-block mb-4">
+                        <img
+                          src={getAvatarUrl()}
+                          alt={journalist.name || journalist.username || 'Journalist'}
+                          className="w-24 h-24 rounded-full border-4 border-[#004e6c] dark:border-[#006b8f] shadow-lg group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
+                          onError={(e) => {
+                            const seed = journalist.name || journalist.username || journalist.userId || 'default'
+                            ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+                          }}
+                        />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-1 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+                        {journalist.name || journalist.username || 'Unknown'}
+                      </h3>
+                      {journalist.username && (
+                        <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mb-4">
+                          {journalist.username.startsWith('@') ? journalist.username : `@${journalist.username}`}
+                        </p>
+                      )}
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="text-yellow-400">⭐</span>
+                          <span className="text-sm font-semibold text-[#004e6c] dark:text-gray-200">
+                            {typeof journalist.rating === 'number' ? journalist.rating.toFixed(1) : parseFloat(journalist.rating ?? 0).toFixed(1)}
+                          </span>
+                          <span className="text-xs text-[#004e6c]/50 dark:text-gray-500">
+                            {getTranslation(language, 'rating')}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-4 text-sm text-[#004e6c]/70 dark:text-gray-400">
+                          <span className="flex items-center space-x-1">
+                            <span>👥</span>
+                            <span>
+                              {(() => {
+                                const followers = typeof journalist.followers === 'number' ? journalist.followers : (parseInt(journalist.followers) || 0)
+                                if (followers >= 1000) {
+                                  return (followers / 1000).toFixed(1) + 'K'
+                                }
+                                return followers.toLocaleString()
+                              })()}
+                            </span>
+                            <span className="text-xs">{getTranslation(language, 'followers')}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <span>📝</span>
+                            <span>{journalist.posts ?? 0}</span>
+                            <span className="text-xs">{getTranslation(language, 'posts')}</span>
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/journalist/${journalist.userId || journalist.id}`)
+                        }}
+                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-2 rounded-xl font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      >
+                        {getTranslation(language, 'viewProfile')}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Membership Section */}
       {memberships.length > 0 && (
@@ -944,14 +1294,17 @@ export default function Home() {
                       )}
 
                       <button
-                        onClick={() => router.push('/account/memberships')}
-                        className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+                        onClick={() => handleMembershipSelect(membership)}
+                        disabled={isFree || isCreatingInvoice}
+                        className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg ${
                           isFree
-                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-                            : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
+                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 cursor-not-allowed opacity-60'
+                            : isCreatingInvoice
+                            ? 'bg-[#004e6c]/50 dark:bg-[#006b8f]/50 text-white cursor-wait'
+                            : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] hover:shadow-xl transform hover:-translate-y-0.5'
                         }`}
                       >
-                        {getTranslation(language, 'selectPlan') || 'Сонгох'}
+                        {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : (getTranslation(language, 'selectPlan') || 'Сонгох')}
                       </button>
                     </div>
                   </div>
@@ -960,6 +1313,95 @@ export default function Home() {
             </div>
           </div>
         </section>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10 dark:border-gray-700">
+            <div className="p-6 border-b-2 border-[#004e6c]/10 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">QPay төлбөр</h2>
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false)
+                    setQrCode(null)
+                    setQrText(null)
+                    setInvoiceId(null)
+                    setPaymentStatus(null)
+                    setPaymentError(null)
+                    if (paymentPollingInterval.current) {
+                      clearInterval(paymentPollingInterval.current)
+                      paymentPollingInterval.current = null
+                    }
+                  }}
+                  className="text-[#004e6c]/60 dark:text-gray-400 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {paymentError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
+                  <p className="text-red-800 dark:text-red-300 font-medium">{paymentError}</p>
+                </div>
+              )}
+
+              {paymentStatus === 'completed' ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">✅</div>
+                  <h3 className="text-xl font-bold text-[#ff6b35] dark:text-[#ff8555] mb-2">
+                    Төлбөр амжилттай төлөгдлөө!
+                  </h3>
+                  <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
+                    Гишүүнчлэл амжилттай шинэчлэгдлээ.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium mb-4">
+                    QPay апп ашиглан QR кодыг уншуулж төлбөрөө төлөөрэй.
+                  </p>
+
+                  {qrCode ? (
+                    <div className="flex flex-col items-center mb-4">
+                      <img
+                        src={qrCode}
+                        alt="QPay QR Code"
+                        className="w-64 h-64 border-2 border-[#004e6c]/20 dark:border-gray-600 rounded-xl mb-4"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      {qrText && (
+                        <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 break-all text-center font-medium">{qrText}</p>
+                      )}
+                      <div className="flex items-center justify-center space-x-2 text-sm text-[#ff6b35] dark:text-[#ff8555] mt-4">
+                        <div className="w-2 h-2 bg-[#ff6b35] dark:bg-[#ff8555] rounded-full animate-pulse"></div>
+                        <span className="font-medium">Төлбөрийн статус шалгаж байна...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-800 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 rounded-xl p-8 mb-4 text-center border-2 border-[#004e6c]/10 dark:border-gray-700">
+                      <div className="w-12 h-12 border-4 border-[#004e6c] dark:border-[#ff6b35] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">QR код үүсгэж байна...</p>
+                    </div>
+                  )}
+
+                  <div className="bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-800 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-4">
+                    <p className="text-sm text-[#004e6c]/80 dark:text-gray-300 font-medium">
+                      Төлбөр төлөгдсөний дараа автоматаар шинэчлэгдэнэ. Хэсэг хугацааны дараа хуудас шинэчлэх шаардлагагүй.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <Footer />

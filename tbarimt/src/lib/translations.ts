@@ -38,7 +38,7 @@ export const translations = {
     // CTA
     whyTitle: 'Яагаад гэж',
     whyDescription: 'Контентоо оруулаад мөнгө олж эхэл!',
-    joinForFree: 'Join for Free',
+    joinForFree: 'үнэгүй нэгдэх',
     
     // Membership
     membershipPlans: 'Гишүүнчлэлийн төлөвлөгөө',
@@ -47,18 +47,32 @@ export const translations = {
     maxPosts: 'Хамгийн ихдээ нийтлэл',
     popular: 'АЛДАРТАЙ',
     
+    // Journalists Section
+    topJournalists: 'Топ Журналистууд',
+    topJournalistsDescription: 'Манай платформын шилдэг контент бүтээгчид',
+    viewProfile: 'Профайл харах',
+    followers: 'дагагчид',
+    posts: 'нийтлэл',
+    rating: 'Үнэлгээ',
+    
     // Footer
-    footerDescription: 'Your trusted platform for digital content and services.',
-    legal: 'Legal',
-    terms: 'Terms',
-    privacyPolicy: 'Privacy Policy',
-    howItWorksFooter: 'How It Works',
-    resources: 'Resources',
-    help: 'Help',
+    footerDescription: 'Дижитал контент болон үйлчилгээний найдвартай платформ.',
+    legal: 'Хуулийн',
+    terms: 'Нөхцөл',
+    privacyPolicy: 'Нууцлалын бодлого',
+    howItWorksFooter: 'Хэрхэн ажиллах вэ',
+    resources: 'Нөөц',
+    help: 'Тусламж',
     mby: 'Mby',
-    searchFooter: 'Search',
-    contact: 'Contact',
-    allRightsReserved: '© {year} All rights reserved.',
+    searchFooter: 'Хайх',
+    contact: 'Холбоо барих',
+    language: 'Хэл',
+    mongolian: 'Монгол',
+    english: 'Англи',
+    email: 'Имэйл',
+    phone: 'Утас',
+    address: 'Хаяг',
+    allRightsReserved: '© {year} Бүх эрх хуулиар хамгаалагдсан.',
   },
   en: {
     // Header
@@ -106,6 +120,14 @@ export const translations = {
     maxPosts: 'Max Posts',
     popular: 'POPULAR',
     
+    // Journalists Section
+    topJournalists: 'Top Journalists',
+    topJournalistsDescription: 'Top content creators on our platform',
+    viewProfile: 'View Profile',
+    followers: 'followers',
+    posts: 'posts',
+    rating: 'Rating',
+    
     // Footer
     footerDescription: 'Your trusted platform for digital content and services.',
     legal: 'Legal',
@@ -117,6 +139,12 @@ export const translations = {
     mby: 'Mby',
     searchFooter: 'Search',
     contact: 'Contact',
+    language: 'Language',
+    mongolian: 'Mongolian',
+    english: 'English',
+    email: 'Email',
+    phone: 'Phone',
+    address: 'Address',
     allRightsReserved: '© {year} All rights reserved.',
   },
 }

@@ -1,4 +1,4 @@
-const { Journalist, User, Product } = require('../models');
+const { Journalist, User, Product, Review } = require('../models');
 const { Op } = require('sequelize');
 
 exports.getTopJournalists = async (req, res) => {
@@ -15,13 +15,14 @@ exports.getTopJournalists = async (req, res) => {
       limit
     });
 
-    // Batch query: Get all product counts in a single query to avoid N+1 problem
+    // Batch query: Get all product counts, ratings, and engagement metrics in a single query
     const userIds = journalists.map(j => j.userId);
     
     // Use raw query for better performance with GROUP BY
     const { sequelize } = require('../models');
     const { QueryTypes } = require('sequelize');
     
+    // Get product counts
     const productCounts = await sequelize.query(
       `SELECT "authorId", COUNT(*) as count 
        FROM products 
@@ -33,25 +34,86 @@ exports.getTopJournalists = async (req, res) => {
       }
     );
 
-    // Create a map for quick lookup
+    // Get average ratings from product reviews
+    const averageRatings = await sequelize.query(
+      `SELECT p."authorId", AVG(r.rating)::numeric(3,2) as avg_rating, COUNT(r.id) as review_count
+       FROM products p
+       LEFT JOIN reviews r ON p.id = r."productId"
+       WHERE p."authorId" IN (:userIds) AND p."isActive" = true
+       GROUP BY p."authorId"`,
+      {
+        replacements: { userIds },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Get engagement metrics (views and downloads) for followers calculation
+    const engagementMetrics = await sequelize.query(
+      `SELECT "authorId", 
+              SUM(views) as total_views, 
+              SUM(downloads) as total_downloads
+       FROM products 
+       WHERE "authorId" IN (:userIds) AND "isActive" = true 
+       GROUP BY "authorId"`,
+      {
+        replacements: { userIds },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Create maps for quick lookup
     const countMap = {};
     productCounts.forEach(item => {
       countMap[item.authorId] = parseInt(item.count) || 0;
     });
 
-    // Map journalists with their post counts
+    const ratingMap = {};
+    averageRatings.forEach(item => {
+      // Only use rating if there are reviews, otherwise default to 0
+      if (item.review_count > 0 && item.avg_rating) {
+        ratingMap[item.authorId] = parseFloat(item.avg_rating) || 0;
+      } else {
+        ratingMap[item.authorId] = 0;
+      }
+    });
+
+    const engagementMap = {};
+    engagementMetrics.forEach(item => {
+      engagementMap[item.authorId] = {
+        views: parseInt(item.total_views) || 0,
+        downloads: parseInt(item.total_downloads) || 0
+      };
+    });
+
+    // Map journalists with real calculated data
     const journalistsWithPosts = journalists.map((journalist) => {
+      const userId = journalist.userId;
+      const engagement = engagementMap[userId] || { views: 0, downloads: 0 };
+      
+      // Calculate followers as a proxy from engagement metrics
+      // Formula: (views / 10 + downloads * 2) to get a reasonable follower count
+      // This gives more weight to downloads as they indicate stronger engagement
+      const calculatedFollowers = Math.floor((engagement.views / 10) + (engagement.downloads * 2));
+      
       return {
         id: journalist.id,
-        userId: journalist.userId,
+        userId: userId,
         name: journalist.user.fullName || journalist.user.username,
         username: `@${journalist.user.username}`,
         avatar: journalist.user.avatar,
         specialty: journalist.specialty,
-        rating: parseFloat(journalist.rating),
-        followers: journalist.followers,
-        posts: countMap[journalist.userId] || 0
+        rating: ratingMap[userId] || 0,
+        followers: calculatedFollowers,
+        posts: countMap[userId] || 0
       };
+    });
+
+    // Sort by rating first, then by followers
+    journalistsWithPosts.sort((a, b) => {
+      if (b.rating !== a.rating) {
+        return b.rating - a.rating;
+      }
+      return b.followers - a.followers;
     });
 
     res.json({ journalists: journalistsWithPosts });
