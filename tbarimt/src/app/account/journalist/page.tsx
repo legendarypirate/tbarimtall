@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
-import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus } from '@/lib/api'
+import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus, updateProfile } from '@/lib/api'
 import MembershipBar from '@/components/MembershipBar'
 import TermsAndConditionsModal from '@/components/TermsAndConditionsModal'
 
@@ -87,6 +87,13 @@ export default function JournalistAccount() {
   const [isCreatingWalletInvoice, setIsCreatingWalletInvoice] = useState(false)
   const [walletRechargePollingInterval, setWalletRechargePollingInterval] = useState<NodeJS.Timeout | null>(null)
   const [showTermsModal, setShowTermsModal] = useState(false)
+  const [profileAvatar, setProfileAvatar] = useState<File | null>(null)
+  const [profileAvatarPreview, setProfileAvatarPreview] = useState<string | null>(null)
+  const [profilePhone, setProfilePhone] = useState<string>('')
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
+  const [profileUpdateError, setProfileUpdateError] = useState<string | null>(null)
+  const [profileUpdateSuccess, setProfileUpdateSuccess] = useState<string | null>(null)
+  const [showProfileEditModal, setShowProfileEditModal] = useState(false)
 
   useEffect(() => {
     // Get user from localStorage
@@ -105,6 +112,7 @@ export default function JournalistAccount() {
       
       if (parsedUser.role === 'journalist' || parsedUser.role === 'viewer') {
         setUser(parsedUser)
+        setProfilePhone(parsedUser.phone || '')
         fetchData(parsedUser)
       } else {
         // If user exists but is not journalist, redirect to login
@@ -188,6 +196,8 @@ export default function JournalistAccount() {
         setUser(userProfileResponse.user)
         // Update localStorage with latest user data
         localStorage.setItem('user', JSON.stringify(userProfileResponse.user))
+        // Set profile form data
+        setProfilePhone(userProfileResponse.user.phone || '')
       }
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -780,12 +790,24 @@ export default function JournalistAccount() {
         {/* Profile Card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#004e6c]/20 dark:hover:border-gray-600 transition-all">
           <div className="flex items-center space-x-6">
-            <div className="relative">
+            <div className="relative group">
               <img
-                src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.fullName || user.email}`}
+                src={profileAvatarPreview || user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.fullName || user.email}`}
                 alt={user.fullName || user.username}
-                className="w-24 h-24 rounded-full border-4 border-[#004e6c] shadow-lg"
+                className="w-24 h-24 rounded-full border-4 border-[#004e6c] shadow-lg object-cover"
               />
+                <button
+                  onClick={() => {
+                    setProfilePhone(user.phone || '')
+                    setShowProfileEditModal(true)
+                  }}
+                  className="absolute bottom-0 right-0 bg-[#004e6c] dark:bg-[#ff6b35] text-white rounded-full p-2 shadow-lg hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all transform hover:scale-110 border-2 border-white dark:border-gray-800"
+                  title="Профайл зураг засах"
+                >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-1">
@@ -796,6 +818,23 @@ export default function JournalistAccount() {
               <p className="text-[#004e6c]/70 dark:text-gray-400 mb-2 font-medium">
                 @{user.username} • {user.email}
               </p>
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
+                  📱 {user.phone || 'Утасны дугаар оруулаагүй'}
+                </span>
+                <button
+                  onClick={() => {
+                    setProfilePhone(user.phone || '')
+                    setShowProfileEditModal(true)
+                  }}
+                  className="text-[#004e6c] dark:text-gray-400 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors p-1 rounded hover:bg-[#004e6c]/10 dark:hover:bg-gray-700"
+                  title="Утасны дугаар засах"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              </div>
               <div className="flex items-center space-x-1">
                 <span className="text-yellow-400">⭐</span>
                 <span className="font-semibold text-[#004e6c] dark:text-gray-200">
@@ -1191,39 +1230,181 @@ export default function JournalistAccount() {
                     Профайл
                   </h3>
                   <div className="space-y-4">
+                    {/* Avatar Upload */}
+                    <div>
+                      <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
+                        Профайл зураг
+                      </label>
+                      <div className="flex items-center space-x-4">
+                        <div className="relative">
+                          <img
+                            src={profileAvatarPreview || user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.fullName || user.email}`}
+                            alt="Profile"
+                            className="w-24 h-24 rounded-full border-4 border-[#004e6c] shadow-lg object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const files = e.target.files
+                                if (files && files.length > 0) {
+                                  const imageFile = files[0]
+                                  if (!imageFile.type.startsWith('image/')) {
+                                    setProfileUpdateError('Зөвхөн зураг файл оруулна уу')
+                                    return
+                                  }
+                                  setProfileAvatar(imageFile)
+                                  const reader = new FileReader()
+                                  reader.onloadend = () => {
+                                    setProfileAvatarPreview(reader.result as string)
+                                  }
+                                  reader.readAsDataURL(imageFile)
+                                  setProfileUpdateError(null)
+                                }
+                              }}
+                              className="hidden"
+                            />
+                            <div className="px-4 py-2 border-2 border-dashed border-[#004e6c]/20 dark:border-gray-700 rounded-xl hover:border-[#004e6c] dark:hover:border-[#ff6b35] transition-colors text-center bg-[#004e6c]/5 dark:bg-gray-700/50 cursor-pointer">
+                              <span className="text-[#004e6c] dark:text-gray-200 font-medium">
+                                {profileAvatar ? profileAvatar.name : 'Зураг сонгох'}
+                              </span>
+                            </div>
+                          </label>
+                          {profileAvatar && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProfileAvatar(null)
+                                setProfileAvatarPreview(null)
+                              }}
+                              className="mt-2 text-sm text-red-500 hover:text-red-700 transition-colors"
+                            >
+                              Зураг устгах
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Phone Number */}
+                    <div>
+                      <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
+                        Утасны дугаар
+                      </label>
+                      <input
+                        type="tel"
+                        value={profilePhone}
+                        onChange={(e) => {
+                          setProfilePhone(e.target.value)
+                          setProfileUpdateError(null)
+                        }}
+                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 focus:border-[#004e6c] dark:focus:border-[#ff6b35] transition-colors"
+                        placeholder="Утасны дугаар оруулна уу"
+                      />
+                    </div>
+
+                    {/* Display Name (Read-only) */}
                     <div>
                       <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                         Нэр
                       </label>
                       <input
                         type="text"
-                        defaultValue={user.fullName || user.username || ''}
-                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 focus:border-[#004e6c] dark:focus:border-[#ff6b35] transition-colors"
+                        value={user.fullName || user.username || ''}
+                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        disabled
                       />
                     </div>
+
+                    {/* Email (Read-only) */}
                     <div>
                       <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                         Имэйл
                       </label>
                       <input
                         type="email"
-                        defaultValue={user.email || ''}
-                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 focus:border-[#004e6c] dark:focus:border-[#ff6b35] transition-colors"
+                        value={user.email || ''}
+                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        disabled
                       />
                     </div>
+
+                    {/* Username (Read-only) */}
                     <div>
                       <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
                         Хэрэглэгчийн нэр
                       </label>
                       <input
                         type="text"
-                        defaultValue={user.username || ''}
-                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c]/60 dark:text-gray-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        value={user.username || ''}
+                        className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200/60 dark:text-gray-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         disabled
                       />
                     </div>
-                    <button className="bg-[#004e6c] text-white px-6 py-3 rounded-xl hover:bg-[#ff6b35] transition-all font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                      Хадгалах
+
+                    {/* Error Message */}
+                    {profileUpdateError && (
+                      <div className="p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
+                        <p className="text-sm text-red-700 dark:text-red-400 font-medium">{profileUpdateError}</p>
+                      </div>
+                    )}
+
+                    {/* Success Message */}
+                    {profileUpdateSuccess && (
+                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl">
+                        <p className="text-sm text-green-700 dark:text-green-400 font-medium">{profileUpdateSuccess}</p>
+                      </div>
+                    )}
+
+                    {/* Save Button */}
+                    <button
+                      onClick={async () => {
+                        setIsUpdatingProfile(true)
+                        setProfileUpdateError(null)
+                        setProfileUpdateSuccess(null)
+
+                        try {
+                          const response = await updateProfile({
+                            phone: profilePhone || undefined,
+                            avatar: profileAvatar || undefined,
+                          })
+
+                          if (response.user) {
+                            // Update user state and localStorage
+                            setUser(response.user)
+                            localStorage.setItem('user', JSON.stringify(response.user))
+                            
+                            // Clear avatar preview and file
+                            setProfileAvatar(null)
+                            setProfileAvatarPreview(null)
+                            
+                            setProfileUpdateSuccess('Профайл амжилттай шинэчлэгдлээ!')
+                            setTimeout(() => setProfileUpdateSuccess(null), 3000)
+                          }
+                        } catch (error: any) {
+                          console.error('Error updating profile:', error)
+                          setProfileUpdateError(error.message || 'Профайл шинэчлэхэд алдаа гарлаа')
+                        } finally {
+                          setIsUpdatingProfile(false)
+                        }
+                      }}
+                      disabled={isUpdatingProfile || (!profileAvatar && profilePhone === (user.phone || ''))}
+                      className="bg-[#004e6c] text-white px-6 py-3 rounded-xl hover:bg-[#ff6b35] transition-all font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
+                    >
+                      {isUpdatingProfile ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Хадгалж байна...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>✅</span>
+                          <span>Хадгалах</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1929,6 +2110,193 @@ export default function JournalistAccount() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Edit Modal */}
+      {showProfileEditModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border-2 border-[#004e6c]/10 dark:border-gray-700">
+            <div className="p-6 border-b-2 border-[#004e6c]/10 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200">
+                  Профайл засах
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowProfileEditModal(false)
+                    setProfileUpdateError(null)
+                    setProfileUpdateSuccess(null)
+                  }}
+                  className="text-[#004e6c]/60 dark:text-gray-400 hover:text-[#ff6b35] dark:hover:text-[#ff8555] transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Avatar Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
+                  Профайл зураг
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img
+                      src={profileAvatarPreview || user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.fullName || user.email}`}
+                      alt="Profile"
+                      className="w-24 h-24 rounded-full border-4 border-[#004e6c] shadow-lg object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const files = e.target.files
+                          if (files && files.length > 0) {
+                            const imageFile = files[0]
+                            if (!imageFile.type.startsWith('image/')) {
+                              setProfileUpdateError('Зөвхөн зураг файл оруулна уу')
+                              return
+                            }
+                            setProfileAvatar(imageFile)
+                            const reader = new FileReader()
+                            reader.onloadend = () => {
+                              setProfileAvatarPreview(reader.result as string)
+                            }
+                            reader.readAsDataURL(imageFile)
+                            setProfileUpdateError(null)
+                          }
+                        }}
+                        className="hidden"
+                      />
+                      <div className="px-4 py-2 border-2 border-dashed border-[#004e6c]/20 dark:border-gray-700 rounded-xl hover:border-[#004e6c] dark:hover:border-[#ff6b35] transition-colors text-center bg-[#004e6c]/5 dark:bg-gray-700/50 cursor-pointer">
+                        <span className="text-[#004e6c] dark:text-gray-200 font-medium">
+                          {profileAvatar ? profileAvatar.name : 'Зураг сонгох'}
+                        </span>
+                      </div>
+                    </label>
+                    {profileAvatar && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileAvatar(null)
+                          setProfileAvatarPreview(null)
+                        }}
+                        className="mt-2 text-sm text-red-500 hover:text-red-700 transition-colors"
+                      >
+                        Зураг устгах
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Phone Number */}
+              <div>
+                <label className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
+                  Утасны дугаар
+                </label>
+                <input
+                  type="tel"
+                  value={profilePhone}
+                  onChange={(e) => {
+                    setProfilePhone(e.target.value)
+                    setProfileUpdateError(null)
+                  }}
+                  className="w-full px-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 focus:border-[#004e6c] dark:focus:border-[#ff6b35] transition-colors"
+                  placeholder="Утасны дугаар оруулна уу"
+                />
+              </div>
+
+              {/* Error Message */}
+              {profileUpdateError && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
+                  <p className="text-sm text-red-700 dark:text-red-400 font-medium">{profileUpdateError}</p>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {profileUpdateSuccess && (
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl">
+                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">{profileUpdateSuccess}</p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={async () => {
+                    setIsUpdatingProfile(true)
+                    setProfileUpdateError(null)
+                    setProfileUpdateSuccess(null)
+
+                    try {
+                      const response = await updateProfile({
+                        phone: profilePhone || undefined,
+                        avatar: profileAvatar || undefined,
+                      })
+
+                      if (response.user) {
+                        // Update user state and localStorage
+                        setUser(response.user)
+                        localStorage.setItem('user', JSON.stringify(response.user))
+                        
+                        // Clear avatar preview and file
+                        setProfileAvatar(null)
+                        setProfileAvatarPreview(null)
+                        
+                        setProfileUpdateSuccess('Профайл амжилттай шинэчлэгдлээ!')
+                        setTimeout(() => {
+                          setProfileUpdateSuccess(null)
+                          setShowProfileEditModal(false)
+                        }, 2000)
+                      }
+                    } catch (error: any) {
+                      console.error('Error updating profile:', error)
+                      setProfileUpdateError(error.message || 'Профайл шинэчлэхэд алдаа гарлаа')
+                    } finally {
+                      setIsUpdatingProfile(false)
+                    }
+                  }}
+                  disabled={isUpdatingProfile || (!profileAvatar && profilePhone === (user.phone || ''))}
+                  className="flex-1 bg-[#004e6c] text-white px-6 py-3 rounded-xl hover:bg-[#ff6b35] transition-all font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center space-x-2"
+                >
+                  {isUpdatingProfile ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Хадгалж байна...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✅</span>
+                      <span>Хадгалах</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileEditModal(false)
+                    setProfileUpdateError(null)
+                    setProfileUpdateSuccess(null)
+                    // Reset to original values
+                    setProfileAvatar(null)
+                    setProfileAvatarPreview(null)
+                    setProfilePhone(user.phone || '')
+                  }}
+                  className="px-6 py-3 rounded-xl border-2 border-[#004e6c]/20 text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/5 transition-colors font-semibold"
+                >
+                  Цуцлах
+                </button>
+              </div>
             </div>
           </div>
         </div>

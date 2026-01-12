@@ -25,7 +25,7 @@ export default function AboutPage() {
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#004e6c] dark:text-gray-200 mb-6 leading-tight tracking-tight">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#004e6c] dark:text-gray-200 mb-6 leading-tight tracking-tight">
               Бидний тухай
             </h2>
             <p className="text-xl md:text-2xl text-[#004e6c]/70 dark:text-gray-400 mb-12 max-w-3xl mx-auto font-medium">
@@ -65,7 +65,7 @@ export default function AboutPage() {
 
         {/* Features Section */}
         <div className="mb-16">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-[#004e6c] dark:text-gray-200 mb-12 text-center">
+          <h3 className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-12 text-center">
             Яагаад биднийг сонгох вэ?
           </h3>
           <div className="grid md:grid-cols-3 gap-8">
@@ -109,22 +109,22 @@ export default function AboutPage() {
 
         {/* Stats Section */}
         <div className="bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-2xl p-12 text-white text-center shadow-2xl mb-16">
-          <h3 className="text-3xl md:text-4xl font-extrabold mb-10">Манай амжилтууд</h3>
+          <h3 className="text-2xl md:text-3xl font-bold mb-10">Манай амжилтууд</h3>
           <div className="grid md:grid-cols-4 gap-8">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
-              <div className="text-4xl md:text-5xl font-extrabold mb-2">1000+</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">1000+</div>
               <div className="text-white/90 font-medium">Бүтээгдэхүүн</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
-              <div className="text-4xl md:text-5xl font-extrabold mb-2">5000+</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">5000+</div>
               <div className="text-white/90 font-medium">Хэрэглэгч</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
-              <div className="text-4xl md:text-5xl font-extrabold mb-2">50+</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">50+</div>
               <div className="text-white/90 font-medium">Нийтлэлч</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
-              <div className="text-4xl md:text-5xl font-extrabold mb-2">4.8</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">4.8</div>
               <div className="text-white/90 font-medium">Дундаж үнэлгээ</div>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function AboutPage() {
 
         {/* Team Section */}
         <div className="mt-16">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-[#004e6c] dark:text-gray-200 mb-8 text-center">
+          <h3 className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-8 text-center">
             Манай баг
           </h3>
           <p className="text-center text-[#004e6c]/70 dark:text-gray-400 max-w-3xl mx-auto mb-12 font-medium text-lg">

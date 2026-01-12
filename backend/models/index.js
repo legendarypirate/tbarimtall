@@ -15,6 +15,8 @@ const DownloadToken = require('./DownloadToken');
 const Wishlist = require('./Wishlist');
 const CopyrightReport = require('./CopyrightReport');
 const HeroSlider = require('./HeroSlider');
+const JournalistReview = require('./JournalistReview');
+const Follow = require('./Follow');
 
 // Define associations
 User.hasMany(Product, { foreignKey: 'authorId', as: 'products' });
@@ -61,6 +63,18 @@ User.hasMany(CopyrightReport, { foreignKey: 'userId', as: 'copyrightReports' });
 CopyrightReport.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 CopyrightReport.belongsTo(User, { foreignKey: 'processedBy', as: 'processedByUser' });
 
+// Journalist Review associations
+Journalist.hasMany(JournalistReview, { foreignKey: 'journalistId', as: 'reviews' });
+JournalistReview.belongsTo(Journalist, { foreignKey: 'journalistId', as: 'journalist' });
+JournalistReview.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(JournalistReview, { foreignKey: 'userId', as: 'journalistReviews' });
+
+// Follow associations
+Journalist.hasMany(Follow, { foreignKey: 'journalistId', as: 'follows' });
+Follow.belongsTo(Journalist, { foreignKey: 'journalistId', as: 'journalist' });
+Follow.belongsTo(User, { foreignKey: 'followerId', as: 'follower' });
+User.hasMany(Follow, { foreignKey: 'followerId', as: 'following' });
+
 module.exports = {
   sequelize,
   User,
@@ -78,6 +92,8 @@ module.exports = {
   DownloadToken,
   Wishlist,
   CopyrightReport,
-  HeroSlider
+  HeroSlider,
+  JournalistReview,
+  Follow
 };
 

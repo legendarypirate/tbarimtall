@@ -579,7 +579,7 @@ export default function Home() {
             <div className="text-center">
               {/* Dynamic Title and Subtitle from slider or default */}
               {heroSliders.length > 0 && heroSliders[currentSlide] ? (
-                <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
                   {heroSliders[currentSlide].title || getTranslation(language, 'heroTitle')}
                   {heroSliders[currentSlide].subtitle ? (
                     <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
@@ -592,7 +592,7 @@ export default function Home() {
                   )}
                 </h2>
               ) : (
-                <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
                   {getTranslation(language, 'heroTitle')}
                   <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
                     {getTranslation(language, 'heroSubtitle')}
@@ -858,7 +858,7 @@ export default function Home() {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-4xl lg:text-5xl font-extrabold text-white dark:text-gray-200 mb-6">
+          <h2 className="text-3xl md:text-3xl lg:text-4xl font-bold text-white dark:text-gray-200 mb-6">
             {getTranslation(language, 'whyTitle')}
           </h2>
           <p className="text-xl md:text-1xl text-white/90 dark:text-gray-300 mb-10 max-w-1xl mx-auto font-medium">
@@ -1078,7 +1078,7 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between pt-5 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                      <span className={`text-2xl font-extrabold transition-colors ${
+                      <span className={`text-2xl font-bold transition-colors ${
                         isUnique 
                           ? 'text-green-600 dark:text-green-400' 
                           : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
@@ -1142,7 +1142,7 @@ export default function Home() {
                 const getAvatarUrl = () => {
                   if (journalist.avatar) return journalist.avatar
                   const seed = journalist.name || journalist.username || journalist.userId || 'default'
-                  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+                  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                 }
                 
                 return (
@@ -1159,7 +1159,7 @@ export default function Home() {
                           className="w-24 h-24 rounded-full border-4 border-[#004e6c] dark:border-[#006b8f] shadow-lg group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
                           onError={(e) => {
                             const seed = journalist.name || journalist.username || journalist.userId || 'default'
-                            ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+                            ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                           }}
                         />
                       </div>

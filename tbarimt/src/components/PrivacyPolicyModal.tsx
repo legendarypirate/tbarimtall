@@ -5,12 +5,151 @@ import { useLanguage } from '@/contexts/LanguageContext'
 
 interface PrivacyPolicyModalProps {
   isOpen: boolean
-  onAccept: () => void
+  onClose?: () => void
+  onAccept?: () => void
+  showAcceptButton?: boolean
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
-export default function PrivacyPolicyModal({ isOpen, onAccept }: PrivacyPolicyModalProps) {
+// Privacy Policy content in Mongolian
+const PRIVACY_CONTENT = `Нууцлалын бодлого
+1. Ерөнхий нөхцөл
+1.1 Энэхүү "Нууцлалын бодлого" нь Платформд бүртгүүлэн үйлчилгээ авч буй
+хэрэглэгчийн хувийн мэдээллийг ямар зорилгоор, ямар хүрээнд, ямар хугацаанд
+цуглуулах, ашиглах, хадгалах, хамгаалах, шаардлагатай тохиолдолд гуравдагч этгээдэд
+дамжуулах талаархи харилцааг зохицуулахад оршино.
+1.2 Платформ нь хэрэглэгчийн хувийн мэдээллийг Монгол Улсын холбогдох хууль
+тогтоомж болон мэдээллийн аюулгүй байдлын нийтлэг стандартын дагуу хамгаалж,
+зөвхөн үйлчилгээ үзүүлэхэд зайлшгүй шаардлагатай тохиолдолд, тодорхой
+зорилготойгоор ашиглана.
+1.3 Хэрэглэгч Платформд бүртгүүлж, үйлчилгээ ашиглаж эхэлснээр энэхүү Нууцлалын
+бодлогыг уншиж танилцсан, хүлээн зөвшөөрсөн бөгөөд үүнд заасан нөхцөлийг дагаж
+мөрдөхийг зөвшөөрсөнд тооцно.
+1.4 Энэхүү бодлого нь Платформын вэбсайт болон мобайл аппликэйшнд адил тэгш
+үйлчлэх бөгөөд хэрэглэгч аль сувгаар үйлчилгээ авснаас үл хамааран хүчин төгөлдөр
+байна.
+1.5 Платформ нь хэрэглэгчийн хувийн мэдээлэлд хандах эрхийг зөвхөн тухайн
+мэдээлэлтэй ажиллах зайлшгүй шаардлагатай ажилтан, админд шаталсан хандалтын
+түвшнээр олгох бөгөөд бүх хандалт лог бүртгэлд хадгалагдан, хяналт шалгалтад
+ашиглагдана.
+1.6 Хэрэв Платформыг Монгол Улсаас гадуур байрлаж буй хэрэглэгч ашиглаж байгаа
+тохиолдолд хэрэглэгчийн мэдээлэл нь Монгол Улсад байрших сервер болон гадаадын дата
+төвөөр дамжин боловсруулагдаж болохыг хэрэглэгч урьдчилан хүлээн зөвшөөрнө.
+2. Цуглуулах мэдээлэл
+Платформ хэрэглэгчээс дараах төрлийн мэдээллийг цуглуулах бөгөөд үүгээр
+хязгаарлагдахгүй байж болно.
+2.1 Платформ нь хэрэглэгчийг таньж тодорхойлох, бүртгэл үүсгэх, үйлчилгээ үзүүлэх,
+төлбөрийн гүйлгээг баталгаажуулах зорилгоор нэр, цахим шуудан, утасны дугаар,
+хэрэглэгчийн бүртгэлийн таних дугаар зэрэг үндсэн бүртгэлийн мэдээллийг цуглуулна.
+2.2 Платформ нь гишүүнчлэлийн эрх, онцлох бүтээгдэхүүн үйлчилгээ болон контентын
+борлуулалттай холбоотойгоор төлбөрийн түүх, захиалгын бүртгэл, гүйлгээний төлөв зэрэг
+санхүүгийн шинжтэй мэдээллийг хадгалах боловч банкны картын дугаар, нууц код зэрэг
+эмзэг мэдээллийг хадгалахгүй бөгөөд эдгээр нь зөвхөн төлбөрийн үйлчилгээ үзүүлэгч
+байгууллагын системд боловсруулагдана.
+2.3 Хэрэглэгчийн байршуулсан файл, түүний тайлбар, үнэ, ангилал, борлуулалтын
+статистик зэрэг нь үйлчилгээ үзүүлэх үндсэн зорилготойгоор системд хадгалагдана.
+2.4 Платформ нь системийн хэвийн ажиллагаа, аюулгүй байдлыг хангах, хэрэглээний дүн
+шинжилгээ хийх зорилгоор IP хаяг, төхөөрөмжийн төрөл, нэвтрэх лог, cookie буюу
+хэрэглэгчийн төхөөрөмжид хадгалагдах жижиг хэмжээний мэдээллийн файл болон бусад
+техникийн мэдээллийг автоматаар цуглуулж болно.
+3. Мэдээллийг ашиглах зорилго
+3.1 Платформ нь цуглуулсан мэдээллийг зөвхөн контент худалдах, худалдан авах
+үйлчилгээг хэрэгжүүлэх, гишүүнчлэлийн эрх болон онцлох бүтээгдэхүүн байршуулах
+эрхийг баталгаажуулах, хэрэглэгчтэй холбоо барих, мэдэгдэл хүргэх, хууль бус үйлдэл
+илрүүлэх, маргаан гомдол шийдвэрлэх, системийн аюулгүй байдал, чанарыг сайжруулах
+зорилгоор ашиглана.
+3.2 Хэрэглэгчийн хувийн мэдээллийг түүний урьдчилсан зөвшөөрөлгүйгээр гуравдагч
+этгээдэд худалдах, түрээслэх, сурталчилгааны зорилгоор ашиглахыг хатуу хориглоно.
+3.3 Платформ нь хэрэглэгчийн мэдээллийг зөвхөн үйлчилгээ үзүүлэхэд шаардлагатай
+хугацаанд хадгална.
+3.4 Бүртгэлийг устгасан тохиолдолд хуульд заасан хугацаанд шаардлагатай мэдээллийг
+хадгалж, бусад мэдээллийг устгана.
+3.5 Сервер, өгөгдлийн санг нууцлал, шифрлэлтийн хамгаалалттай орчинд хадгална.
+4. Мэдээллийг хамгаалах
+4.1 Платформ нь хэрэглэгчийн мэдээллийг үйлчилгээ үзүүлэхэд шаардлагатай хугацаанд
+болон хуульд заасан хугацаанд хадгалж, уг хугацаа дуусмагц устгах, эсхүл хувийн
+мэдээллийг таних боломжгүй болтол нь хувиргана.
+4.2 Хэрэглэгч бүртгэлээ устгах хүсэлт гаргасан тохиолдолд санхүү, татвар, маргаантай
+холбоотой мэдээллийг хуульд заасан хугацаанд хадгалах шаардлагаас бусад мэдээллийг
+устгана.
+5. Мэдээллийн аюулгүй байдал
+5.1 Платформ нь хэрэглэгчийн мэдээллийг зөвшөөрөлгүй нэвтрэх, задруулах, өөрчлөх,
+устгахаас хамгаалах зорилгоор шифрлэлтийн технологи, серверийн хамгаалалт, хандалтын
+хяналтын систем, нөөцлөлтийн механизм зэрэг техникийн болон зохион байгуулалтын
+хамгаалалтын арга хэмжээг хэрэгжүүлнэ.
+5.2 Гэсэн хэдий ч интернэтийн орчны онцлогоос шалтгаалан гуравдагч этгээдийн кибер
+халдлага, техникийн саатлаас бүрэн сэргийлэх боломжгүй тул ийм шалтгаанаар үүссэн
+шууд бус хохиролд Платформ хязгаарлагдмал хариуцлага хүлээнэ.
+5.3 Хэрэв кибер халдлага, системийн доголдол, техникийн гэмтэл зэргээс шалтгаалан
+хэрэглэгчийн мэдээлэл алдагдах, задрах, гуравдагч этгээдэд зөвшөөрөлгүй дамжих эрсдэл
+үүссэн тохиолдолд Платформ нэн даруй дотоод шалгалт явуулж, аюулгүй байдлын
+эрсдэлийг хязгаарлах арга хэмжээ авна.
+5.4 Мэдээллийн алдагдал хэрэглэгчид бодит эрсдэл учруулах магадлалтай гэж үзвэл
+Платформ холбогдох хэрэглэгчдэд боломжит сувгаар мэдэгдэж, эрсдэлийг бууруулах
+зөвлөмж, арга хэмжээг мэдээлнэ.
+5.5 Гэсэн хэдий ч хэрэглэгчийн өөрийн буруутай үйлдэл, нууц үгээ гуравдагч этгээдэд
+задруулсан, фишинг халдлагад өртсөн зэрэг шалтгаанаар үүссэн мэдээллийн алдагдалд
+Платформ хариуцлага хүлээхгүй.
+6. Гуравдагч этгээдэд дамжуулах
+6.1 Платформ нь хуульд заасан шаардлага, төлбөрийн гүйлгээ боловсруулах, маргаан
+шийдвэрлэх, хууль сахиулах байгууллагын албан шаардлага биелүүлэх зэрэг зайлшгүй
+нөхцөлд хэрэглэгчийн мэдээллийг гуравдагч этгээдэд дамжуулж болно.
+6.2 Ийм тохиолдолд дамжуулах мэдээлэл нь тухайн зорилгод зайлшгүй шаардлагатай
+хамгийн бага хүрээнд хязгаарлагдана.
+7. Контент ба хувийн мэдээллийн хариуцлага
+7.1 Хэрэглэгчийн байршуулсан контент нь бусад хэрэглэгчдэд харагдах боломжтой тул
+тухайн контентод хувийн мэдээлэл оруулах эсэхтэй холбоотой эрсдэлийг хэрэглэгч өөрөө
+бүрэн хариуцна.
+7.2 Платформ нь контентын доторх хувийн мэдээллийг хянах, устгах үүрэг хүлээхгүй
+бөгөөд үүнтэй холбоотой хохиролд хариуцлага хүлээхгүй.
+7.3 Хэрэглэгч нь өөрийн account-ийн нууц үг, нэвтрэх мэдээллийг гуравдагч этгээдэд
+задруулахгүй байх, төхөөрөмжийн аюулгүй байдлыг хангах үүрэгтэй бөгөөд үүнийг
+зөрчсөнөөс үүсэх эрсдэлийг өөрөө бүрэн хариуцна.
+7.4 Хэрэглэгч өөрийн байршуулсан контентод бусдын хувийн мэдээлэл оруулсан
+тохиолдолд тухайн мэдээллийн хууль ёсны зөвшөөрлийг авсан байх үүргийг хэрэглэгч
+өөрөө хүлээнэ.
+8. Cookie (жижиг мэдээллийн файл) ашиглах
+8.1 Платформ нь хэрэглэгчийн үйлчилгээг сайжруулах, хэрэглэгчийн тохиргоог хадгалах,
+системийн аюулгүй байдлыг хангах болон статистик дүн шинжилгээ хийх зорилгоор
+хэрэглэгчийн төхөөрөмжид хадгалагддаг жижиг хэмжээний мэдээллийн файл болох cookie
+ашиглаж болно.
+8.2 Cookie нь хэрэглэгчийн нэр, нууц үг зэрэг шууд таних боломжтой хувийн мэдээллийг
+хадгалдаггүй бөгөөд зөвхөн техникийн болон хэрэглээний мэдээллийг агуулна.
+8.3 Хэрэглэгч нь өөрийн интернет хөтчийн тохиргоогоор cookie-г зөвшөөрөх, хязгаарлах,
+устгах боломжтой бөгөөд cookie-г идэвхгүй болгосон тохиолдолд Платформын зарим
+үйлчилгээ хэвийн ажиллахгүй байх эрсдэлтэйг хэрэглэгч хүлээн зөвшөөрнө.
+9. Насанд хүрээгүй хэрэглэгчийн мэдээлэл
+9.1 Насанд хүрээгүй этгээдийн мэдээллийг санаатайгаар өгсөн, эсхүл бодит бус
+мэдээллээр бүртгүүлсэнтэй холбоотойгоор үүсэх аливаа үр дагавар, хохирлыг Платформ
+хариуцахгүй бөгөөд тухайн хэрэглэгч болон түүний хууль ёсны төлөөлөгч бүрэн
+хариуцна.
+9.2 Эцэг, эх, асран хамгаалагч нь насанд хүрээгүй этгээдийн нэрийн өмнөөс хувийн
+мэдээлэл өгөгдсөн, эсхүл үйлчилгээ ашигласан гэж үзвэл Платформд мэдэгдэж, тухайн
+мэдээллийг устгуулах, бүртгэлийг хаалгах хүсэлт гаргах эрхтэй.
+10. Бодлогын шинэчлэлт ба хэрэглэгчид мэдэгдэх
+10.1 Платформ нь хууль тогтоомжийн өөрчлөлт, үйлчилгээний төрөл, төлбөрийн систем,
+технологийн шинэчлэл болон аюулгүй байдлын шаардлагаас шалтгаалан энэхүү
+Нууцлалын бодлогыг нэг талын санаачилгаар шинэчлэх, өөрчлөх, нэмэлт оруулах эрхтэй.
+10.2 Нууцлалын бодлогод орсон аливаа өөрчлөлтийг Платформ вэбсайт, аппликэйшн дээр
+нийтлэх, эсхүл хэрэглэгчийн бүртгэлтэй цахим шуудан, дотоод мэдэгдлийн системээр
+дамжуулан мэдэгдэж болно.
+10.3 Шинэчилсэн бодлого нийтлэгдсэний дараа хэрэглэгч Платформын үйлчилгээг
+үргэлжлүүлэн ашигласан тохиолдолд тухайн өөрчлөлтийг бүрэн хүлээн зөвшөөрсөнд
+тооцно.
+10.4 Хэрэв хэрэглэгч шинэчилсэн бодлогыг хүлээн зөвшөөрөхгүй тохиолдолд өөрийн
+account-ийг устгах, үйлчилгээ ашиглахаа зогсоох эрхтэй бөгөөд энэ тохиолдолд Платформ
+нь өмнөх хугацаанд хууль ёсоор боловсруулсан мэдээлэлд хариуцлага хүлээхгүй.
+11. Холбоо барих
+Нууцлалын бодлоготой холбоотой санал, гомдлыг дараах сувгаар хүлээн авна:
+................................`
+
+export default function PrivacyPolicyModal({ 
+  isOpen, 
+  onClose, 
+  onAccept,
+  showAcceptButton = false 
+}: PrivacyPolicyModalProps) {
   const { language } = useLanguage()
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -74,7 +213,9 @@ export default function PrivacyPolicyModal({ isOpen, onAccept }: PrivacyPolicyMo
         localStorage.setItem('user', JSON.stringify({ ...currentUser, privacyAccepted: true }))
       }
 
-      onAccept()
+      if (onAccept) {
+        onAccept()
+      }
     } catch (err: any) {
       console.error('Error accepting privacy policy:', err)
       setError(err.message || (language === 'mn' 
@@ -90,68 +231,95 @@ export default function PrivacyPolicyModal({ isOpen, onAccept }: PrivacyPolicyMo
   return (
     <div 
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 dark:bg-black/70 backdrop-blur-sm p-4 min-h-screen"
+      onClick={showAcceptButton ? undefined : onClose}
     >
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all relative max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full p-8 transform transition-all relative max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Content */}
-        <div className="text-center">
-          <div className="mb-4">
-            <svg className="w-16 h-16 mx-auto text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        {/* Close Button - Only show if showAcceptButton is false */}
+        {onClose && !showAcceptButton && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors z-10"
+            aria-label="Close"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </div>
-          
-          <h2 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200 mb-2">
-            {language === 'mn' ? 'Нууцлалын бодлого' : 'Privacy Policy'}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {language === 'mn' 
-              ? 'Үргэлжлүүлэхийн тулд та нууцлалын бодлогыг зөвшөөрөх ёстой' 
-              : 'You must accept the privacy policy to continue'}
-          </p>
+          </button>
+        )}
 
-          {/* Privacy Policy Checkbox */}
-          <div className="mb-6 flex items-start space-x-3 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
-            <input
-              type="checkbox"
-              id="privacy-policy-accept"
-              checked={privacyAccepted}
-              onChange={(e) => {
-                setPrivacyAccepted(e.target.checked)
-                setError(null)
-              }}
-              className="mt-1 w-5 h-5 text-[#004e6c] border-gray-300 rounded focus:ring-[#004e6c] focus:ring-2 cursor-pointer"
-            />
-            <label
-              htmlFor="privacy-policy-accept"
-              className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer flex-1 text-left"
-            >
-              {language === 'mn' 
-                ? 'Би нууцлалын бодлогыг уншиж, зөвшөөрч байна' 
-                : 'I have read and agree to the Privacy Policy'}
-            </label>
+        {/* Modal Content */}
+        <div>
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2">
+              {language === 'mn' ? 'Нууцлалын бодлого' : 'Privacy Policy'}
+            </h2>
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
+          {/* Privacy Policy Content */}
+          <div className="mb-6 bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg max-h-[60vh] overflow-y-auto">
+            <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 font-sans leading-relaxed">
+              {PRIVACY_CONTENT}
+            </pre>
+          </div>
+
+          {/* Accept Checkbox and Button (only shown if showAcceptButton is true) */}
+          {showAcceptButton && (
+            <>
+              {/* Privacy Policy Checkbox */}
+              <div className="mb-6 flex items-start space-x-3 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="privacy-policy-accept"
+                  checked={privacyAccepted}
+                  onChange={(e) => {
+                    setPrivacyAccepted(e.target.checked)
+                    setError(null)
+                  }}
+                  className="mt-1 w-5 h-5 text-[#004e6c] border-gray-300 rounded focus:ring-[#004e6c] focus:ring-2 cursor-pointer"
+                />
+                <label
+                  htmlFor="privacy-policy-accept"
+                  className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer flex-1 text-left"
+                >
+                  {language === 'mn' 
+                    ? 'Би нууцлалын бодлогыг уншиж, зөвшөөрч байна' 
+                    : 'I have read and agree to the Privacy Policy'}
+                </label>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                </div>
+              )}
+
+              {/* Accept Button */}
+              <button
+                onClick={handleAccept}
+                disabled={isSubmitting}
+                className="w-full px-6 py-3 bg-[#004e6c] hover:bg-[#003d56] dark:bg-[#006b8f] dark:hover:bg-[#005a7a] text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {isSubmitting 
+                  ? (language === 'mn' ? 'Хадгалж байна...' : 'Saving...')
+                  : (language === 'mn' ? 'Зөвшөөрөх' : 'Accept')
+                }
+              </button>
+            </>
           )}
 
-          {/* Accept Button */}
-          <button
-            onClick={handleAccept}
-            disabled={isSubmitting}
-            className="w-full px-6 py-3 bg-[#004e6c] hover:bg-[#003d56] dark:bg-[#006b8f] dark:hover:bg-[#005a7a] text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {isSubmitting 
-              ? (language === 'mn' ? 'Хадгалж байна...' : 'Saving...')
-              : (language === 'mn' ? 'Зөвшөөрөх' : 'Accept')
-            }
-          </button>
+          {/* Close Button (only shown if not showing accept button) */}
+          {!showAcceptButton && onClose && (
+            <button
+              onClick={onClose}
+              className="w-full px-6 py-3 bg-[#004e6c] hover:bg-[#003d56] dark:bg-[#006b8f] dark:hover:bg-[#005a7a] text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold"
+            >
+              {language === 'mn' ? 'Хаах' : 'Close'}
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -99,6 +99,28 @@ export async function getJournalistById(id: string | number) {
   return fetchAPI(`/journalists/${id}`);
 }
 
+export async function followJournalist(id: string | number) {
+  return fetchAPI(`/journalists/${id}/follow`, {
+    method: 'POST',
+  });
+}
+
+export async function unfollowJournalist(id: string | number) {
+  return fetchAPI(`/journalists/${id}/follow`, {
+    method: 'DELETE',
+  });
+}
+
+export async function createJournalistReview(id: string | number, data: {
+  rating: number;
+  comment?: string;
+}) {
+  return fetchAPI(`/journalists/${id}/review`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 // Search
 export async function searchProducts(query: string, params?: {
   page?: number;
@@ -375,6 +397,56 @@ export async function payWithWallet(data: {
 // Get current user info (for checking balance)
 export async function getCurrentUser() {
   return fetchAPI('/auth/profile');
+}
+
+// Update user profile (avatar and phone)
+export async function updateProfile(data: {
+  phone?: string;
+  avatar?: File;
+}) {
+  const url = `${API_BASE_URL}/auth/profile`;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  const formData = new FormData();
+  if (data.phone !== undefined) {
+    formData.append('phone', data.phone);
+  }
+  if (data.avatar) {
+    formData.append('avatar', data.avatar);
+  }
+
+  const headers: Record<string, string> = {};
+  // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `API error: ${response.statusText || response.status}`;
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const error = await response.json();
+        errorMessage = error.message || error.error || errorMessage;
+      } else {
+        const text = await response.text();
+        if (text) {
+          errorMessage = text;
+        }
+      }
+    } catch (parseError) {
+      errorMessage = `API error: ${response.status} ${response.statusText}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
 }
 
 // Memberships

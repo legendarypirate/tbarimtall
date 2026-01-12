@@ -131,7 +131,7 @@ export default function FAQPage() {
 
         {/* Contact Section */}
         <div className="mt-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-2xl p-8 md:p-12 text-white text-center shadow-2xl">
-          <h3 className="text-2xl md:text-3xl font-extrabold mb-4">
+          <h3 className="text-2xl md:text-3xl font-bold mb-4">
             {language === 'mn' ? 'Асуулт үлдээх' : 'Still have questions?'}
           </h3>
           <p className="text-white/90 mb-6 font-medium">

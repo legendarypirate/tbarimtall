@@ -83,29 +83,11 @@ export default function HowItWorksPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative w-full py-24 md:py-32 overflow-hidden bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-900 to-[#ff6b35]/5 dark:to-[#ff6b35]/10">
-        {/* Abstract background graphics */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-[#004e6c]/15 dark:bg-[#004e6c]/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#ff6b35]/15 dark:bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#004e6c] dark:text-gray-200 mb-6 leading-tight tracking-tight">
-              {t.title}
-            </h2>
-            <p className="text-xl md:text-2xl text-[#004e6c]/70 dark:text-gray-400 mb-12 max-w-3xl mx-auto font-medium">
-              {t.subtitle}
-            </p>
-          </div>
-        </div>
-      </section>
-
+     
       {/* For Buyers Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
         <div className="text-center mb-12">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-[#004e6c] dark:text-gray-200 mb-4">
+          <h3 className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
             {t.forBuyers}
           </h3>
         </div>
@@ -180,7 +162,7 @@ export default function HowItWorksPage() {
       {/* For Sellers Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-100 dark:bg-gray-800">
         <div className="text-center mb-12">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-[#004e6c] dark:text-gray-200 mb-4">
+          <h3 className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
             {t.forSellers}
           </h3>
         </div>
@@ -255,7 +237,7 @@ export default function HowItWorksPage() {
       {/* Benefits Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
         <div className="text-center mb-12">
-          <h3 className="text-3xl md:text-4xl font-extrabold text-[#004e6c] dark:text-gray-200 mb-4">
+          <h3 className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
             {t.benefitsTitle}
           </h3>
         </div>
@@ -332,7 +314,7 @@ export default function HowItWorksPage() {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white dark:text-gray-200 mb-6">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white dark:text-gray-200 mb-6">
             {t.ctaTitle}
           </h2>
           <p className="text-xl md:text-2xl text-white/90 dark:text-gray-300 mb-10 max-w-2xl mx-auto font-medium">

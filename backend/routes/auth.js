@@ -6,12 +6,29 @@ const router = express.Router();
 const passport = require('../config/passport');
 const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
+const multer = require('multer');
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/profile', authenticate, authController.getProfile);
 router.post('/accept-privacy-policy', authenticate, authController.acceptPrivacyPolicy);
 router.post('/accept-terms', authenticate, authController.acceptTerms);
+
+// Update profile route with multer for avatar upload
+const uploadAvatar = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit for images
+  }
+});
+router.put('/profile', authenticate, uploadAvatar.single('avatar'), authController.updateProfile);
 
 // Google OAuth routes - only register if Google OAuth is configured
 const hasGoogleCredentials = 

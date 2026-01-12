@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { addToWishlist, removeFromWishlist, checkWishlist } from '@/lib/api'
 import toast from 'react-hot-toast'
+import AuthModal from './AuthModal'
 
 interface WishlistHeartIconProps {
   productId: number | string
@@ -20,12 +21,35 @@ export default function WishlistHeartIcon({
   const [isInWishlist, setIsInWishlist] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const isProcessingRef = useRef(false)
 
   // Check authentication
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    setIsAuthenticated(!!token)
+    const checkAuth = () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      setIsAuthenticated(!!token)
+    }
+    checkAuth()
+    
+    // Listen for storage changes (when user logs in from another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'token') {
+        checkAuth()
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Also listen for custom auth events
+    const handleAuthChange = () => {
+      checkAuth()
+    }
+    window.addEventListener('auth-changed', handleAuthChange)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('auth-changed', handleAuthChange)
+    }
   }, [])
 
   const checkWishlistStatus = useCallback(async () => {
@@ -59,13 +83,8 @@ export default function WishlistHeartIcon({
     }
 
     if (!isAuthenticated) {
-      // Redirect to login or show message
-      if (typeof window !== 'undefined') {
-        const shouldLogin = confirm('Хүслийн жагсаалтад нэмэхийн тулд нэвтрэх шаардлагатай. Нэвтрэх үү?')
-        if (shouldLogin) {
-          window.location.href = '/account/login'
-        }
-      }
+      // Show auth modal directly
+      setIsAuthModalOpen(true)
       return
     }
 
@@ -125,46 +144,63 @@ export default function WishlistHeartIcon({
     lg: 'w-8 h-8'
   }
 
+  const handleGoogleAuth = () => {
+    // AuthModal will handle the redirect
+  }
+
+  const handleFacebookAuth = () => {
+    // AuthModal will handle the redirect
+  }
+
   return (
-    <button
-      onClick={handleToggle}
-      disabled={isLoading}
-      className={`
-        ${sizeClasses[size]}
-        ${className}
-        transition-all duration-300
-        ${isInWishlist 
-          ? 'text-red-500 hover:text-red-600' 
-          : 'text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-500'
-        }
-        ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-        hover:scale-110 active:scale-95
-        flex items-center justify-center
-      `}
-      aria-label={isInWishlist ? 'Хүслийн жагсаалтаас хасах' : 'Хүслийн жагсаалтад нэмэх'}
-    >
-      {isLoading ? (
-        <svg className="animate-spin w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-      ) : (
-        <svg
-          className="w-full h-full"
-          fill={isInWishlist ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-          />
-        </svg>
-      )}
-    </button>
+    <>
+      <button
+        onClick={handleToggle}
+        disabled={isLoading}
+        className={`
+          ${sizeClasses[size]}
+          ${className}
+          transition-all duration-300
+          ${isInWishlist 
+            ? 'text-red-500 hover:text-red-600' 
+            : 'text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-500'
+          }
+          ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          hover:scale-110 active:scale-95
+          flex items-center justify-center
+        `}
+        aria-label={isInWishlist ? 'Хүслийн жагсаалтаас хасах' : 'Хүслийн жагсаалтад нэмэх'}
+      >
+        {isLoading ? (
+          <svg className="animate-spin w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        ) : (
+          <svg
+            className="w-full h-full"
+            fill={isInWishlist ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            />
+          </svg>
+        )}
+      </button>
+      
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSelectGoogle={handleGoogleAuth}
+        onSelectFacebook={handleFacebookAuth}
+      />
+    </>
   )
 }
 

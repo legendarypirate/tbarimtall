@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getTranslation, formatTranslation } from '@/lib/translations'
 import TermsAndConditionsModal from './TermsAndConditionsModal'
+import PrivacyPolicyModal from './PrivacyPolicyModal'
 
 export default function Footer() {
   const router = useRouter()
   const { language, setLanguage } = useLanguage()
   const [showTermsModal, setShowTermsModal] = useState(false)
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
   return (
     <footer className="bg-[#004e6c] dark:bg-gray-900 mt-20">
@@ -41,7 +43,7 @@ export default function Footer() {
               </li>
               <li>
                 <button 
-                  onClick={() => router.push('/privacy')}
+                  onClick={() => setShowPrivacyModal(true)}
                   className="text-white/70 dark:text-gray-400 hover:text-white dark:hover:text-gray-200 transition-colors text-sm"
                 >
                   {getTranslation(language, 'privacyPolicy')}
@@ -49,7 +51,7 @@ export default function Footer() {
               </li>
               <li>
                 <button 
-                  onClick={() => router.push('/about')}
+                  onClick={() => router.push('/howitworks')}
                   className="text-white/70 dark:text-gray-400 hover:text-white dark:hover:text-gray-200 transition-colors text-sm"
                 >
                   {getTranslation(language, 'howItWorksFooter')}
@@ -64,7 +66,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <button 
-                  onClick={() => router.push('/pricing')}
+                  onClick={() => router.push('/membership')}
                   className="text-white/70 dark:text-gray-400 hover:text-white dark:hover:text-gray-200 transition-colors text-sm"
                 >
                   {getTranslation(language, 'pricing')}
@@ -72,20 +74,13 @@ export default function Footer() {
               </li>
               <li>
                 <button 
-                  onClick={() => router.push('/help')}
+                  onClick={() => router.push('/faq')}
                   className="text-white/70 dark:text-gray-400 hover:text-white dark:hover:text-gray-200 transition-colors text-sm"
                 >
                   {getTranslation(language, 'help')}
                 </button>
               </li>
-              <li>
-                <button 
-                  onClick={() => router.push('/mby')}
-                  className="text-white/70 dark:text-gray-400 hover:text-white dark:hover:text-gray-200 transition-colors text-sm"
-                >
-                  {getTranslation(language, 'mby')}
-                </button>
-              </li>
+          
               <li>
                 <button 
                   onClick={() => router.push('/search')}
@@ -108,36 +103,12 @@ export default function Footer() {
                 {getTranslation(language, 'phone')}: +976 93000022
               </li>
               <li className="text-white/70 dark:text-gray-400 text-sm">
-                {getTranslation(language, 'address')}: Ulaanbaatar, Mongolia
+                {getTranslation(language, 'address')}: Улаанбаатар хот, Хан-Уул дүүрэг 2-р хороо 19 Үйлчилгээний төвөөс баруун тийш 15-р сургуулийн дэргэд
               </li>
             </ul>
             
             {/* Language Selection */}
-            <div className="flex flex-col">
-              <h6 className="text-white dark:text-gray-200 font-semibold mb-4">{getTranslation(language, 'language')}</h6>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setLanguage('mn')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    language === 'mn'
-                      ? 'bg-[#ff6b35] dark:bg-[#ff8555] text-white shadow-lg'
-                      : 'bg-white/10 dark:bg-gray-800 text-white/70 dark:text-gray-400 hover:bg-white/20 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {getTranslation(language, 'mongolian')}
-                </button>
-                <button
-                  onClick={() => setLanguage('en')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    language === 'en'
-                      ? 'bg-[#ff6b35] dark:bg-[#ff8555] text-white shadow-lg'
-                      : 'bg-white/10 dark:bg-gray-800 text-white/70 dark:text-gray-400 hover:bg-white/20 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {getTranslation(language, 'english')}
-                </button>
-              </div>
-            </div>
+           
           </div>
         </div>
 
@@ -153,6 +124,12 @@ export default function Footer() {
       <TermsAndConditionsModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
+      />
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
       />
     </footer>
   )

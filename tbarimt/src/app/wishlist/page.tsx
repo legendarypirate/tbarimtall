@@ -301,7 +301,7 @@ export default function WishlistPage() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between pt-5 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                      <span className="text-2xl font-extrabold text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+                      <span className="text-2xl font-bold text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                         {formatNumber(parseFloat(product.price?.toString() || '0'))}₮
                       </span>
                       <button 

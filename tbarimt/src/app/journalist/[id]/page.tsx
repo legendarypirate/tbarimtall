@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getJournalistById } from '@/lib/api'
+import { getJournalistById, followJournalist, unfollowJournalist, createJournalistReview } from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +14,13 @@ export default function JournalistProfile() {
   const [journalist, setJournalist] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [isFollowingLoading, setIsFollowingLoading] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+  const [hasReviewed, setHasReviewed] = useState(false)
+  const [userReview, setUserReview] = useState<any>(null)
 
   useEffect(() => {
     const fetchJournalist = async () => {
@@ -29,6 +36,13 @@ export default function JournalistProfile() {
         const response = await getJournalistById(journalistId)
         if (response.journalist) {
           setJournalist(response.journalist)
+          setIsFollowing(response.journalist.isFollowing || false)
+          // Always allow new reviews, so hasReviewed is always false
+          setHasReviewed(false)
+          setUserReview(response.journalist.userReview || null)
+          // Don't populate form with existing review - allow fresh review each time
+          setReviewRating(5)
+          setReviewComment('')
         } else {
           setError('Journalist not found')
         }
@@ -48,6 +62,83 @@ export default function JournalistProfile() {
       return (num / 1000).toFixed(1) + 'K'
     }
     return num.toLocaleString('mn-MN')
+  }
+
+  const handleFollow = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    if (!token) {
+      alert('Нэвтрэх шаардлагатай')
+      router.push('/login')
+      return
+    }
+
+    try {
+      setIsFollowingLoading(true)
+      if (isFollowing) {
+        await unfollowJournalist(journalistId)
+        setIsFollowing(false)
+        setJournalist((prev: any) => ({
+          ...prev,
+          followers: Math.max(0, (prev.followers || 0) - 1)
+        }))
+      } else {
+        const response = await followJournalist(journalistId)
+        setIsFollowing(true)
+        setJournalist((prev: any) => ({
+          ...prev,
+          followers: response.followers || (prev.followers || 0) + 1
+        }))
+      }
+    } catch (error: any) {
+      console.error('Error following/unfollowing:', error)
+      alert(error.message || 'Алдаа гарлаа')
+    } finally {
+      setIsFollowingLoading(false)
+    }
+  }
+
+  const handleSubmitReview = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    if (!token) {
+      alert('Нэвтрэх шаардлагатай')
+      router.push('/login')
+      return
+    }
+
+    if (!reviewRating || reviewRating < 1 || reviewRating > 5) {
+      alert('Үнэлгээ сонгоно уу')
+      return
+    }
+
+    try {
+      setIsSubmittingReview(true)
+      const response = await createJournalistReview(journalistId, {
+        rating: reviewRating,
+        comment: reviewComment || undefined
+      })
+      
+      // Refresh journalist data
+      const updatedResponse = await getJournalistById(journalistId)
+      if (updatedResponse.journalist) {
+        setJournalist(updatedResponse.journalist)
+        // Always allow new reviews, so hasReviewed is always false
+        setHasReviewed(false)
+        // Update userReview to show the most recent review
+        setUserReview(updatedResponse.journalist.userReview || null)
+      }
+      
+      // Reset form
+      setReviewRating(5)
+      setReviewComment('')
+      alert('Үнэлгээ амжилттай илгээгдлээ')
+    } catch (error: any) {
+      console.error('Error submitting review:', error)
+      // Extract error message properly
+      const errorMessage = error.message || error.error || 'Алдаа гарлаа'
+      alert(errorMessage)
+    } finally {
+      setIsSubmittingReview(false)
+    }
   }
 
   if (loading) {
@@ -92,9 +183,9 @@ export default function JournalistProfile() {
     if (isGoogleAuthor && user.avatar) {
       return user.avatar
     }
-    // Use DiceBear API for random avatar SVG
+    // Use DiceBear API for professional initials avatar
     const seed = user.fullName || user.email || user.username || user.id || 'default'
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+    return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
   }
 
   return (
@@ -130,7 +221,7 @@ export default function JournalistProfile() {
                 onError={(e) => {
                   // Fallback to DiceBear if image fails to load
                   const seed = user.fullName || user.email || user.username || user.id || 'default'
-                  ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`
+                  ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                 }}
               />
             </div>
@@ -161,11 +252,19 @@ export default function JournalistProfile() {
               <div className="flex items-center space-x-1 bg-yellow-100 dark:bg-yellow-900/30 px-4 py-2 rounded-lg">
                 <span className="text-yellow-600 dark:text-yellow-400 text-xl">⭐</span>
                 <span className="font-bold text-yellow-700 dark:text-yellow-300">
-                  {parseFloat(journalist.rating) || 0}
+                  {journalist.rating ? (typeof journalist.rating === 'number' ? journalist.rating.toFixed(1) : parseFloat(journalist.rating || 0).toFixed(1)) : '0.0'}
                 </span>
               </div>
-              <button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md">
-                Дагах
+              <button 
+                onClick={handleFollow}
+                disabled={isFollowingLoading}
+                className={`px-6 py-2 rounded-lg transition-all font-semibold shadow-md ${
+                  isFollowing
+                    ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                    : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+                } ${isFollowingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isFollowingLoading ? 'Ачааллаж байна...' : isFollowing ? 'Дагаж байна' : 'Дагах'}
               </button>
             </div>
           </div>
@@ -283,48 +382,132 @@ export default function JournalistProfile() {
             )}
 
             {activeTab === 'reviews' && (
-              <div className="space-y-4">
-                {reviews.length > 0 ? reviews.map((review: any) => (
-                  <div
-                    key={review.id}
-                    className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="flex items-start space-x-4">
-                      <img
-                        src={review.avatar}
-                        alt={review.user}
-                        className="w-12 h-12 rounded-full"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <h4 className="font-semibold text-gray-900 dark:text-white">
-                              {review.user}
-                            </h4>
-                            <div className="flex items-center space-x-1">
-                              {[...Array(5)].map((_, i) => (
-                                <span
-                                  key={i}
-                                  className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'}
-                                >
-                                  ⭐
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                          <span className="text-sm text-gray-500">{review.date}</span>
+              <div className="space-y-6">
+                {/* Review Form - Always show, allow multiple reviews */}
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Үнэлгээ үлдээх
+                  </h3>
+                  {userReview && (
+                    <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-2 font-medium">
+                        Таны сүүлд өгсөн үнэлгээ:
+                      </p>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="flex items-center space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <span
+                              key={i}
+                              className={i < userReview.rating ? 'text-yellow-400' : 'text-gray-300'}
+                            >
+                              ⭐
+                            </span>
+                          ))}
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {userReview.date}
+                        </span>
+                      </div>
+                      {userReview.comment && (
+                        <p className="text-gray-700 dark:text-gray-300 mt-2 text-sm">{userReview.comment}</p>
+                      )}
+                    </div>
+                  )}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Үнэлгээ
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() => setReviewRating(rating)}
+                            className={`text-2xl transition-transform hover:scale-110 ${
+                              rating <= reviewRating ? 'text-yellow-400' : 'text-gray-300'
+                            }`}
+                          >
+                            ⭐
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                          {reviewRating} / 5
+                        </span>
                       </div>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Сэтгэгдэл (сонголттой)
+                      </label>
+                      <textarea
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder="Сэтгэгдлээ бичнэ үү..."
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={4}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSubmitReview}
+                      disabled={isSubmittingReview}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmittingReview ? 'Илгээж байна...' : 'Үнэлгээ илгээх'}
+                    </button>
                   </div>
-                )) : (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Үнэлгээ олдсонгүй
-                    </p>
-                  </div>
-                )}
+                </div>
+
+                {/* Reviews List */}
+                <div className="space-y-4">
+                  {reviews.length > 0 ? reviews.map((review: any) => (
+                    <div
+                      key={review.id}
+                      className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-700"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <img
+                          src={review.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${review.user}`}
+                          alt={review.user}
+                          className="w-12 h-12 rounded-full"
+                          onError={(e) => {
+                            const seed = review.user || 'default'
+                            ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
+                          }}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900 dark:text-white">
+                                {review.user}
+                              </h4>
+                              <div className="flex items-center space-x-1 mt-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'}
+                                  >
+                                    ⭐
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <span className="text-sm text-gray-500">{review.date}</span>
+                          </div>
+                          {review.comment && (
+                            <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-center py-12">
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Үнэлгээ олдсонгүй
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

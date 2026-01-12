@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
 
 const generateToken = (userId) => {
   return jwt.sign(
@@ -291,6 +293,71 @@ exports.facebookCallback = async (req, res) => {
   } catch (error) {
     console.error('Facebook OAuth callback error:', error);
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=server_error`);
+  }
+};
+
+// Update user profile (avatar and phone)
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updateData = {};
+
+    // Handle phone number update
+    if (req.body.phone !== undefined) {
+      updateData.phone = req.body.phone;
+    }
+
+    // Handle avatar image upload
+    if (req.file) {
+      try {
+        // Upload image to Cloudinary
+        const uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              resource_type: 'image',
+              folder: 'tbarimt/avatars',
+              use_filename: true,
+              unique_filename: true,
+            },
+            (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
+            }
+          );
+          streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+        });
+
+        updateData.avatar = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading avatar to Cloudinary:', uploadError);
+        return res.status(500).json({ error: 'Failed to upload avatar image' });
+      }
+    }
+
+    // Update user
+    await user.update(updateData);
+
+    const userData = user.toJSON();
+    delete userData.password;
+    userData.income = parseFloat(user.income || 0);
+    userData.privacyAccepted = user.privacyAccepted || false;
+    userData.termsAccepted = user.termsAccepted || false;
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: userData
+    });
+  } catch (error) {
+    console.error('[updateProfile Error]', error);
+    res.status(500).json({ error: error.message });
   }
 };
 

@@ -14,6 +14,7 @@
     "migrate:orders-productid": "node scripts/migrate-orders-productid.js",
     "migrate:reviews-productid": "node scripts/migrate-reviews-productid.js",
     "migrate:all": "npm run migrate:products-id && npm run migrate:orders-productid && npm run migrate:reviews-productid",
+    "remove:journalist-review-constraint": "node scripts/remove-unique-constraint-journalist-reviews.js",
     "seed": "node scripts/seed.js"
   },
   "keywords": [],

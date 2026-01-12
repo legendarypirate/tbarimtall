@@ -8,95 +8,6 @@ import WishlistHeartIcon from '@/components/WishlistHeartIcon'
 
 export const dynamic = 'force-dynamic'
 
-// Default product data (fallback)
-const defaultProductsData: { [key: string]: any } = {
-  '1': {
-    id: 1,
-    title: 'Монгол улсын эдийн засгийн хөгжил',
-    category: 'Реферат',
-    price: 15000,
-    pages: 25,
-    downloads: 234,
-    views: 1250,
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=500&fit=crop',
-    description: 'Монгол улсын эдийн засгийн хөгжлийн тухай бүрэн дүүрэн судалгаа. Эдийн засгийн бүтэц, хөгжлийн чиглэл, сорилтууд болон боломжуудыг нарийвчлан авч үзсэн.',
-    author: {
-      id: 1,
-      name: 'Батбаяр',
-      username: '@batbayar_pro',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Batbayar',
-      rating: 4.9
-    },
-    previewImages: [
-      'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=500&fit=crop'
-    ],
-    tags: ['Эдийн засаг', 'Монгол улс', 'Хөгжил', 'Судалгаа'],
-    createdAt: '2024-01-15',
-    fileType: 'PDF',
-    fileSize: '2.5 MB'
-  },
-  '2': {
-    id: 2,
-    title: 'Компьютерийн сүлжээний аюулгүй байдал',
-    category: 'Дипломын ажил',
-    price: 45000,
-    pages: 80,
-    downloads: 156,
-    views: 890,
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=500&fit=crop',
-    description: 'Компьютерийн сүлжээний аюулгүй байдлын тухай бүрэн дүүрэн дипломын ажил. Орчин үеийн аюул заналхийлэл, хамгаалах арга хэмжээ, практик жишээнүүдийг багтаасан.',
-    author: {
-      id: 3,
-      name: 'Энхбат',
-      username: '@enkhat_dev',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Enkhat',
-      rating: 4.9
-    },
-    previewImages: [
-      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=500&fit=crop'
-    ],
-    tags: ['Сүлжээ', 'Аюулгүй байдал', 'Кибер аюул', 'Технологи'],
-    createdAt: '2024-02-20',
-    fileType: 'PDF',
-    fileSize: '5.2 MB',
-    isDiploma: true
-  },
-  '3': {
-    id: 3,
-    title: 'Action Adventure Game Pack',
-    category: 'Тоглоом (EXE)',
-    price: 25000,
-    size: '2.5 GB',
-    downloads: 892,
-    views: 2340,
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&h=500&fit=crop',
-    description: 'Гайхалтай action adventure тоглоом. Олон түвшин, сонирхолтой түүх, гайхалтай график.',
-    author: {
-      id: 4,
-      name: 'Оюунцэцэг',
-      username: '@oyuntsetseg',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Oyuntsetseg',
-      rating: 4.7
-    },
-    previewImages: [
-      'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&h=500&fit=crop',
-      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=500&fit=crop'
-    ],
-    tags: ['Тоглоом', 'Action', 'Adventure', 'EXE'],
-    createdAt: '2024-03-10',
-    fileType: 'EXE',
-    fileSize: '2.5 GB'
-  }
-}
-
 export default function ProductDetail() {
   const params = useParams()
   const router = useRouter()
@@ -105,7 +16,7 @@ export default function ProductDetail() {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'qpay' | 'bank' | null>(null)
-  const [product, setProduct] = useState<any>(defaultProductsData[productId] || defaultProductsData['1'])
+  const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [banners, setBanners] = useState<any[]>([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
@@ -661,7 +572,7 @@ export default function ProductDetail() {
       return author.avatar;
     }
     const seed = author.fullName || author.email || author.username || author.id || 'default';
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+    return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
   };
 
   return (
@@ -888,7 +799,7 @@ export default function ProductDetail() {
                   onError={(e) => {
                     // Fallback to DiceBear if image fails to load
                     const seed = author.fullName || author.email || author.username || author.id || 'default';
-                    (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+                    (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
                   }}
                 />
                 <div className="flex-1">
@@ -898,6 +809,11 @@ export default function ProductDetail() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     @{author.username || 'unknown'}
                   </p>
+                  {author.email && (
+                    <p className="text-sm text-gray-500 dark:text-gray-500">
+                      {author.email}
+                    </p>
+                  )}
                   {author.journalist && (
                     <div className="flex items-center space-x-1 mt-1">
                       <span className="text-yellow-400">⭐</span>
@@ -995,20 +911,7 @@ export default function ProductDetail() {
                 🛒 Одоо худалдаж авах
               </button>
 
-              <button 
-                onClick={(e) => {
-                  e.preventDefault()
-                  // The WishlistHeartIcon will handle the click
-                }}
-                className="w-full flex items-center justify-center border-2 border-blue-600 text-blue-600 dark:text-blue-400 py-3 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-gray-700 transition-all"
-              >
-                <WishlistHeartIcon 
-                  productId={product.uuid || product.id} 
-                  size="md"
-                />
-                <span className="ml-2">Хүслийн жагсаалтад нэмэх</span>
-              </button>
-
+           
               <button
                 onClick={() => {
                   setIsCopyrightReportModalOpen(true)
@@ -1130,7 +1033,7 @@ export default function ProductDetail() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                        <span className={`text-xl font-extrabold transition-colors ${
+                        <span className={`text-xl font-bold transition-colors ${
                           isUnique 
                             ? 'text-green-600 dark:text-green-400' 
                             : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'

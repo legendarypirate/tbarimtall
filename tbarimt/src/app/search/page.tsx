@@ -229,14 +229,7 @@ function SearchContent() {
                     </svg>
                   </div>
                 </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Хайх... (жишээ: реферат, дипломын ажил, тоглоом)"
-                  className="flex-1 pl-16 pr-32 py-4 text-lg bg-transparent text-[#004e6c] dark:text-gray-200 placeholder-[#004e6c]/40 dark:placeholder-gray-500 focus:outline-none"
-                />
+              
                 {searchQuery && (
                   <button
                     onClick={() => {

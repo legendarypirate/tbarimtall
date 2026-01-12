@@ -205,7 +205,7 @@ exports.getProductById = async (req, res) => {
           {
             model: User,
             as: 'author',
-            attributes: ['id', 'username', 'fullName', 'avatar'],
+            attributes: ['id', 'username', 'fullName', 'avatar', 'email'],
             include: [{
               model: require('../models').Journalist,
               as: 'journalist',
@@ -235,7 +235,7 @@ exports.getProductById = async (req, res) => {
           {
             model: User,
             as: 'author',
-            attributes: ['id', 'username', 'fullName', 'avatar'],
+            attributes: ['id', 'username', 'fullName', 'avatar', 'email'],
             include: [{
               model: require('../models').Journalist,
               as: 'journalist',
