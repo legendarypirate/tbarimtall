@@ -113,6 +113,15 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
 
+    // Run migration for fileSizeLimitUnit enum conversion if needed
+    try {
+      const { migrateFileSizeLimitUnit } = require('./scripts/migrate-filesize-limit-unit');
+      await migrateFileSizeLimitUnit();
+    } catch (error) {
+      console.warn('Warning: Could not run fileSizeLimitUnit migration:', error.message);
+      // Continue anyway - the sync might handle it
+    }
+
     // Sync database - use appropriate option for your environment
     const syncOptions = { alter: true };
     if (process.env.NODE_ENV === 'development') {

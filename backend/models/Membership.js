@@ -53,6 +53,17 @@ const Membership = sequelize.define('Membership', {
       min: 0,
       max: 100
     }
+  },
+  fileSizeLimit: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: null,
+    comment: 'Maximum file size limit for one-time upload (e.g., 60 for 60MB)'
+  },
+  fileSizeLimitUnit: {
+    type: DataTypes.ENUM('MB', 'GB', 'TB'),
+    allowNull: true,
+    defaultValue: 'MB'
   }
 }, {
   tableName: 'memberships',

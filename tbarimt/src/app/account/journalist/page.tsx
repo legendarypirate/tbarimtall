@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
-import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus, updateProfile } from '@/lib/api'
+import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus, updateProfile, getMyMembership } from '@/lib/api'
 import MembershipBar from '@/components/MembershipBar'
 import TermsAndConditionsModal from '@/components/TermsAndConditionsModal'
 
@@ -94,6 +94,7 @@ export default function JournalistAccount() {
   const [profileUpdateError, setProfileUpdateError] = useState<string | null>(null)
   const [profileUpdateSuccess, setProfileUpdateSuccess] = useState<string | null>(null)
   const [showProfileEditModal, setShowProfileEditModal] = useState(false)
+  const [membershipInfo, setMembershipInfo] = useState<any>(null)
 
   useEffect(() => {
     // Get user from localStorage
@@ -142,6 +143,21 @@ export default function JournalistAccount() {
     }
     fetchCategories()
   }, [])
+
+  // Fetch membership info to get file size limit
+  useEffect(() => {
+    const fetchMembershipInfo = async () => {
+      try {
+        const data = await getMyMembership()
+        setMembershipInfo(data)
+      } catch (error) {
+        console.error('Error fetching membership info:', error)
+      }
+    }
+    if (user) {
+      fetchMembershipInfo()
+    }
+  }, [user])
 
   const fetchData = async (userData: any) => {
     try {
@@ -347,6 +363,26 @@ export default function JournalistAccount() {
     const files = e.target.files
     if (files && files.length > 0) {
       const fileArray = Array.from(files)
+      
+      // Check file size limit if membership has one
+      if (membershipInfo?.membership?.fileSizeLimit) {
+        const limitInBytes = convertToBytes(
+          membershipInfo.membership.fileSizeLimit,
+          membershipInfo.membership.fileSizeLimitUnit || 'MB'
+        )
+        
+        const totalSize = fileArray.reduce((sum, file) => sum + file.size, 0)
+        
+        if (totalSize > limitInBytes) {
+          setErrors(prev => ({
+            ...prev,
+            file: 'Та төлбөртэй хувилбар сонгож тус файлыг оруулах боломжтой.'
+          }))
+          e.target.value = '' // Clear the input
+          return
+        }
+      }
+      
       setFormData(prev => ({ ...prev, files: fileArray }))
       // Clear error
       if (errors.file) {
@@ -356,6 +392,20 @@ export default function JournalistAccount() {
           return newErrors
         })
       }
+    }
+  }
+
+  // Helper function to convert file size to bytes
+  const convertToBytes = (size: number, unit: 'MB' | 'GB' | 'TB'): number => {
+    switch (unit) {
+      case 'MB':
+        return size * 1024 * 1024
+      case 'GB':
+        return size * 1024 * 1024 * 1024
+      case 'TB':
+        return size * 1024 * 1024 * 1024 * 1024
+      default:
+        return size * 1024 * 1024
     }
   }
 

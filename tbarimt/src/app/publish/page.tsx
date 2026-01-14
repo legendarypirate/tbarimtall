@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
-import { createProductWithFiles, createQPayInvoice, checkQPayPaymentStatus } from '@/lib/api'
+import { createProductWithFiles, createQPayInvoice, checkQPayPaymentStatus, getMyMembership } from '@/lib/api'
 
 // Categories matching the home page
 const categories = [
@@ -43,6 +43,7 @@ export default function PublishPage() {
   const [createdProductId, setCreatedProductId] = useState<string | null>(null)
   const paymentCheckInterval = useRef<NodeJS.Timeout | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [membershipInfo, setMembershipInfo] = useState<any>(null)
 
   useEffect(() => {
     // Check if user is logged in as journalist
@@ -80,6 +81,21 @@ export default function PublishPage() {
     }
   }, [])
 
+  // Fetch membership info to get file size limit
+  useEffect(() => {
+    const fetchMembershipInfo = async () => {
+      try {
+        const data = await getMyMembership()
+        setMembershipInfo(data)
+      } catch (error) {
+        console.error('Error fetching membership info:', error)
+      }
+    }
+    if (user) {
+      fetchMembershipInfo()
+    }
+  }, [user])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -115,6 +131,23 @@ export default function PublishPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Check file size limit if membership has one
+      if (membershipInfo?.membership?.fileSizeLimit) {
+        const limitInBytes = convertToBytes(
+          membershipInfo.membership.fileSizeLimit,
+          membershipInfo.membership.fileSizeLimitUnit || 'MB'
+        )
+        
+        if (file.size > limitInBytes) {
+          setErrors(prev => ({
+            ...prev,
+            file: 'Та төлбөртэй хувилбар сонгож тус файлыг оруулах боломжтой.'
+          }))
+          e.target.value = '' // Clear the input
+          return
+        }
+      }
+      
       setFormData(prev => ({ ...prev, file }))
       // Clear error
       if (errors.file) {
@@ -124,6 +157,20 @@ export default function PublishPage() {
           return newErrors
         })
       }
+    }
+  }
+
+  // Helper function to convert file size to bytes
+  const convertToBytes = (size: number, unit: 'MB' | 'GB' | 'TB'): number => {
+    switch (unit) {
+      case 'MB':
+        return size * 1024 * 1024
+      case 'GB':
+        return size * 1024 * 1024 * 1024
+      case 'TB':
+        return size * 1024 * 1024 * 1024 * 1024
+      default:
+        return size * 1024 * 1024
     }
   }
 

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Trash2, Plus, Loader2, Search, X, Crown, Star, Zap, CheckCircle2, XCircle } from "lucide-react";
 import { membershipsApi } from "@/lib/api";
 
@@ -25,6 +26,8 @@ export interface MembershipData {
   isActive: boolean;
   order: number;
   percentage: number;
+  fileSizeLimit?: number | null;
+  fileSizeLimitUnit?: 'MB' | 'GB' | 'TB' | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -50,6 +53,8 @@ function MembershipForm({
     isActive: membership?.isActive ?? true,
     order: membership?.order || 0,
     percentage: membership?.percentage || 20.00,
+    fileSizeLimit: membership?.fileSizeLimit ?? null,
+    fileSizeLimitUnit: membership?.fileSizeLimitUnit || 'MB',
   });
 
   const [advantageInput, setAdvantageInput] = useState("");
@@ -148,6 +153,44 @@ function MembershipForm({
         <p className="text-sm text-gray-500 mt-1">
           Борлуулалтаас авна комиссын хувь (жишээ: 20.00 = 20%)
         </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="fileSizeLimit" className="mb-2 block">Файлын хэмжээний хязгаар</Label>
+          <Input
+            id="fileSizeLimit"
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.fileSizeLimit || ""}
+            onChange={(e) => setForm({...form, fileSizeLimit: e.target.value ? parseFloat(e.target.value) : null})}
+            placeholder="60"
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            Нэг удаагийн файл оруулалтын хязгаар (жишээ: 60)
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="fileSizeLimitUnit" className="mb-2 block">Хэмжээний нэгж</Label>
+          <Select
+            value={form.fileSizeLimitUnit || 'MB'}
+            onValueChange={(value: 'MB' | 'GB' | 'TB') => setForm({...form, fileSizeLimitUnit: value})}
+          >
+            <SelectTrigger id="fileSizeLimitUnit">
+              <SelectValue placeholder="Нэгж сонгох" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MB">MB</SelectItem>
+              <SelectItem value="GB">GB</SelectItem>
+              <SelectItem value="TB">TB</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-gray-500 mt-1">
+            Файлын хэмжээний нэгж
+          </p>
+        </div>
       </div>
 
       <div>
@@ -281,6 +324,8 @@ export default function MembershipPage() {
         isActive: membershipData.isActive,
         order: membershipData.order,
         percentage: membershipData.percentage,
+        fileSizeLimit: membershipData.fileSizeLimit,
+        fileSizeLimitUnit: membershipData.fileSizeLimitUnit,
       });
 
       setSuccess('Гишүүнчлэл амжилттай үүслээ');
@@ -312,6 +357,8 @@ export default function MembershipPage() {
         isActive: membershipData.isActive,
         order: membershipData.order,
         percentage: membershipData.percentage,
+        fileSizeLimit: membershipData.fileSizeLimit,
+        fileSizeLimitUnit: membershipData.fileSizeLimitUnit,
       });
 
       setSuccess('Гишүүнчлэл амжилттай шинэчлэгдлээ');

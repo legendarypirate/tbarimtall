@@ -59,7 +59,7 @@ exports.getMembershipById = async (req, res) => {
 // Create membership
 exports.createMembership = async (req, res) => {
   try {
-    const { name, price, maxPosts, advantages, description, isActive, order, percentage } = req.body;
+    const { name, price, maxPosts, advantages, description, isActive, order, percentage, fileSizeLimit, fileSizeLimitUnit } = req.body;
 
     // Validate required fields
     if (!name || price === undefined || maxPosts === undefined) {
@@ -77,7 +77,9 @@ exports.createMembership = async (req, res) => {
       description: description || null,
       isActive: isActive !== undefined ? isActive : true,
       order: order !== undefined ? parseInt(order) : 0,
-      percentage: percentage !== undefined ? parseFloat(percentage) : 20.00
+      percentage: percentage !== undefined ? parseFloat(percentage) : 20.00,
+      fileSizeLimit: fileSizeLimit !== undefined ? parseFloat(fileSizeLimit) : null,
+      fileSizeLimitUnit: fileSizeLimitUnit || 'MB'
     });
 
     res.status(201).json({ membership });
@@ -93,7 +95,7 @@ exports.createMembership = async (req, res) => {
 exports.updateMembership = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, maxPosts, advantages, description, isActive, order, percentage } = req.body;
+    const { name, price, maxPosts, advantages, description, isActive, order, percentage, fileSizeLimit, fileSizeLimitUnit } = req.body;
 
     const membership = await Membership.findByPk(id);
 
@@ -112,6 +114,8 @@ exports.updateMembership = async (req, res) => {
     if (isActive !== undefined) updateData.isActive = isActive;
     if (order !== undefined) updateData.order = parseInt(order);
     if (percentage !== undefined) updateData.percentage = parseFloat(percentage);
+    if (fileSizeLimit !== undefined) updateData.fileSizeLimit = fileSizeLimit !== null ? parseFloat(fileSizeLimit) : null;
+    if (fileSizeLimitUnit !== undefined) updateData.fileSizeLimitUnit = fileSizeLimitUnit || 'MB';
 
     await membership.update(updateData);
 
@@ -172,10 +176,14 @@ exports.getUserMembership = async (req, res) => {
     // Get membership details
     let membership = null;
     if (user.membership_type) {
-      membership = await Membership.findByPk(user.membership_type);
+      membership = await Membership.findByPk(user.membership_type, {
+        attributes: ['id', 'name', 'price', 'maxPosts', 'advantages', 'description', 'order', 'percentage', 'fileSizeLimit', 'fileSizeLimitUnit']
+      });
     } else {
       // Default to FREE membership if not set
-      membership = await Membership.findByPk(2); // FREE membership
+      membership = await Membership.findByPk(2, {
+        attributes: ['id', 'name', 'price', 'maxPosts', 'advantages', 'description', 'order', 'percentage', 'fileSizeLimit', 'fileSizeLimitUnit']
+      }); // FREE membership
     }
 
     // If user doesn't have membership_type set but is a journalist, set default FREE membership
