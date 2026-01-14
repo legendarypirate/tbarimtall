@@ -325,7 +325,7 @@ export default function MembershipPage() {
         order: membershipData.order,
         percentage: membershipData.percentage,
         fileSizeLimit: membershipData.fileSizeLimit,
-        fileSizeLimitUnit: membershipData.fileSizeLimitUnit,
+        fileSizeLimitUnit: membershipData.fileSizeLimitUnit ?? undefined,
       });
 
       setSuccess('Гишүүнчлэл амжилттай үүслээ');
@@ -358,7 +358,7 @@ export default function MembershipPage() {
         order: membershipData.order,
         percentage: membershipData.percentage,
         fileSizeLimit: membershipData.fileSizeLimit,
-        fileSizeLimitUnit: membershipData.fileSizeLimitUnit,
+        fileSizeLimitUnit: membershipData.fileSizeLimitUnit ?? undefined,
       });
 
       setSuccess('Гишүүнчлэл амжилттай шинэчлэгдлээ');
