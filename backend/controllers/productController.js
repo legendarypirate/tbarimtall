@@ -633,12 +633,8 @@ exports.createProduct = async (req, res) => {
     if (!productData.status) {
       productData.status = 'new';
     }
-    // isActive will use the model's default value (true) if not explicitly provided
-    // Only set it if explicitly provided in the request
-    if (productData.isActive !== undefined && productData.isActive !== null) {
-      // Convert string to boolean if needed
-      productData.isActive = productData.isActive === 'true' || productData.isActive === true;
-    }
+    // Journalist products are not published by default (isActive = false)
+   
 
     const product = await Product.create(productData);
 
