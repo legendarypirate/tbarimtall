@@ -239,6 +239,19 @@ exports.getJournalistById = async (req, res) => {
       };
     } else {
       journalist = journalist.toJSON();
+      // Always ensure user data includes membership (from the separately fetched user)
+      journalist.user = {
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName,
+        avatar: user.avatar,
+        email: user.email,
+        membership_type: user.membership_type || null,
+        membership: user.membership ? {
+          id: user.membership.id,
+          name: user.membership.name
+        } : null
+      };
     }
 
     // Get products

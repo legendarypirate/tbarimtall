@@ -643,30 +643,24 @@ export default function ProductDetail() {
   // Determine membership type and get decoration styles
   const getMembershipDecoration = () => {
     // Check if author has membership information
-    const membershipId = author.membership_type || author.membership?.id;
     const membershipName = author.membership?.name || '';
     
-    // Determine membership type based on ID or name
+    // Determine membership type based on name only (no static IDs)
     let membershipType = 'FREE';
     
-    if (membershipId) {
-      // Based on the provided membership data
-      if (membershipId === 3 || membershipName.includes('SILVER')) {
-        membershipType = 'SILVER';
-      } else if (membershipId === 1 || membershipName.includes('GOLD')) {
-        membershipType = 'GOLD';
-      } else if (membershipId === 4 || membershipName.includes('PLATINUM')) {
+    if (membershipName) {
+      const upperName = membershipName.toUpperCase();
+      if (upperName.includes('PLATINUM')) {
         membershipType = 'PLATINUM';
-      } else if (membershipId === 5 || membershipName.includes('FREE')) {
-        membershipType = 'FREE';
-      } else if (membershipName.includes('BRONZE')) {
+      } else if (upperName.includes('GOLD')) {
+        membershipType = 'GOLD';
+      } else if (upperName.includes('SILVER')) {
+        membershipType = 'SILVER';
+      } else if (upperName.includes('BRONZE')) {
         membershipType = 'BRONZE';
+      } else if (upperName.includes('FREE')) {
+        membershipType = 'FREE';
       }
-    } else if (membershipName) {
-      if (membershipName.includes('SILVER')) membershipType = 'SILVER';
-      else if (membershipName.includes('GOLD')) membershipType = 'GOLD';
-      else if (membershipName.includes('PLATINUM')) membershipType = 'PLATINUM';
-      else if (membershipName.includes('BRONZE')) membershipType = 'BRONZE';
     }
 
     // Return decoration styles based on membership type
