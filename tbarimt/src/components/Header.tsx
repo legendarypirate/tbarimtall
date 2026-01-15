@@ -353,7 +353,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                                   key={subcategory.id}
                                   onClick={(e) => {
                                     e.preventDefault()
-                                    router.push(`/category/${subcategory.id}`)
+                                    router.push(`/subcategory/${subcategory.id}`)
                                     setShowCategoriesDrawer(false)
                                   }}
                                   className="w-full text-left px-3 py-2 rounded-md hover:bg-[#004e6c]/8 dark:hover:bg-gray-700/60 transition-all duration-150 text-sm text-gray-700 dark:text-gray-300 hover:text-[#004e6c] dark:hover:text-white font-medium hover:translate-x-1 transform group"

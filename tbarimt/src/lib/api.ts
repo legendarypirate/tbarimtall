@@ -90,6 +90,15 @@ export async function getCategoryProducts(id: string | number, page: number = 1,
   return fetchAPI(`/categories/${id}/products?page=${page}&limit=${limit}`);
 }
 
+// Subcategories
+export async function getSubcategoryById(id: string | number) {
+  return fetchAPI(`/categories/subcategory/${id}`);
+}
+
+export async function getSubcategoryProducts(id: string | number, page: number = 1, limit: number = 20) {
+  return fetchAPI(`/categories/subcategory/${id}/products?page=${page}&limit=${limit}`);
+}
+
 // Journalists
 export async function getTopJournalists(limit: number = 10) {
   return fetchAPI(`/journalists/top?limit=${limit}`);
