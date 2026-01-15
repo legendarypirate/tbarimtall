@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getTranslation } from '@/lib/translations'
+import { getCategories } from '@/lib/api'
 import AuthModal from './AuthModal'
 
 interface HeaderProps {
@@ -19,6 +20,8 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
   const [isJournalist, setIsJournalist] = useState(false)
   const [searchQuery, setSearchQuery] = useState(externalSearchQuery || '')
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false)
+  const [categories, setCategories] = useState<any[]>([])
 
   useEffect(() => {
     // Check if user is logged in as journalist
@@ -31,6 +34,33 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
         setIsJournalist(false)
       }
     }
+  }, [])
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getCategories()
+        if (response.categories && Array.isArray(response.categories)) {
+          // Filter to only show parent categories (those with subcategories)
+          const filteredCategories = response.categories.filter((cat: any) => {
+            // Skip categories with generic names like "Category 37", "Category 40", etc.
+            const isGenericCategory = /^Category\s+\d+$/i.test(cat.name)
+            if (isGenericCategory) {
+              return false
+            }
+            // Only show categories that have subcategories (parent categories)
+            const hasSubcategories = cat.subcategories && Array.isArray(cat.subcategories) && cat.subcategories.length > 0
+            return hasSubcategories
+          })
+          setCategories(filteredCategories)
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
+    }
+
+    fetchCategories()
   }, [])
 
   useEffect(() => {
@@ -189,17 +219,71 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
              
             </div>
             <div className="flex items-center space-x-8">
-              <button 
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  router.push('/products')
-                }}
-                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+              <div 
+                className="relative"
+                onMouseEnter={() => setShowCategoriesDropdown(true)}
+                onMouseLeave={() => setShowCategoriesDropdown(false)}
               >
-                {getTranslation(language, 'categories')}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
-              </button>
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    router.push('/products')
+                  }}
+                  className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+                >
+                  {getTranslation(language, 'categories')}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                </button>
+                
+                {/* Categories Dropdown - Wide 3-column layout */}
+                {showCategoriesDropdown && categories.length > 0 && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-[900px] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-6 z-50">
+                    <div className="px-6 pb-4 border-b border-gray-200 dark:border-gray-700 mb-4">
+                      <h3 className="text-lg font-bold text-[#004e6c] dark:text-white">
+                        {getTranslation(language, 'categories')}
+                      </h3>
+                    </div>
+                    <div className="px-6">
+                      <div className="grid grid-cols-3 gap-6">
+                        {categories.map((category: any) => (
+                          <div key={category.id} className="flex flex-col">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                router.push(`/category/${category.id}`)
+                                setShowCategoriesDropdown(false)
+                              }}
+                              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-colors group mb-2"
+                            >
+                              <span className="text-sm font-bold text-[#004e6c] dark:text-white group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+                                {category.name}
+                              </span>
+                            </button>
+                            {category.subcategories && category.subcategories.length > 0 && (
+                              <div className="space-y-1">
+                                {category.subcategories.map((subcategory: any) => (
+                                  <button
+                                    key={subcategory.id}
+                                    onClick={(e) => {
+                                      e.preventDefault()
+                                      router.push(`/category/${subcategory.id}`)
+                                      setShowCategoriesDropdown(false)
+                                    }}
+                                    className="w-full text-left px-3 py-2 rounded-md hover:bg-[#004e6c]/5 dark:hover:bg-gray-700/50 transition-colors text-xs text-gray-700 dark:text-gray-300 hover:text-[#004e6c] dark:hover:text-white font-medium"
+                                  >
+                                    {subcategory.name}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button 
                 type="button"
                 onClick={(e) => {

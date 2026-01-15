@@ -1628,7 +1628,6 @@ export default function JournalistAccount() {
                     value={formData.price}
                     onChange={handleInputChange}
                     min="0"
-                    step="1000"
                     className={`w-full px-4 py-3 rounded-xl border-2 ${
                       errors.price
                         ? 'border-red-500 dark:border-red-500 focus:border-red-500'

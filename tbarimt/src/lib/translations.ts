@@ -48,7 +48,7 @@ export const translations = {
     popular: 'АЛДАРТАЙ',
     
     // Journalists Section
-    topJournalists: 'Топ Журналистууд',
+    topJournalists: 'Шилдэг нийтлэлчид',
     topJournalistsDescription: 'Манай платформын шилдэг контент бүтээгчид',
     viewProfile: 'Профайл харах',
     followers: 'дагагчид',
