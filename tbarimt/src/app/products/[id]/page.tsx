@@ -474,6 +474,116 @@ export default function ProductDetail() {
     return `${minutes} минут ${seconds} секунд`
   }
 
+  // Generate random placeholder images
+  const generatePlaceholderImages = (count: number = 3): string[] => {
+    // Use product ID or UUID to generate consistent random images
+    const seed = product?.id || product?.uuid || productId || Math.random().toString(36).substring(7);
+    const images: string[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      // Use Picsum Photos with seed for consistent random images
+      const imageSeed = `${seed}-${i}`;
+      images.push(`https://picsum.photos/seed/${imageSeed}/800/500`);
+    }
+    
+    return images;
+  };
+
+  // Check if product has admin-created previewImages
+  const hasPreviewImages = () => {
+    if (!product || !product.previewImages) return false;
+    
+    // If it's already an array, filter out empty values
+    if (Array.isArray(product.previewImages)) {
+      const filtered = product.previewImages.filter(Boolean);
+      return filtered.length > 0;
+    } else if (typeof product.previewImages === 'string') {
+      // If it's a string, try to parse it
+      try {
+        const parsed = JSON.parse(product.previewImages);
+        if (Array.isArray(parsed)) {
+          const filtered = parsed.filter(Boolean);
+          return filtered.length > 0;
+        }
+      } catch (e) {
+        console.error('Error parsing previewImages:', e);
+      }
+    }
+    
+    return false;
+  };
+
+  // Ensure previewImages is always an array
+  // Priority: admin-created previewImages > product.image > placeholders
+  const getPreviewImages = () => {
+    if (!product) return [];
+    
+    // Check if admin created previewImages
+    let adminPreviewImages: string[] | null = null;
+    
+    if (product.previewImages) {
+      // If it's already an array, filter out empty values
+      if (Array.isArray(product.previewImages)) {
+        const filtered = product.previewImages.filter(Boolean);
+        if (filtered.length > 0) {
+          adminPreviewImages = filtered;
+        }
+      } else if (typeof product.previewImages === 'string') {
+        // If it's a string, try to parse it
+        try {
+          const parsed = JSON.parse(product.previewImages);
+          if (Array.isArray(parsed)) {
+            const filtered = parsed.filter(Boolean);
+            if (filtered.length > 0) {
+              adminPreviewImages = filtered;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing previewImages:', e);
+        }
+      }
+    }
+    
+    // If admin created previewImages, use them
+    if (adminPreviewImages && adminPreviewImages.length > 0) {
+      return adminPreviewImages;
+    }
+    
+    // Otherwise, use product.image if it exists
+    if (product.image) {
+      return [product.image];
+    }
+    
+    // Last resort: generate placeholders
+    return generatePlaceholderImages(3);
+  };
+  
+  const previewImages = getPreviewImages();
+
+  // Keyboard navigation for image modal
+  useEffect(() => {
+    if (!isImageModalOpen || !previewImages || previewImages.length <= 1) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setSelectedImageIndex((prev) => 
+          prev === 0 ? previewImages.length - 1 : prev - 1
+        )
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        setSelectedImageIndex((prev) => 
+          prev === previewImages.length - 1 ? 0 : prev + 1
+        )
+      } else if (e.key === 'Escape') {
+        setIsImageModalOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isImageModalOpen, previewImages])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -503,67 +613,6 @@ export default function ProductDetail() {
     )
   }
 
-  // Generate random placeholder images
-  const generatePlaceholderImages = (count: number = 3): string[] => {
-    // Use product ID or UUID to generate consistent random images
-    const seed = product.id || product.uuid || productId || Math.random().toString(36).substring(7);
-    const images: string[] = [];
-    
-    for (let i = 0; i < count; i++) {
-      // Use Picsum Photos with seed for consistent random images
-      const imageSeed = `${seed}-${i}`;
-      images.push(`https://picsum.photos/seed/${imageSeed}/800/500`);
-    }
-    
-    return images;
-  };
-
-  // Ensure previewImages is always an array
-  const getPreviewImages = () => {
-    if (!product.previewImages) {
-      // If no preview images and no main image, return random placeholders
-      if (!product.image) {
-        return generatePlaceholderImages(3);
-      }
-      return [product.image];
-    }
-    
-    // If it's already an array, return it (filter out empty values)
-    if (Array.isArray(product.previewImages)) {
-      const filtered = product.previewImages.filter(Boolean);
-      // If array is empty, return random placeholders
-      if (filtered.length === 0) {
-        return generatePlaceholderImages(3);
-      }
-      return filtered;
-    }
-    
-    // If it's a string, try to parse it
-    if (typeof product.previewImages === 'string') {
-      try {
-        const parsed = JSON.parse(product.previewImages);
-        if (Array.isArray(parsed)) {
-          const filtered = parsed.filter(Boolean);
-          // If array is empty, return random placeholders
-          if (filtered.length === 0) {
-            return generatePlaceholderImages(3);
-          }
-          return filtered;
-        }
-      } catch (e) {
-        console.error('Error parsing previewImages:', e);
-      }
-    }
-    
-    // Fallback to main image or random placeholders
-    if (product.image) {
-      return [product.image];
-    }
-    
-    return generatePlaceholderImages(3);
-  };
-  
-  const previewImages = getPreviewImages();
   const author = product.author || {}
 
   // Get avatar URL with DiceBear SVG fallback
@@ -691,7 +740,7 @@ export default function ProductDetail() {
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
               <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
                 <img
-                  src={previewImages[selectedImageIndex] || previewImages[0] || product.image || '/placeholder.png'}
+                  src={product.image || '/placeholder.png'}
                   alt={product.title}
                   className="w-full h-full object-cover cursor-pointer"
                   onClick={() => setIsImageModalOpen(true)}
@@ -706,31 +755,6 @@ export default function ProductDetail() {
                   <span className="font-bold text-gray-900 dark:text-white">{parseFloat(product.rating) || 0}</span>
                 </div>
               </div>
-              
-              {/* Thumbnail Images */}
-              {previewImages && previewImages.length > 1 && (
-                <div className="p-4 bg-gray-50 dark:bg-gray-900">
-                  <div className="flex space-x-3 overflow-x-auto">
-                    {previewImages.map((img: string, index: number) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImageIndex(index)}
-                        className={`flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedImageIndex === index
-                            ? 'border-blue-600 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
-                        }`}
-                      >
-                        <img
-                          src={img}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Stats Cards */}
@@ -764,6 +788,37 @@ export default function ProductDetail() {
               </div>
             </div>
 
+            {/* Preview Images Horizontal List */}
+            {hasPreviewImages() && previewImages && previewImages.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                  Зургийн цомог
+                </h3>
+                <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
+                  {previewImages.map((img: string, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setSelectedImageIndex(index)
+                        setIsImageModalOpen(true)
+                      }}
+                      className={`flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 transition-all cursor-pointer hover:scale-105 ${
+                        selectedImageIndex === index
+                          ? 'border-blue-600 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Description */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
@@ -783,54 +838,6 @@ export default function ProductDetail() {
                     #{tag}
                   </span>
                 ))}
-              </div>
-            </div>
-
-            {/* Author Info */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Зохиогч
-              </h3>
-              <div className="flex items-center space-x-4">
-                <img
-                  src={getAvatarUrl()}
-                  alt={author.fullName || author.username || 'Author'}
-                  className="w-16 h-16 rounded-full border-2 border-blue-500 dark:border-blue-400"
-                  onError={(e) => {
-                    // Fallback to DiceBear if image fails to load
-                    const seed = author.fullName || author.email || author.username || author.id || 'default';
-                    (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
-                  }}
-                />
-                <div className="flex-1">
-                  <h4 className="text-lg font-bold text-gray-900 dark:text-white">
-                    {author.fullName || author.username || 'Unknown'}
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    @{author.username || 'unknown'}
-                  </p>
-                  {author.email && (
-                    <p className="text-sm text-gray-500 dark:text-gray-500">
-                      {author.email}
-                    </p>
-                  )}
-                  {author.journalist && (
-                    <div className="flex items-center space-x-1 mt-1">
-                      <span className="text-yellow-400">⭐</span>
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        {parseFloat(author.journalist.rating) || 0}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                {author.id && (
-                  <button 
-                    onClick={() => router.push(`/journalist/${author.id}`)}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md"
-                  >
-                    Профайл үзэх
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -927,6 +934,50 @@ export default function ProductDetail() {
                 <span className="mr-2">⚠️</span>
                 <span>Зохиогчийн эрхийн мэдэгдэл</span>
               </button>
+
+              {/* Author Info */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                  Зохиогч
+                </h3>
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={getAvatarUrl()}
+                      alt={author.fullName || author.username || 'Author'}
+                      className="w-16 h-16 rounded-full border-2 border-blue-500 dark:border-blue-400"
+                      onError={(e) => {
+                        // Fallback to DiceBear if image fails to load
+                        const seed = author.fullName || author.email || author.username || author.id || 'default';
+                        (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
+                      }}
+                    />
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+                        {author.fullName || author.username || 'Unknown'}
+                      </h4>
+                    
+                     
+                      {author.journalist && (
+                        <div className="flex items-center space-x-1 mt-1">
+                          <span className="text-yellow-400">⭐</span>
+                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                            {parseFloat(author.journalist.rating) || 0}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {author.id && (
+                    <button 
+                      onClick={() => router.push(`/journalist/${author.id}`)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md"
+                    >
+                      Профайл үзэх
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1066,43 +1117,104 @@ export default function ProductDetail() {
         </div>
       )}
 
-      {/* Image Modal */}
+      {/* Image Modal - Gallery Viewer */}
       {isImageModalOpen && (
         <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
           onClick={() => setIsImageModalOpen(false)}
         >
-          <div className="relative max-w-5xl w-full">
+          <div className="relative max-w-7xl w-full h-full flex items-center justify-center">
+            {/* Close Button */}
             <button
               onClick={() => setIsImageModalOpen(false)}
-              className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 z-10"
+              className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 z-20 bg-black/50 rounded-full w-12 h-12 flex items-center justify-center transition-all hover:bg-black/70"
             >
               ×
             </button>
-            <img
-              src={previewImages[selectedImageIndex] || previewImages[0] || product.image || '/placeholder.png'}
-              alt={product.title}
-              className="w-full h-auto rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
+
+            {/* Left Navigation Arrow */}
             {previewImages && previewImages.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                {previewImages.map((img: string, index: number) => (
-                  <button
-                    key={index}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedImageIndex(index)
-                    }}
-                    className={`w-3 h-3 rounded-full transition-all ${
-                      selectedImageIndex === index
-                        ? 'bg-white'
-                        : 'bg-white/50 hover:bg-white/75'
-                    }`}
-                  />
-                ))}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedImageIndex((prev) => 
+                    prev === 0 ? previewImages.length - 1 : prev - 1
+                  )
+                }}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center z-20 transition-all"
+                aria-label="Previous image"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+
+            {/* Main Image */}
+            <div className="relative max-w-5xl w-full h-full flex items-center justify-center">
+              <img
+                src={previewImages[selectedImageIndex] || previewImages[0] || '/placeholder.png'}
+                alt={`${product.title} - Image ${selectedImageIndex + 1}`}
+                className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            {/* Right Navigation Arrow */}
+            {previewImages && previewImages.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSelectedImageIndex((prev) => 
+                    prev === previewImages.length - 1 ? 0 : prev + 1
+                  )
+                }}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center z-20 transition-all"
+                aria-label="Next image"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+
+            {/* Thumbnail Navigation */}
+            {previewImages && previewImages.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
+                <div className="flex space-x-2 bg-black/50 rounded-lg p-2 backdrop-blur-sm">
+                  {previewImages.map((img: string, index: number) => (
+                    <button
+                      key={index}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedImageIndex(index)
+                      }}
+                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedImageIndex === index
+                          ? 'border-white ring-2 ring-blue-400'
+                          : 'border-white/50 hover:border-white/75 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
+
+            {/* Image Counter */}
+            {previewImages && previewImages.length > 1 && (
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 bg-black/50 text-white px-4 py-2 rounded-full backdrop-blur-sm">
+                <span className="text-sm font-medium">
+                  {selectedImageIndex + 1} / {previewImages.length}
+                </span>
+              </div>
+            )}
+
           </div>
         </div>
       )}
