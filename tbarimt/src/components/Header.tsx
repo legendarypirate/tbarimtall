@@ -20,7 +20,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
   const [isJournalist, setIsJournalist] = useState(false)
   const [searchQuery, setSearchQuery] = useState(externalSearchQuery || '')
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false)
+  const [showCategoriesDrawer, setShowCategoriesDrawer] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
 
   useEffect(() => {
@@ -68,6 +68,26 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
       setSearchQuery(externalSearchQuery)
     }
   }, [externalSearchQuery])
+
+  // Close drawer on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showCategoriesDrawer) {
+        setShowCategoriesDrawer(false)
+      }
+    }
+    
+    if (showCategoriesDrawer) {
+      document.addEventListener('keydown', handleEscape)
+      // Prevent body scroll when drawer is open
+      document.body.style.overflow = 'hidden'
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'unset'
+    }
+  }, [showCategoriesDrawer])
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value)
@@ -219,71 +239,17 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
              
             </div>
             <div className="flex items-center space-x-8">
-              <div 
-                className="relative"
-                onMouseEnter={() => setShowCategoriesDropdown(true)}
-                onMouseLeave={() => setShowCategoriesDropdown(false)}
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setShowCategoriesDrawer(true)
+                }}
+                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
               >
-                <button 
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    router.push('/products')
-                  }}
-                  className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
-                >
-                  {getTranslation(language, 'categories')}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
-                </button>
-                
-                {/* Categories Dropdown - Wide 3-column layout */}
-                {showCategoriesDropdown && categories.length > 0 && (
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-[900px] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-6 z-50">
-                    <div className="px-6 pb-4 border-b border-gray-200 dark:border-gray-700 mb-4">
-                      <h3 className="text-lg font-bold text-[#004e6c] dark:text-white">
-                        {getTranslation(language, 'categories')}
-                      </h3>
-                    </div>
-                    <div className="px-6">
-                      <div className="grid grid-cols-3 gap-6">
-                        {categories.map((category: any) => (
-                          <div key={category.id} className="flex flex-col">
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                router.push(`/category/${category.id}`)
-                                setShowCategoriesDropdown(false)
-                              }}
-                              className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-colors group mb-2"
-                            >
-                              <span className="text-sm font-bold text-[#004e6c] dark:text-white group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
-                                {category.name}
-                              </span>
-                            </button>
-                            {category.subcategories && category.subcategories.length > 0 && (
-                              <div className="space-y-1">
-                                {category.subcategories.map((subcategory: any) => (
-                                  <button
-                                    key={subcategory.id}
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      router.push(`/category/${subcategory.id}`)
-                                      setShowCategoriesDropdown(false)
-                                    }}
-                                    className="w-full text-left px-3 py-2 rounded-md hover:bg-[#004e6c]/5 dark:hover:bg-gray-700/50 transition-colors text-xs text-gray-700 dark:text-gray-300 hover:text-[#004e6c] dark:hover:text-white font-medium"
-                                  >
-                                    {subcategory.name}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+                {getTranslation(language, 'categories')}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+              </button>
               <button 
                 type="button"
                 onClick={(e) => {
@@ -321,6 +287,127 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
           </div>
         </div>
       </nav>
+
+      {/* Categories Drawer - Slides in from right */}
+      {showCategoriesDrawer && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 transition-opacity"
+            onClick={() => setShowCategoriesDrawer(false)}
+          />
+          
+          {/* Drawer */}
+          <div className={`fixed top-0 right-0 h-full w-full max-w-4xl bg-white dark:bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 ease-out overflow-hidden flex flex-col ${
+            showCategoriesDrawer ? 'translate-x-0' : 'translate-x-full'
+          }`}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-[#004e6c] dark:bg-gray-900">
+              <h2 className="text-2xl font-bold text-white">
+                {getTranslation(language, 'categories')}
+              </h2>
+              <button
+                onClick={() => setShowCategoriesDrawer(false)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white"
+                aria-label="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              {categories.length > 0 ? (
+                <div className="p-6">
+                  <div className="grid grid-cols-4 gap-6">
+                    {categories.map((category: any) => {
+                      // Limit subcategories to 10
+                      const displaySubcategories = category.subcategories && Array.isArray(category.subcategories) 
+                        ? category.subcategories.slice(0, 10)
+                        : [];
+                      const hasMoreSubcategories = category.subcategories && category.subcategories.length > 10;
+                      
+                      return (
+                        <div key={category.id} className="flex flex-col">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              router.push(`/category/${category.id}`)
+                              setShowCategoriesDrawer(false)
+                            }}
+                            className="w-full text-left px-4 py-3 rounded-lg hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200 group mb-3 border-l-4 border-transparent hover:border-[#004e6c] dark:hover:border-[#ff6b35]"
+                          >
+                            <span className="text-base font-bold text-[#004e6c] dark:text-white group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors flex items-center">
+                              {category.name}
+                              <svg className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </span>
+                          </button>
+                          {displaySubcategories.length > 0 && (
+                            <div className="space-y-1.5 pl-4">
+                              {displaySubcategories.map((subcategory: any) => (
+                                <button
+                                  key={subcategory.id}
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    router.push(`/category/${subcategory.id}`)
+                                    setShowCategoriesDrawer(false)
+                                  }}
+                                  className="w-full text-left px-3 py-2 rounded-md hover:bg-[#004e6c]/8 dark:hover:bg-gray-700/60 transition-all duration-150 text-sm text-gray-700 dark:text-gray-300 hover:text-[#004e6c] dark:hover:text-white font-medium hover:translate-x-1 transform group"
+                                >
+                                  <span className="flex items-center">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#004e6c]/30 dark:bg-gray-500 mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                                    {subcategory.name}
+                                  </span>
+                                </button>
+                              ))}
+                              {hasMoreSubcategories && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    router.push(`/category/${category.id}`)
+                                    setShowCategoriesDrawer(false)
+                                  }}
+                                  className="w-full text-left px-3 py-2 rounded-md hover:bg-[#004e6c]/8 dark:hover:bg-gray-700/60 transition-all duration-150 text-xs text-[#004e6c] dark:text-[#ff6b35] font-semibold italic mt-2"
+                                >
+                                  + {category.subcategories.length - 10} {language === 'mn' ? 'бусад' : 'more'}...
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {language === 'mn' ? 'Ангилал олдсонгүй' : 'No categories found'}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  router.push('/products')
+                  setShowCategoriesDrawer(false)
+                }}
+                className="w-full text-center px-4 py-3 rounded-lg bg-[#004e6c] dark:bg-[#006b8f] hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] text-white transition-all duration-200 font-semibold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                {language === 'mn' ? 'Бүх ангилал харах' : 'View All Categories'} →
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   )
 }
