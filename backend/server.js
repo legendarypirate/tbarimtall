@@ -122,6 +122,15 @@ async function startServer() {
       // Continue anyway - the sync might handle it
     }
 
+    // Run migration to fix membership_type foreign key constraint
+    try {
+      const { fixMembershipTypeFK } = require('./scripts/fix-membership-type-fk');
+      await fixMembershipTypeFK();
+    } catch (error) {
+      console.warn('Warning: Could not run membership_type FK migration:', error.message);
+      // Continue anyway - the sync might handle it
+    }
+
     // Sync database - use appropriate option for your environment
     const syncOptions = { alter: true };
     if (process.env.NODE_ENV === 'development') {

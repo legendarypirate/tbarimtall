@@ -1145,6 +1145,34 @@ export default function Home() {
                   return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                 }
                 
+                // Get membership name for badge
+                const getMembershipName = () => {
+                  const membershipName = journalist.membership?.name || '';
+                  if (membershipName) {
+                    const upperName = membershipName.toUpperCase();
+                    if (upperName.includes('PLATINUM')) return 'PLATINUM';
+                    if (upperName.includes('GOLD')) return 'GOLD';
+                    if (upperName.includes('SILVER')) return 'SILVER';
+                    if (upperName.includes('BRONZE')) return 'BRONZE';
+                    if (upperName.includes('FREE')) return 'FREE';
+                    return membershipName.toUpperCase();
+                  }
+                  return 'FREE';
+                };
+
+                // Get membership badge color
+                const getMembershipBadgeColor = (name: string) => {
+                  const upperName = name.toUpperCase();
+                  if (upperName.includes('PLATINUM')) return 'bg-cyan-500 text-white';
+                  if (upperName.includes('GOLD')) return 'bg-yellow-500 text-white';
+                  if (upperName.includes('SILVER')) return 'bg-slate-500 text-white';
+                  if (upperName.includes('BRONZE')) return 'bg-orange-600 text-white';
+                  return 'bg-gray-500 text-white';
+                };
+
+                const membershipName = getMembershipName();
+                const badgeColor = getMembershipBadgeColor(membershipName);
+                
                 return (
                   <div
                     key={journalist.userId || journalist.id}
@@ -1162,6 +1190,10 @@ export default function Home() {
                             ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                           }}
                         />
+                        {/* Membership Badge in corner */}
+                        <div className={`absolute -bottom-1 -right-1 ${badgeColor} text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border-2 border-white dark:border-gray-800 z-20 uppercase`}>
+                          {membershipName}
+                        </div>
                       </div>
                       <h3 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-1 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                         {journalist.name || journalist.username || 'Unknown'}

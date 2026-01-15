@@ -53,7 +53,10 @@ const User = sequelize.define('User', {
     type: DataTypes.INTEGER,
     allowNull: true,
     defaultValue: null,
-    comment: 'Reference to membership id (gold, silver, bronze)'
+    comment: 'Reference to membership id (bronze, free)',
+    // Remove any reference configuration that Sequelize might be interpreting
+    // Or explicitly set references to null
+    references: null
   },
   subscriptionStartDate: {
     type: DataTypes.DATE,

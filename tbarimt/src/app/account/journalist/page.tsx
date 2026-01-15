@@ -846,6 +846,40 @@ export default function JournalistAccount() {
                 alt={user.fullName || user.username}
                 className="w-24 h-24 rounded-full border-4 border-[#004e6c] shadow-lg object-cover"
               />
+              {/* Membership Badge in corner */}
+              {(() => {
+                const getMembershipName = () => {
+                  const membershipName = membershipInfo?.membership?.name || user.membership?.name || '';
+                  if (membershipName) {
+                    const upperName = membershipName.toUpperCase();
+                    if (upperName.includes('PLATINUM')) return 'PLATINUM';
+                    if (upperName.includes('GOLD')) return 'GOLD';
+                    if (upperName.includes('SILVER')) return 'SILVER';
+                    if (upperName.includes('BRONZE')) return 'BRONZE';
+                    if (upperName.includes('FREE')) return 'FREE';
+                    return membershipName.toUpperCase();
+                  }
+                  return 'FREE';
+                };
+
+                const getMembershipBadgeColor = (name: string) => {
+                  const upperName = name.toUpperCase();
+                  if (upperName.includes('PLATINUM')) return 'bg-cyan-500 text-white';
+                  if (upperName.includes('GOLD')) return 'bg-yellow-500 text-white';
+                  if (upperName.includes('SILVER')) return 'bg-slate-500 text-white';
+                  if (upperName.includes('BRONZE')) return 'bg-orange-600 text-white';
+                  return 'bg-gray-500 text-white';
+                };
+
+                const membershipName = getMembershipName();
+                const badgeColor = getMembershipBadgeColor(membershipName);
+                
+                return (
+                  <div className={`absolute -bottom-1 -right-1 ${badgeColor} text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border-2 border-white dark:border-gray-800 z-10 uppercase`}>
+                    {membershipName}
+                  </div>
+                );
+              })()}
                 <button
                   onClick={() => {
                     setProfilePhone(user.phone || '')
@@ -853,6 +887,7 @@ export default function JournalistAccount() {
                   }}
                   className="absolute bottom-0 right-0 bg-[#004e6c] dark:bg-[#ff6b35] text-white rounded-full p-2 shadow-lg hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all transform hover:scale-110 border-2 border-white dark:border-gray-800"
                   title="Профайл зураг засах"
+                  style={{ zIndex: 20 }}
                 >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

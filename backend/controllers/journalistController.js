@@ -6,12 +6,19 @@ exports.getTopJournalists = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
 
     // Fetch users directly from users table where role = 'journalist'
+    const { Membership } = require('../models');
     const journalistUsers = await User.findAll({
       where: {
         role: 'journalist',
         isActive: true
       },
-      attributes: ['id', 'username', 'fullName', 'avatar', 'email'],
+      attributes: ['id', 'username', 'fullName', 'avatar', 'email', 'membership_type'],
+      include: [{
+        model: Membership,
+        as: 'membership',
+        required: false,
+        attributes: ['id', 'name']
+      }],
       limit: limit * 2 // Get more users initially, we'll filter and sort later
     });
 
@@ -145,7 +152,12 @@ exports.getTopJournalists = async (req, res) => {
         specialty: journalistRecord.specialty || null,
         rating: ratingMap[userId] || 0,
         followers: followerMap[userId] || 0,
-        posts: countMap[userId] || 0
+        posts: countMap[userId] || 0,
+        membership_type: user.membership_type || null,
+        membership: user.membership ? {
+          id: user.membership.id,
+          name: user.membership.name
+        } : null
       };
     });
 
@@ -175,8 +187,15 @@ exports.getJournalistById = async (req, res) => {
     const { id } = req.params;
 
     // First check if user exists
+    const { Membership } = require('../models');
     const user = await User.findByPk(id, {
-      attributes: ['id', 'username', 'fullName', 'avatar', 'email', 'role']
+      attributes: ['id', 'username', 'fullName', 'avatar', 'email', 'role', 'membership_type'],
+      include: [{
+        model: Membership,
+        as: 'membership',
+        required: false,
+        attributes: ['id', 'name']
+      }]
     });
 
     if (!user) {
@@ -211,7 +230,12 @@ exports.getJournalistById = async (req, res) => {
         username: user.username,
         fullName: user.fullName,
         avatar: user.avatar,
-        email: user.email
+        email: user.email,
+        membership_type: user.membership_type || null,
+        membership: user.membership ? {
+          id: user.membership.id,
+          name: user.membership.name
+        } : null
       };
     } else {
       journalist = journalist.toJSON();

@@ -205,12 +205,20 @@ exports.getProductById = async (req, res) => {
           {
             model: User,
             as: 'author',
-            attributes: ['id', 'username', 'fullName', 'avatar', 'email'],
-            include: [{
-              model: require('../models').Journalist,
-              as: 'journalist',
-              required: false
-            }]
+            attributes: ['id', 'username', 'fullName', 'avatar', 'email', 'membership_type'],
+            include: [
+              {
+                model: require('../models').Journalist,
+                as: 'journalist',
+                required: false
+              },
+              {
+                model: require('../models').Membership,
+                as: 'membership',
+                required: false,
+                attributes: ['id', 'name', 'price', 'maxPosts', 'percentage']
+              }
+            ]
           },
           {
             model: Review,
@@ -235,12 +243,20 @@ exports.getProductById = async (req, res) => {
           {
             model: User,
             as: 'author',
-            attributes: ['id', 'username', 'fullName', 'avatar', 'email'],
-            include: [{
-              model: require('../models').Journalist,
-              as: 'journalist',
-              required: false
-            }]
+            attributes: ['id', 'username', 'fullName', 'avatar', 'email', 'membership_type'],
+            include: [
+              {
+                model: require('../models').Journalist,
+                as: 'journalist',
+                required: false
+              },
+              {
+                model: require('../models').Membership,
+                as: 'membership',
+                required: false,
+                attributes: ['id', 'name', 'price', 'maxPosts', 'percentage']
+              }
+            ]
           },
           {
             model: Review,

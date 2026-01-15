@@ -624,8 +624,176 @@ export default function ProductDetail() {
     return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
   };
 
+  // Get membership name for badge display
+  const getMembershipName = () => {
+    const membershipName = author.membership?.name || '';
+    if (membershipName) {
+      // Extract the membership tier name (e.g., "GOLD", "SILVER", "BRONZE", "FREE", "PLATINUM")
+      const upperName = membershipName.toUpperCase();
+      if (upperName.includes('PLATINUM')) return 'PLATINUM';
+      if (upperName.includes('GOLD')) return 'GOLD';
+      if (upperName.includes('SILVER')) return 'SILVER';
+      if (upperName.includes('BRONZE')) return 'BRONZE';
+      if (upperName.includes('FREE')) return 'FREE';
+      return membershipName.toUpperCase();
+    }
+    return 'FREE';
+  };
+
+  // Determine membership type and get decoration styles
+  const getMembershipDecoration = () => {
+    // Check if author has membership information
+    const membershipId = author.membership_type || author.membership?.id;
+    const membershipName = author.membership?.name || '';
+    
+    // Determine membership type based on ID or name
+    let membershipType = 'FREE';
+    
+    if (membershipId) {
+      // Based on the provided membership data
+      if (membershipId === 3 || membershipName.includes('SILVER')) {
+        membershipType = 'SILVER';
+      } else if (membershipId === 1 || membershipName.includes('GOLD')) {
+        membershipType = 'GOLD';
+      } else if (membershipId === 4 || membershipName.includes('PLATINUM')) {
+        membershipType = 'PLATINUM';
+      } else if (membershipId === 5 || membershipName.includes('FREE')) {
+        membershipType = 'FREE';
+      } else if (membershipName.includes('BRONZE')) {
+        membershipType = 'BRONZE';
+      }
+    } else if (membershipName) {
+      if (membershipName.includes('SILVER')) membershipType = 'SILVER';
+      else if (membershipName.includes('GOLD')) membershipType = 'GOLD';
+      else if (membershipName.includes('PLATINUM')) membershipType = 'PLATINUM';
+      else if (membershipName.includes('BRONZE')) membershipType = 'BRONZE';
+    }
+
+    // Return decoration styles based on membership type
+    switch (membershipType) {
+      case 'SILVER':
+        return {
+          borderGradient: 'from-gray-300 via-slate-400 to-gray-300',
+          glowColor: 'rgba(192, 192, 192, 0.6)',
+          ringColor: 'ring-slate-400',
+          shadowColor: 'shadow-slate-500/50',
+          pulseColor: 'bg-slate-400',
+          badgeColor: 'bg-slate-500 text-white'
+        };
+      case 'GOLD':
+        return {
+          borderGradient: 'from-yellow-400 via-amber-500 to-yellow-400',
+          glowColor: 'rgba(251, 191, 36, 0.7)',
+          ringColor: 'ring-yellow-400',
+          shadowColor: 'shadow-yellow-500/60',
+          pulseColor: 'bg-yellow-400',
+          badgeColor: 'bg-yellow-500 text-white'
+        };
+      case 'PLATINUM':
+        return {
+          borderGradient: 'from-cyan-300 via-blue-400 via-indigo-400 to-cyan-300',
+          glowColor: 'rgba(59, 130, 246, 0.7)',
+          ringColor: 'ring-cyan-400',
+          shadowColor: 'shadow-cyan-500/60',
+          pulseColor: 'bg-cyan-400',
+          badgeColor: 'bg-cyan-500 text-white'
+        };
+      case 'BRONZE':
+        return {
+          borderGradient: 'from-orange-300 via-orange-500 to-orange-300',
+          glowColor: 'rgba(251, 146, 60, 0.7)',
+          ringColor: 'ring-orange-400',
+          shadowColor: 'shadow-orange-500/60',
+          pulseColor: 'bg-orange-400',
+          badgeColor: 'bg-orange-600 text-white'
+        };
+      default: // FREE
+        return {
+          borderGradient: 'from-gray-200 via-gray-300 to-gray-200',
+          glowColor: 'rgba(156, 163, 175, 0.4)',
+          ringColor: 'ring-gray-400',
+          shadowColor: 'shadow-gray-400/40',
+          pulseColor: 'bg-gray-400',
+          badgeColor: 'bg-gray-500 text-white'
+        };
+    }
+  };
+
+  const membershipDeco = getMembershipDecoration();
+  const membershipName = getMembershipName();
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <>
+      {/* CSS Animations for Membership Decorations */}
+      <style jsx global>{`
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes float-particle {
+          0%, 100% { 
+            transform: translate(0, 0) scale(1); 
+            opacity: 0.4; 
+          }
+          25% { 
+            transform: translate(8px, -10px) scale(1.3); 
+            opacity: 0.8; 
+          }
+          50% { 
+            transform: translate(-8px, 10px) scale(1.1); 
+            opacity: 1; 
+          }
+          75% { 
+            transform: translate(10px, 8px) scale(1.2); 
+            opacity: 0.7; 
+          }
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% { 
+            opacity: 0.6;
+            transform: scale(1);
+          }
+          50% { 
+            opacity: 1;
+            transform: scale(1.05);
+          }
+        }
+        
+        @keyframes sparkle {
+          0%, 100% {
+            opacity: 0;
+            transform: scale(0) rotate(0deg);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1) rotate(180deg);
+          }
+        }
+        
+        @keyframes star-rotate {
+          from {
+            transform: rotate(0deg) translateX(45px) rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg) translateX(45px) rotate(-360deg);
+          }
+        }
+        
+        @keyframes border-pulse {
+          0%, 100% {
+            border-width: 2px;
+            box-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+          }
+          50% {
+            border-width: 3px;
+            box-shadow: 0 0 30px currentColor, 0 0 60px currentColor, 0 0 80px currentColor;
+          }
+        }
+      `}</style>
+      
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -942,16 +1110,131 @@ export default function ProductDetail() {
                 </h3>
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center space-x-4">
-                    <img
-                      src={getAvatarUrl()}
-                      alt={author.fullName || author.username || 'Author'}
-                      className="w-16 h-16 rounded-full border-2 border-blue-500 dark:border-blue-400"
-                      onError={(e) => {
-                        // Fallback to DiceBear if image fails to load
-                        const seed = author.fullName || author.email || author.username || author.id || 'default';
-                        (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
-                      }}
-                    />
+                    {/* Animated Avatar with Membership Decoration */}
+                    <div className="relative" style={{ width: '80px', height: '80px' }}>
+                      {/* Outer animated ring with gradient */}
+                      <div 
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                          background: `conic-gradient(from 0deg, transparent, ${membershipDeco.glowColor}, transparent, ${membershipDeco.glowColor}, transparent)`,
+                          padding: '2px',
+                          width: 'calc(100% + 6px)',
+                          height: 'calc(100% + 6px)',
+                          top: '-3px',
+                          left: '-3px',
+                          animation: 'spin-slow 3s linear infinite',
+                        }}
+                      >
+                        <div className="w-full h-full rounded-full bg-white dark:bg-gray-800"></div>
+                      </div>
+                      
+                      {/* Animated stars around the border */}
+                      {[...Array(8)].map((_, i) => {
+                        const angle = (i * 360) / 8;
+                        const radius = 38;
+                        const x = Math.cos((angle * Math.PI) / 180) * radius;
+                        const y = Math.sin((angle * Math.PI) / 180) * radius;
+                        return (
+                          <div
+                            key={`star-${i}`}
+                            className="absolute text-yellow-400"
+                            style={{
+                              left: `calc(50% + ${x}px)`,
+                              top: `calc(50% + ${y}px)`,
+                              transform: 'translate(-50%, -50%)',
+                              fontSize: '12px',
+                              animation: `star-rotate 4s linear infinite`,
+                              animationDelay: `${i * 0.2}s`,
+                              filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.8))',
+                            }}
+                          >
+                            ⭐
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Middle pulsing ring with enhanced glow */}
+                      <div 
+                        className={`absolute inset-0 rounded-full ${membershipDeco.ringColor}`}
+                        style={{
+                          width: 'calc(100% + 4px)',
+                          height: 'calc(100% + 4px)',
+                          top: '-2px',
+                          left: '-2px',
+                          border: `2px solid ${membershipDeco.glowColor}`,
+                          boxShadow: `0 0 15px ${membershipDeco.glowColor}, 0 0 30px ${membershipDeco.glowColor}`,
+                          animation: 'border-pulse 2s ease-in-out infinite',
+                        }}
+                      />
+                      
+                      {/* Sparkle effects */}
+                      {[...Array(6)].map((_, i) => {
+                        const angle = (i * 360) / 6;
+                        const radius = 32;
+                        const x = Math.cos((angle * Math.PI) / 180) * radius;
+                        const y = Math.sin((angle * Math.PI) / 180) * radius;
+                        return (
+                          <div
+                            key={`sparkle-${i}`}
+                            className="absolute"
+                            style={{
+                              left: `calc(50% + ${x}px)`,
+                              top: `calc(50% + ${y}px)`,
+                              transform: 'translate(-50%, -50%)',
+                              width: '6px',
+                              height: '6px',
+                              background: membershipDeco.glowColor,
+                              borderRadius: '50%',
+                              boxShadow: `0 0 8px ${membershipDeco.glowColor}`,
+                              animation: `sparkle 2s ease-in-out infinite`,
+                              animationDelay: `${i * 0.3}s`,
+                            }}
+                          />
+                        );
+                      })}
+                      
+                      {/* Avatar image */}
+                      <div className="relative z-10">
+                        <img
+                          src={getAvatarUrl()}
+                          alt={author.fullName || author.username || 'Author'}
+                          className="w-16 h-16 rounded-full border-2 border-white dark:border-gray-800 relative z-10"
+                          style={{
+                            boxShadow: `0 0 20px ${membershipDeco.glowColor}, 0 0 40px ${membershipDeco.glowColor}, inset 0 0 15px ${membershipDeco.glowColor}`,
+                            animation: 'pulse-glow 3s ease-in-out infinite',
+                          }}
+                          onError={(e) => {
+                            // Fallback to DiceBear if image fails to load
+                            const seed = author.fullName || author.email || author.username || author.id || 'default';
+                            (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
+                          }}
+                        />
+                        {/* Membership Badge in corner */}
+                        <div className={`absolute -bottom-1 -right-1 ${membershipDeco.badgeColor} text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border-2 border-white dark:border-gray-800 z-20 uppercase`}>
+                          {membershipName}
+                        </div>
+                      </div>
+                      
+                      {/* Floating particles effect */}
+                      <div className="absolute inset-0 overflow-visible rounded-full pointer-events-none">
+                        {[...Array(8)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`absolute ${membershipDeco.pulseColor} rounded-full`}
+                            style={{
+                              width: '5px',
+                              height: '5px',
+                              left: `${20 + (i * 10)}%`,
+                              top: `${20 + (i * 8)}%`,
+                              animation: `float-particle 3s ease-in-out infinite`,
+                              animationDelay: `${i * 0.3}s`,
+                              boxShadow: `0 0 6px ${membershipDeco.glowColor}`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
                     <div className="flex-1">
                       <h4 className="text-lg font-bold text-gray-900 dark:text-white">
                         {author.fullName || author.username || 'Unknown'}
@@ -1853,6 +2136,7 @@ export default function ProductDetail() {
         </div>
       )}
     </div>
+    </>
   )
 }
 

@@ -75,6 +75,12 @@ Follow.belongsTo(Journalist, { foreignKey: 'journalistId', as: 'journalist' });
 Follow.belongsTo(User, { foreignKey: 'followerId', as: 'follower' });
 User.hasMany(Follow, { foreignKey: 'followerId', as: 'following' });
 
+// Membership associations
+// Note: constraints: false prevents Sequelize from auto-creating FK constraint
+// The FK constraint is created manually via SQL migration
+User.belongsTo(Membership, { foreignKey: 'membership_type', as: 'membership', constraints: false });
+Membership.hasMany(User, { foreignKey: 'membership_type', as: 'users', constraints: false });
+
 module.exports = {
   sequelize,
   User,

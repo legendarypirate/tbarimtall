@@ -224,6 +224,40 @@ export default function JournalistProfile() {
                   ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                 }}
               />
+              {/* Membership Badge in corner */}
+              {(() => {
+                const getMembershipName = () => {
+                  const membershipName = user.membership?.name || '';
+                  if (membershipName) {
+                    const upperName = membershipName.toUpperCase();
+                    if (upperName.includes('PLATINUM')) return 'PLATINUM';
+                    if (upperName.includes('GOLD')) return 'GOLD';
+                    if (upperName.includes('SILVER')) return 'SILVER';
+                    if (upperName.includes('BRONZE')) return 'BRONZE';
+                    if (upperName.includes('FREE')) return 'FREE';
+                    return membershipName.toUpperCase();
+                  }
+                  return 'FREE';
+                };
+
+                const getMembershipBadgeColor = (name: string) => {
+                  const upperName = name.toUpperCase();
+                  if (upperName.includes('PLATINUM')) return 'bg-cyan-500 text-white';
+                  if (upperName.includes('GOLD')) return 'bg-yellow-500 text-white';
+                  if (upperName.includes('SILVER')) return 'bg-slate-500 text-white';
+                  if (upperName.includes('BRONZE')) return 'bg-orange-600 text-white';
+                  return 'bg-gray-500 text-white';
+                };
+
+                const membershipName = getMembershipName();
+                const badgeColor = getMembershipBadgeColor(membershipName);
+                
+                return (
+                  <div className={`absolute -bottom-1 -right-1 ${badgeColor} text-xs font-bold px-2 py-1 rounded-full shadow-lg border-2 border-white dark:border-gray-800 z-20 uppercase`}>
+                    {membershipName}
+                  </div>
+                );
+              })()}
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-2">

@@ -138,8 +138,16 @@ exports.deleteMembership = async (req, res) => {
       return res.status(404).json({ error: 'Membership not found' });
     }
 
-    // Soft delete by setting isActive to false
-    await membership.update({ isActive: false });
+    // Check if any users reference this membership
+    const usersCount = await User.count({ where: { membership_type: id } });
+    if (usersCount > 0) {
+      return res.status(400).json({ 
+        error: `Cannot delete membership. There are ${usersCount} user(s) associated with this membership. Please reassign or remove the users first.` 
+      });
+    }
+
+    // Hard delete if no users reference it
+    await membership.destroy();
     res.json({ message: 'Membership deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
