@@ -69,7 +69,7 @@ export default function ProductDetail() {
 
   // Set dynamic meta tags for social sharing
   useEffect(() => {
-    if (!product) return
+    if (!product || typeof window === 'undefined') return
 
     const getAbsoluteUrl = (url: string) => {
       if (!url) return ''
@@ -78,30 +78,28 @@ export default function ProductDetail() {
         return url
       }
       // If relative, make it absolute
-      if (typeof window !== 'undefined') {
-        const origin = window.location.origin
-        // Remove leading slash if present to avoid double slashes
-        const cleanUrl = url.startsWith('/') ? url.substring(1) : url
-        return `${origin}/${cleanUrl}`
+      const origin = window.location.origin
+      // Handle URLs that start with / and those that don't
+      if (url.startsWith('/')) {
+        return `${origin}${url}`
       }
-      return url
+      return `${origin}/${url}`
     }
 
-    const url = typeof window !== 'undefined' 
-      ? window.location.origin + window.location.pathname + window.location.search
-      : ''
+    const url = window.location.href
     
     const title = `${product.title} - Tbarimt.mn`
     const description = product.description 
-      ? product.description.substring(0, 200).replace(/<[^>]*>/g, '') // Remove HTML tags
-      : `${product.title} - ${formatNumber(parseFloat(product.price) || 0)}₮`
+      ? product.description.substring(0, 300).replace(/<[^>]*>/g, '').trim() // Remove HTML tags, limit to 300 chars
+      : `${product.title} - ${formatNumber(parseFloat(product.price) || 0)}₮ - Tbarimt.mn`
     
-    // Ensure image URL is absolute
-    const image = getAbsoluteUrl(product.image || '/tbarimt.jpeg')
+    // Ensure image URL is absolute - use product image or fallback
+    let image = product.image || '/tbarimt.jpeg'
+    image = getAbsoluteUrl(image)
 
     // Set or update meta tags
     const setMetaTag = (property: string, content: string) => {
-      if (!content) return // Don't set empty content
+      if (!content) return
       let element = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement
       if (!element) {
         element = document.createElement('meta')
@@ -112,7 +110,7 @@ export default function ProductDetail() {
     }
 
     const setMetaName = (name: string, content: string) => {
-      if (!content) return // Don't set empty content
+      if (!content) return
       let element = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement
       if (!element) {
         element = document.createElement('meta')
@@ -122,10 +120,13 @@ export default function ProductDetail() {
       element.setAttribute('content', content)
     }
 
-    // Open Graph tags (Facebook requires these)
+    // Open Graph tags (Facebook requires these) - MUST be set for Facebook to see them
     setMetaTag('og:title', title)
     setMetaTag('og:description', description)
     setMetaTag('og:image', image)
+    setMetaTag('og:image:width', '1200')
+    setMetaTag('og:image:height', '630')
+    setMetaTag('og:image:type', 'image/jpeg')
     setMetaTag('og:url', url)
     setMetaTag('og:type', 'website')
     setMetaTag('og:site_name', 'Tbarimt.mn')
@@ -136,6 +137,7 @@ export default function ProductDetail() {
     setMetaName('twitter:title', title)
     setMetaName('twitter:description', description)
     setMetaName('twitter:image', image)
+    setMetaName('twitter:site', '@tbarimt')
 
     // Standard meta tags
     const titleElement = document.querySelector('title')
@@ -256,27 +258,34 @@ export default function ProductDetail() {
   const handleShareFacebook = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!product) return;
+  
+    if (typeof window === 'undefined') return;
+  
+    // Current page URL - use the exact URL that matches the metadata
+    let url = window.location.href;
     
-    const url = typeof window !== 'undefined' 
-      ? window.location.origin + window.location.pathname + window.location.search
-      : '';
-    
-    const title = `${product.title} - Tbarimt.mn`;
-    const description = product.description 
-      ? product.description.substring(0, 200).replace(/<[^>]*>/g, '')
-      : `${product.title} - ${formatNumber(parseFloat(product.price) || 0)}₮`;
-    
-    // Facebook's official share dialog with OG parameters
-    const shareUrl = `https://www.facebook.com/dialog/share?
-      app_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '954271841668576'}
-      &display=popup
-      &href=${encodeURIComponent(url)}
-      &redirect_uri=${encodeURIComponent(url)}
-      &quote=${encodeURIComponent(description)}
-      &hashtag=${encodeURIComponent('#tbarimt')}`.replace(/\s/g, '');
-    
-    window.open(shareUrl, 'fb-share', 'width=626,height=436');
+    // Ensure URL uses UUID if available (matches the page URL format)
+    // This ensures Facebook sees the same URL as in the meta tags
+    if (product.uuid && !url.includes(product.uuid)) {
+      // If URL uses ID but product has UUID, we should use UUID
+      // But since we're already on the page, just use current URL
+      url = window.location.href;
+    }
+  
+    // Facebook Share URL
+    // Note: If preview doesn't show, use Facebook Sharing Debugger:
+    // https://developers.facebook.com/tools/debug/
+    // to clear Facebook's cache
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+  
+    // Open Facebook Share Dialog in a new small window
+    window.open(
+      shareUrl,
+      'fb-share-dialog',
+      'width=626,height=436,scrollbars=no,resizable=no,noopener,noreferrer'
+    );
   };
+  
   
   const handleShareX = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
