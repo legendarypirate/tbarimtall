@@ -67,6 +67,91 @@ export default function ProductDetail() {
     }
   }, [productId])
 
+  // Set dynamic meta tags for social sharing
+  useEffect(() => {
+    if (!product) return
+
+    const getAbsoluteUrl = (url: string) => {
+      if (!url) return ''
+      // If already absolute, return as is
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url
+      }
+      // If relative, make it absolute
+      if (typeof window !== 'undefined') {
+        const origin = window.location.origin
+        // Remove leading slash if present to avoid double slashes
+        const cleanUrl = url.startsWith('/') ? url.substring(1) : url
+        return `${origin}/${cleanUrl}`
+      }
+      return url
+    }
+
+    const url = typeof window !== 'undefined' 
+      ? window.location.origin + window.location.pathname + window.location.search
+      : ''
+    
+    const title = `${product.title} - Tbarimt.mn`
+    const description = product.description 
+      ? product.description.substring(0, 200).replace(/<[^>]*>/g, '') // Remove HTML tags
+      : `${product.title} - ${formatNumber(parseFloat(product.price) || 0)}₮`
+    
+    // Ensure image URL is absolute
+    const image = getAbsoluteUrl(product.image || '/tbarimt.jpeg')
+
+    // Set or update meta tags
+    const setMetaTag = (property: string, content: string) => {
+      if (!content) return // Don't set empty content
+      let element = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement
+      if (!element) {
+        element = document.createElement('meta')
+        element.setAttribute('property', property)
+        document.head.appendChild(element)
+      }
+      element.setAttribute('content', content)
+    }
+
+    const setMetaName = (name: string, content: string) => {
+      if (!content) return // Don't set empty content
+      let element = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement
+      if (!element) {
+        element = document.createElement('meta')
+        element.setAttribute('name', name)
+        document.head.appendChild(element)
+      }
+      element.setAttribute('content', content)
+    }
+
+    // Open Graph tags (Facebook requires these)
+    setMetaTag('og:title', title)
+    setMetaTag('og:description', description)
+    setMetaTag('og:image', image)
+    setMetaTag('og:url', url)
+    setMetaTag('og:type', 'website')
+    setMetaTag('og:site_name', 'Tbarimt.mn')
+    setMetaTag('og:locale', 'mn_MN')
+
+    // Twitter Card tags
+    setMetaName('twitter:card', 'summary_large_image')
+    setMetaName('twitter:title', title)
+    setMetaName('twitter:description', description)
+    setMetaName('twitter:image', image)
+
+    // Standard meta tags
+    const titleElement = document.querySelector('title')
+    if (titleElement) {
+      titleElement.textContent = title
+    } else {
+      const newTitle = document.createElement('title')
+      newTitle.textContent = title
+      document.head.appendChild(newTitle)
+    }
+
+    setMetaName('description', description)
+
+    console.log('Meta tags set:', { title, description, image, url })
+  }, [product])
+
   // Fetch recommended products
   useEffect(() => {
     const fetchRecommended = async () => {
@@ -165,6 +250,74 @@ export default function ProductDetail() {
       } catch (error) {
         console.error('Error fetching user balance:', error)
       }
+    }
+  }
+
+  const handleShareFacebook = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!product) return;
+    
+    const url = typeof window !== 'undefined' 
+      ? window.location.origin + window.location.pathname + window.location.search
+      : '';
+    
+    const title = `${product.title} - Tbarimt.mn`;
+    const description = product.description 
+      ? product.description.substring(0, 200).replace(/<[^>]*>/g, '')
+      : `${product.title} - ${formatNumber(parseFloat(product.price) || 0)}₮`;
+    
+    // Facebook's official share dialog with OG parameters
+    const shareUrl = `https://www.facebook.com/dialog/share?
+      app_id=${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '954271841668576'}
+      &display=popup
+      &href=${encodeURIComponent(url)}
+      &redirect_uri=${encodeURIComponent(url)}
+      &quote=${encodeURIComponent(description)}
+      &hashtag=${encodeURIComponent('#tbarimt')}`.replace(/\s/g, '');
+    
+    window.open(shareUrl, 'fb-share', 'width=626,height=436');
+  };
+  
+  const handleShareX = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!product) return;
+    
+    const url = window.location.href;
+    const text = `${product.title} - ${formatNumber(parseFloat(product.price) || 0)}₮`;
+    const shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+    window.open(shareUrl, 'twitter-share', 'width=626,height=436');
+  }
+
+  const handleCopyLink = async () => {
+    if (!product) return
+    
+    const url = typeof window !== 'undefined' 
+      ? window.location.origin + window.location.pathname + window.location.search
+      : ''
+    
+    if (!url) {
+      alert('URL олдсонгүй')
+      return
+    }
+    
+    try {
+      await navigator.clipboard.writeText(url)
+      alert('Холбоос хуулагдлаа!')
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = url
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        alert('Холбоос хуулагдлаа!')
+      } catch (err) {
+        alert('Холбоос хуулахад алдаа гарлаа')
+      }
+      document.body.removeChild(textArea)
     }
   }
 
@@ -898,6 +1051,30 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {/* Share Buttons - Above Image */}
+            <div className="flex items-center justify-end space-x-2 mb-2">
+              <button
+                onClick={handleShareFacebook}
+                className="w-10 h-10 flex items-center justify-center bg-[#1877F2] text-white rounded-full shadow-lg hover:bg-[#166FE5] transition-all hover:scale-110"
+                aria-label="Facebook дээр хуваалцах"
+                title="Facebook дээр хуваалцах"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </button>
+              <button
+                onClick={handleShareX}
+                className="w-10 h-10 flex items-center justify-center bg-black dark:bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 dark:hover:bg-gray-800 transition-all hover:scale-110"
+                aria-label="X (Twitter) дээр хуваалцах"
+                title="X (Twitter) дээр хуваалцах"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </button>
+            </div>
+
             {/* Main Image */}
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
               <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
@@ -908,11 +1085,11 @@ export default function ProductDetail() {
                   onClick={() => setIsImageModalOpen(true)}
                 />
                 {product.isDiploma && (
-                  <div className="absolute top-4 left-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-lg font-bold shadow-lg">
+                  <div className="absolute top-4 left-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-lg font-bold shadow-lg z-10">
                     🎓 Дипломын ажил
                   </div>
                 )}
-                <div className="absolute top-4 right-4 flex items-center space-x-1 bg-white/90 dark:bg-gray-800/90 px-3 py-1.5 rounded-full shadow-lg">
+                <div className="absolute top-4 right-4 flex items-center space-x-1 bg-white/90 dark:bg-gray-800/90 px-3 py-1.5 rounded-full shadow-lg z-10">
                   <span className="text-yellow-400 text-lg">⭐</span>
                   <span className="font-bold text-gray-900 dark:text-white">{parseFloat(product.rating) || 0}</span>
                 </div>
@@ -1079,7 +1256,6 @@ export default function ProductDetail() {
               >
                 🛒 Одоо худалдаж авах
               </button>
-
            
               <button
                 onClick={() => {
@@ -1091,7 +1267,7 @@ export default function ProductDetail() {
                     setCopyrightReportPhone('')
                   }
                 }}
-                className="w-full flex items-center justify-center border-2 border-red-600 text-red-600 dark:text-red-400 py-3 rounded-xl font-semibold hover:bg-red-50 dark:hover:bg-gray-700 transition-all mt-2"
+                className="w-full flex items-center justify-center border-2 border-red-600 text-red-600 dark:text-red-400 py-3 rounded-xl font-semibold hover:bg-red-50 dark:hover:bg-gray-700 transition-all"
               >
                 <span className="mr-2">⚠️</span>
                 <span>Зохиогчийн эрхийн мэдэгдэл</span>
