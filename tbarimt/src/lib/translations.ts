@@ -41,8 +41,8 @@ export const translations = {
     joinForFree: 'үнэгүй нэгдэх',
     
     // Membership
-    membershipPlans: 'Гишүүнчлэлийн төлөвлөгөө',
-    chooseMembershipPlan: 'Өөрийн хэрэгцээнд тохирох гишүүнчлэлийн төлөвлөгөөг сонгоно уу',
+    membershipPlans: 'Гишүүнчлэлийн эрх',
+    chooseMembershipPlan: 'Өөрийн хэрэгцээнд тохирох гишүүнчлэлийн эрхийг сонгоно уу',
     selectPlan: 'Сонгох',
     maxPosts: 'Хамгийн ихдээ нийтлэл',
     popular: 'АЛДАРТАЙ',

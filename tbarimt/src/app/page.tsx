@@ -1325,19 +1325,19 @@ export default function Home() {
                         </div>
                       )}
 
-                      <button
-                        onClick={() => handleMembershipSelect(membership)}
-                        disabled={isFree || isCreatingInvoice}
-                        className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg ${
-                          isFree
-                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 cursor-not-allowed opacity-60'
-                            : isCreatingInvoice
-                            ? 'bg-[#004e6c]/50 dark:bg-[#006b8f]/50 text-white cursor-wait'
-                            : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] hover:shadow-xl transform hover:-translate-y-0.5'
-                        }`}
-                      >
-                        {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : (getTranslation(language, 'selectPlan') || 'Сонгох')}
-                      </button>
+                      {!isFree && (
+                        <button
+                          onClick={() => handleMembershipSelect(membership)}
+                          disabled={isCreatingInvoice}
+                          className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg ${
+                            isCreatingInvoice
+                              ? 'bg-[#004e6c]/50 dark:bg-[#006b8f]/50 text-white cursor-wait'
+                              : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] hover:shadow-xl transform hover:-translate-y-0.5'
+                          }`}
+                        >
+                          {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : (getTranslation(language, 'selectPlan') || 'Сонгох')}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )

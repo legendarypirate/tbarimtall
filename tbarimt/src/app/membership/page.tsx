@@ -121,16 +121,14 @@ export default function MembershipPage() {
                         </div>
                       )}
 
-                      <button
-                        onClick={() => router.push('/account/memberships')}
-                        className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
-                          isFree
-                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-                            : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
-                        }`}
-                      >
-                        {getTranslation(language, 'selectPlan') || 'Сонгох'}
-                      </button>
+                      {!isFree && (
+                        <button
+                          onClick={() => router.push('/account/memberships')}
+                          className="w-full py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]"
+                        >
+                          {getTranslation(language, 'selectPlan') || 'Сонгох'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
