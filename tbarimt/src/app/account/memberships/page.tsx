@@ -324,9 +324,6 @@ export default function MembershipsPage() {
                     <div className="text-3xl font-bold mb-2">
                       {formatPrice(membership.price)}
                     </div>
-                    {isFree && (
-                      <p className="text-sm opacity-90 font-medium">Суурь гишүүнчлэл</p>
-                    )}
                   </div>
                 </div>
 
