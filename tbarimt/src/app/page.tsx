@@ -775,9 +775,137 @@ export default function Home() {
           })}
         </div>
       </section>
+ {/* Top Journalists Section */}
+ {topBloggers.length > 0 && (
+        <section className="bg-gray-200 dark:bg-gray-800 py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+                {getTranslation(language, 'topJournalists')}
+              </h2>
+              <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
+                {getTranslation(language, 'topJournalistsDescription')}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {topBloggers.slice(0, 4).map((journalist: any) => {
+                const getAvatarUrl = () => {
+                  if (journalist.avatar) return journalist.avatar
+                  const seed = journalist.name || journalist.username || journalist.userId || 'default'
+                  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
+                }
+                
+                // Get membership name for badge
+                const getMembershipName = () => {
+                  const membershipName = journalist.membership?.name || '';
+                  if (membershipName) {
+                    const upperName = membershipName.toUpperCase();
+                    if (upperName.includes('PLATINUM')) return 'PLATINUM';
+                    if (upperName.includes('GOLD')) return 'GOLD';
+                    if (upperName.includes('SILVER')) return 'SILVER';
+                    if (upperName.includes('BRONZE')) return 'BRONZE';
+                    if (upperName.includes('FREE')) return 'FREE';
+                    return membershipName.toUpperCase();
+                  }
+                  return 'FREE';
+                };
 
+                // Get membership badge color
+                const getMembershipBadgeColor = (name: string) => {
+                  const upperName = name.toUpperCase();
+                  if (upperName.includes('PLATINUM')) return 'bg-cyan-500 text-white';
+                  if (upperName.includes('GOLD')) return 'bg-yellow-500 text-white';
+                  if (upperName.includes('SILVER')) return 'bg-slate-500 text-white';
+                  if (upperName.includes('BRONZE')) return 'bg-orange-600 text-white';
+                  return 'bg-gray-500 text-white';
+                };
+
+                const membershipName = getMembershipName();
+                const badgeColor = getMembershipBadgeColor(membershipName);
+                
+                return (
+                  <div
+                    key={journalist.userId || journalist.id}
+                    onClick={() => router.push(`/journalist/${journalist.userId || journalist.id}`)}
+                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 hover:shadow-2xl cursor-pointer group"
+                  >
+                    <div className="p-6 text-center">
+                      <div className="relative inline-block mb-4">
+                        <img
+                          src={getAvatarUrl()}
+                          alt={journalist.name || journalist.username || 'Journalist'}
+                          className="w-24 h-24 rounded-full border-4 border-[#004e6c] dark:border-[#006b8f] shadow-lg group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
+                          onError={(e) => {
+                            const seed = journalist.name || journalist.username || journalist.userId || 'default'
+                            ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
+                          }}
+                        />
+                        {/* Membership Badge in corner */}
+                        <div className={`absolute -bottom-1 -right-1 ${badgeColor} text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border-2 border-white dark:border-gray-800 z-20 uppercase`}>
+                          {membershipName}
+                        </div>
+                      </div>
+                      <h3 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-1 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+                        {journalist.name || journalist.username || 'Unknown'}
+                      </h3>
+                      {journalist.username && (
+                        <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mb-4">
+                          {journalist.username.startsWith('@') ? journalist.username : `@${journalist.username}`}
+                        </p>
+                      )}
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="text-yellow-400">⭐</span>
+                          <span className="text-sm font-semibold text-[#004e6c] dark:text-gray-200">
+                            {typeof journalist.rating === 'number' ? journalist.rating.toFixed(1) : parseFloat(journalist.rating ?? 0).toFixed(1)}
+                          </span>
+                          <span className="text-xs text-[#004e6c]/50 dark:text-gray-500">
+                            {getTranslation(language, 'rating')}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-4 text-sm text-[#004e6c]/70 dark:text-gray-400">
+                          <span className="flex items-center space-x-1">
+                            <span>👥</span>
+                            <span>
+                              {(() => {
+                                const followers = typeof journalist.followers === 'number' ? journalist.followers : (parseInt(journalist.followers) || 0)
+                                if (followers >= 1000) {
+                                  return (followers / 1000).toFixed(1) + 'K'
+                                }
+                                return followers.toLocaleString()
+                              })()}
+                            </span>
+                            <span className="text-xs">{getTranslation(language, 'followers')}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <span>📝</span>
+                            <span>{journalist.posts ?? 0}</span>
+                            <span className="text-xs">{getTranslation(language, 'posts')}</span>
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/journalist/${journalist.userId || journalist.id}`)
+                        }}
+                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-2 rounded-xl font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      >
+                        {getTranslation(language, 'viewProfile')}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
       {/* Features Section */}
-      <section className="relative w-full py-12 overflow-hidden bg-gray-200 dark:bg-gray-800">
+      <section className="relative w-full py-12 overflow-hidden bg-white">
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* TBARIMT Logo - Centered Above */}
           <div className="text-center mb-8">
@@ -1124,140 +1252,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Top Journalists Section */}
-      {topBloggers.length > 0 && (
-        <section className="bg-white dark:bg-gray-900 py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
-                {getTranslation(language, 'topJournalists')}
-              </h2>
-              <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
-                {getTranslation(language, 'topJournalistsDescription')}
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {topBloggers.slice(0, 4).map((journalist: any) => {
-                const getAvatarUrl = () => {
-                  if (journalist.avatar) return journalist.avatar
-                  const seed = journalist.name || journalist.username || journalist.userId || 'default'
-                  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
-                }
-                
-                // Get membership name for badge
-                const getMembershipName = () => {
-                  const membershipName = journalist.membership?.name || '';
-                  if (membershipName) {
-                    const upperName = membershipName.toUpperCase();
-                    if (upperName.includes('PLATINUM')) return 'PLATINUM';
-                    if (upperName.includes('GOLD')) return 'GOLD';
-                    if (upperName.includes('SILVER')) return 'SILVER';
-                    if (upperName.includes('BRONZE')) return 'BRONZE';
-                    if (upperName.includes('FREE')) return 'FREE';
-                    return membershipName.toUpperCase();
-                  }
-                  return 'FREE';
-                };
-
-                // Get membership badge color
-                const getMembershipBadgeColor = (name: string) => {
-                  const upperName = name.toUpperCase();
-                  if (upperName.includes('PLATINUM')) return 'bg-cyan-500 text-white';
-                  if (upperName.includes('GOLD')) return 'bg-yellow-500 text-white';
-                  if (upperName.includes('SILVER')) return 'bg-slate-500 text-white';
-                  if (upperName.includes('BRONZE')) return 'bg-orange-600 text-white';
-                  return 'bg-gray-500 text-white';
-                };
-
-                const membershipName = getMembershipName();
-                const badgeColor = getMembershipBadgeColor(membershipName);
-                
-                return (
-                  <div
-                    key={journalist.userId || journalist.id}
-                    onClick={() => router.push(`/journalist/${journalist.userId || journalist.id}`)}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 hover:shadow-2xl cursor-pointer group"
-                  >
-                    <div className="p-6 text-center">
-                      <div className="relative inline-block mb-4">
-                        <img
-                          src={getAvatarUrl()}
-                          alt={journalist.name || journalist.username || 'Journalist'}
-                          className="w-24 h-24 rounded-full border-4 border-[#004e6c] dark:border-[#006b8f] shadow-lg group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
-                          onError={(e) => {
-                            const seed = journalist.name || journalist.username || journalist.userId || 'default'
-                            ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
-                          }}
-                        />
-                        {/* Membership Badge in corner */}
-                        <div className={`absolute -bottom-1 -right-1 ${badgeColor} text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border-2 border-white dark:border-gray-800 z-20 uppercase`}>
-                          {membershipName}
-                        </div>
-                      </div>
-                      <h3 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-1 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
-                        {journalist.name || journalist.username || 'Unknown'}
-                      </h3>
-                      {journalist.username && (
-                        <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mb-4">
-                          {journalist.username.startsWith('@') ? journalist.username : `@${journalist.username}`}
-                        </p>
-                      )}
-                      
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center justify-center space-x-2">
-                          <span className="text-yellow-400">⭐</span>
-                          <span className="text-sm font-semibold text-[#004e6c] dark:text-gray-200">
-                            {typeof journalist.rating === 'number' ? journalist.rating.toFixed(1) : parseFloat(journalist.rating ?? 0).toFixed(1)}
-                          </span>
-                          <span className="text-xs text-[#004e6c]/50 dark:text-gray-500">
-                            {getTranslation(language, 'rating')}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-center space-x-4 text-sm text-[#004e6c]/70 dark:text-gray-400">
-                          <span className="flex items-center space-x-1">
-                            <span>👥</span>
-                            <span>
-                              {(() => {
-                                const followers = typeof journalist.followers === 'number' ? journalist.followers : (parseInt(journalist.followers) || 0)
-                                if (followers >= 1000) {
-                                  return (followers / 1000).toFixed(1) + 'K'
-                                }
-                                return followers.toLocaleString()
-                              })()}
-                            </span>
-                            <span className="text-xs">{getTranslation(language, 'followers')}</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <span>📝</span>
-                            <span>{journalist.posts ?? 0}</span>
-                            <span className="text-xs">{getTranslation(language, 'posts')}</span>
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          router.push(`/journalist/${journalist.userId || journalist.id}`)
-                        }}
-                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-2 rounded-xl font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                      >
-                        {getTranslation(language, 'viewProfile')}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+     
 
       {/* Membership Section */}
       {memberships.length > 0 && (
-        <section className="bg-gray-200 dark:bg-gray-800 py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
                 {getTranslation(language, 'membershipPlans') || 'Membership Plans'}

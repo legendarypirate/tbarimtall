@@ -16,10 +16,10 @@ export const translations = {
     heroSubtitle: 'аюулгүй',
     viewAllContent: 'Бүх контент үзэх',
     addYourContent: 'Өөрийн контент оруулах',
-    users: 'Users',
-    creators: 'Creators',
-    contents: 'Contents',
-    earned: 'Earned',
+    users: 'Хэрэглэгч',
+    creators: 'Нийтлэлч',
+    contents: 'Контент',
+    earned: 'Борлуулалт',
     allCategories: 'Ангилалууд',
     all: 'Бүгд',
     featuredProducts: 'Онцлох бүтээгдэхүүн',
@@ -43,7 +43,7 @@ export const translations = {
     // Membership
     membershipPlans: 'Гишүүнчлэлийн төлөвлөгөө',
     chooseMembershipPlan: 'Өөрийн хэрэгцээнд тохирох гишүүнчлэлийн төлөвлөгөөг сонгоно уу',
-    selectPlan: 'Төлөвлөгөө сонгох',
+    selectPlan: 'Сонгох',
     maxPosts: 'Хамгийн ихдээ нийтлэл',
     popular: 'АЛДАРТАЙ',
     
