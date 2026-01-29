@@ -1,4 +1,4 @@
-const { User, Product, Category, Subcategory, Order, Review, sequelize } = require('../models');
+const { User, Product, Category, Subcategory, Order, Review, Membership, sequelize } = require('../models');
 const { Op, QueryTypes } = require('sequelize');
 
 // Helper function to recursively parse JSON strings until we get an array of URLs
@@ -983,16 +983,74 @@ exports.getAllOrders = async (req, res) => {
     const { count, rows } = await Order.findAndCountAll({
       where,
       include: [
-        { model: User, as: 'user', attributes: ['id', 'username', 'email', 'fullName'], required: false },
-        { model: Product, as: 'product', attributes: ['id', 'title', 'price'], required: false } // Optional for wallet recharge orders
+        { 
+          model: User, 
+          as: 'user', 
+          attributes: ['id', 'username', 'email', 'fullName', 'phone'], 
+          required: false 
+        },
+        { 
+          model: Product, 
+          as: 'product', 
+          attributes: ['id', 'title', 'price', 'authorId'], 
+          required: false,
+          include: [
+            {
+              model: User,
+              as: 'author',
+              attributes: ['id', 'username', 'fullName', 'email', 'phone', 'membership_type'],
+              required: false,
+              include: [
+                {
+                  model: Membership,
+                  as: 'membership',
+                  attributes: ['id', 'name', 'percentage'],
+                  required: false
+                }
+              ]
+            }
+          ]
+        }
       ],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
       offset
     });
 
+    // Calculate commission amounts for each order
+    const ordersWithCommission = rows.map(order => {
+      const orderData = order.toJSON();
+      const orderAmount = parseFloat(order.amount || 0);
+      
+      if (orderData.product && orderData.product.author) {
+        const membership = orderData.product.author.membership;
+        const commissionPercentage = membership ? parseFloat(membership.percentage || 20) : 20;
+        
+        // Amount goes to journalist (based on membership percentage)
+        const journalistAmount = orderAmount * (commissionPercentage / 100);
+        
+        // Amount goes to tbarimt (remaining amount)
+        const tbarimtAmount = orderAmount - journalistAmount;
+        
+        orderData.commission = {
+          journalistAmount: parseFloat(journalistAmount.toFixed(2)),
+          tbarimtAmount: parseFloat(tbarimtAmount.toFixed(2)),
+          commissionPercentage: commissionPercentage
+        };
+      } else {
+        // No product or author, so no commission split
+        orderData.commission = {
+          journalistAmount: 0,
+          tbarimtAmount: orderAmount,
+          commissionPercentage: 0
+        };
+      }
+      
+      return orderData;
+    });
+
     res.json({
-      orders: rows,
+      orders: ordersWithCommission,
       pagination: {
         total: count,
         page: parseInt(page),
@@ -1390,6 +1448,159 @@ exports.getDashboardStats = async (req, res) => {
       }
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get income analytics with date filters
+exports.getIncomeAnalytics = async (req, res) => {
+  try {
+    const { startDate, endDate, type } = req.query;
+    
+    // Build date filter
+    const dateFilter = {};
+    if (startDate || endDate) {
+      dateFilter.createdAt = {};
+      if (startDate) {
+        dateFilter.createdAt[Op.gte] = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Include full end date
+        dateFilter.createdAt[Op.lte] = end;
+      }
+    }
+    
+    // Base filter: only completed orders
+    const baseFilter = {
+      status: 'completed',
+      ...dateFilter
+    };
+    
+    // Get subscription income (membership orders)
+    const subscriptionOrders = await Order.findAll({
+      where: {
+        ...baseFilter,
+        membershipId: { [Op.ne]: null }
+      },
+      include: [
+        {
+          model: Membership,
+          as: 'membership',
+          required: false,
+          attributes: ['id', 'name', 'price']
+        },
+        {
+          model: User,
+          as: 'user',
+          required: false,
+          attributes: ['id', 'username', 'fullName', 'email']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    // Get purchase income (product orders)
+    const purchaseOrders = await Order.findAll({
+      where: {
+        ...baseFilter,
+        productId: { [Op.ne]: null }
+      },
+      include: [
+        {
+          model: Product,
+          as: 'product',
+          required: false,
+          attributes: ['id', 'title', 'price'],
+          include: [
+            {
+              model: User,
+              as: 'author',
+              required: false,
+              attributes: ['id', 'username', 'fullName']
+            }
+          ]
+        },
+        {
+          model: User,
+          as: 'user',
+          required: false,
+          attributes: ['id', 'username', 'fullName', 'email']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    // Calculate totals
+    const subscriptionTotal = subscriptionOrders.reduce((sum, order) => {
+      return sum + parseFloat(order.amount || 0);
+    }, 0);
+    
+    const purchaseTotal = purchaseOrders.reduce((sum, order) => {
+      return sum + parseFloat(order.amount || 0);
+    }, 0);
+    
+    const grandTotal = subscriptionTotal + purchaseTotal;
+    
+    // Format response based on type filter
+    let response = {
+      summary: {
+        subscriptionTotal: parseFloat(subscriptionTotal.toFixed(2)),
+        purchaseTotal: parseFloat(purchaseTotal.toFixed(2)),
+        grandTotal: parseFloat(grandTotal.toFixed(2)),
+        subscriptionCount: subscriptionOrders.length,
+        purchaseCount: purchaseOrders.length
+      }
+    };
+    
+    if (!type || type === 'subscription') {
+      response.subscriptions = subscriptionOrders.map(order => ({
+        id: order.id,
+        amount: parseFloat(order.amount),
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+        membership: order.membership ? {
+          id: order.membership.id,
+          name: order.membership.name,
+          price: parseFloat(order.membership.price)
+        } : null,
+        user: order.user ? {
+          id: order.user.id,
+          username: order.user.username,
+          fullName: order.user.fullName,
+          email: order.user.email
+        } : null
+      }));
+    }
+    
+    if (!type || type === 'purchase') {
+      response.purchases = purchaseOrders.map(order => ({
+        id: order.id,
+        amount: parseFloat(order.amount),
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+        product: order.product ? {
+          id: order.product.id,
+          title: order.product.title,
+          price: parseFloat(order.product.price),
+          author: order.product.author ? {
+            id: order.product.author.id,
+            username: order.product.author.username,
+            fullName: order.product.author.fullName
+          } : null
+        } : null,
+        user: order.user ? {
+          id: order.user.id,
+          username: order.user.username,
+          fullName: order.user.fullName,
+          email: order.user.email
+        } : null
+      }));
+    }
+    
+    res.json(response);
+  } catch (error) {
+    console.error('Income analytics error:', error);
     res.status(500).json({ error: error.message });
   }
 };

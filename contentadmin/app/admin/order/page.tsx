@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Search, Eye, Edit, Truck, CheckCircle, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { ordersApi } from "@/lib/api";
 
 type OrderItem = {
   name: string;
@@ -37,6 +38,35 @@ type Order = {
   customer_name?: string;
   customer_phone?: string;
   address?: string;
+  user?: {
+    id: number;
+    username: string;
+    fullName?: string;
+    email?: string;
+    phone?: string;
+  };
+  product?: {
+    id: number;
+    title: string;
+    price: number;
+    author?: {
+      id: number;
+      username: string;
+      fullName?: string;
+      email?: string;
+      phone?: string;
+      membership?: {
+        id: number;
+        name: string;
+        percentage: number;
+      };
+    };
+  };
+  commission?: {
+    journalistAmount: number;
+    tbarimtAmount: number;
+    commissionPercentage: number;
+  };
 };
 
 export default function AdminOrderList() {
@@ -53,9 +83,6 @@ function OrderPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // API base URL
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders`;
 
   // Map backend order status to frontend status
   const mapOrderStatus = (status: number | string): Order["status"] => {
@@ -111,13 +138,8 @@ function OrderPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(API_URL);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
+      const data = await ordersApi.getAll();
       
       if (data.orders && Array.isArray(data.orders)) {
         // Transform backend data to frontend format
@@ -135,6 +157,9 @@ function OrderPage() {
           customer_name: order.user?.fullName || order.user?.username || "Хэрэглэгч",
           customer_phone: order.user?.phone || "",
           address: order.address || "",
+          user: order.user,
+          product: order.product,
+          commission: order.commission,
         }));
         
         setOrders(transformedOrders);
@@ -163,17 +188,7 @@ function OrderPage() {
 
       const backendStatus = statusMap[newStatus] || newStatus;
 
-      const updateResponse = await fetch(`${API_URL}/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: backendStatus }),
-      });
-
-      if (!updateResponse.ok) {
-        throw new Error('Failed to update order status');
-      }
+      await ordersApi.update(orderId, { status: backendStatus });
 
       // Refresh orders after update
       await fetchOrders();
@@ -195,17 +210,7 @@ function OrderPage() {
 
       const backendPaymentStatus = paymentMap[newPaymentStatus] || newPaymentStatus;
 
-      const updateResponse = await fetch(`${API_URL}/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ paymentStatus: backendPaymentStatus }),
-      });
-
-      if (!updateResponse.ok) {
-        throw new Error('Failed to update payment status');
-      }
+      await ordersApi.update(orderId, { paymentStatus: backendPaymentStatus });
 
       // Refresh orders after update
       await fetchOrders();
@@ -250,7 +255,7 @@ function OrderPage() {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customer_phone?.includes(searchTerm);
     
@@ -379,8 +384,138 @@ function OrderPage() {
         </Select>
       </div>
 
-      {/* Orders List */}
-      <div className="grid grid-cols-1 gap-4">
+      {/* Orders List - Table View */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-50 dark:bg-gray-800 border-b">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">ID</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Огноо</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Худалдан авагч</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Бүтээгдэхүүн</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Зохиогч (Журналист)</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Нийт дүн</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tbarimt-д</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Журналист-д</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Төлөв</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Үйлдэл</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+            {filteredOrders.map((order) => (
+              <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <span className="font-semibold">#{order.id}</span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                  {order.created_at}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {order.user?.fullName || order.user?.username || "Хэрэглэгч"}
+                    </div>
+                    {order.user?.phone && (
+                      <div className="text-gray-500 dark:text-gray-400 text-xs">{order.user.phone}</div>
+                    )}
+                    {order.user?.email && (
+                      <div className="text-gray-500 dark:text-gray-400 text-xs">{order.user.email}</div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  {order.product ? (
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900 dark:text-white">{order.product.title}</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs">ID: {order.product.id}</div>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {order.product?.author ? (
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {order.product.author.fullName || order.product.author.username || "Зохиогч"}
+                      </div>
+                      {order.product.author.phone && (
+                        <div className="text-gray-500 dark:text-gray-400 text-xs">{order.product.author.phone}</div>
+                      )}
+                      {order.product.author.membership && (
+                        <div className="text-xs">
+                          <span className="text-blue-600 dark:text-blue-400">
+                            {order.product.author.membership.name} ({order.product.author.membership.percentage}%)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-right">
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {order.total.toLocaleString()}₮
+                  </span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-right">
+                  <span className="font-semibold text-green-600 dark:text-green-400">
+                    {order.commission?.tbarimtAmount?.toLocaleString() || order.total.toLocaleString()}₮
+                  </span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-right">
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                    {order.commission?.journalistAmount?.toLocaleString() || "0"}₮
+                  </span>
+                  {order.commission?.commissionPercentage && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      ({order.commission.commissionPercentage}%)
+                    </div>
+                  )}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex flex-col gap-1">
+                    <span className={`px-2 py-1 rounded-full text-xs border ${statusColor[order.status]}`}>
+                      {getStatusIcon(order.status)} {statusOptions.find(s => s.value === order.status)?.label}
+                    </span>
+                    <span className={`px-2 py-1 rounded-full text-xs border ${paymentColor[order.payment_status]}`}>
+                      {paymentOptions.find(p => p.value === order.payment_status)?.label}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewOrder(order)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEditOrder(order)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {filteredOrders.length === 0 && (
+        <Card className="p-8 text-center">
+          <p className="text-gray-500">Захиалга олдсонгүй</p>
+        </Card>
+      )}
+
+      {/* Old Card View - Hidden but keeping for reference */}
+      <div className="hidden grid grid-cols-1 gap-4">
         {filteredOrders.map((order) => (
           <Card key={order.id} className="p-6 shadow-sm border">
             <div className="flex justify-between items-start mb-4">
@@ -477,11 +612,6 @@ function OrderPage() {
           </Card>
         ))}
 
-        {filteredOrders.length === 0 && (
-          <Card className="p-8 text-center">
-            <p className="text-gray-500">Захиалга олдсонгүй</p>
-          </Card>
-        )}
       </div>
 
       {/* View Order Dialog */}
@@ -494,18 +624,46 @@ function OrderPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold">Харилцагчийн мэдээлэл</h4>
-                  <p>Нэр: {selectedOrder.customer_name}</p>
-                  <p>Утас: {selectedOrder.customer_phone}</p>
-                  <p>Хаяг: {selectedOrder.address}</p>
+                  <h4 className="font-semibold mb-2">Худалдан авагчийн мэдээлэл</h4>
+                  <p className="text-sm"><span className="font-medium">Нэр:</span> {selectedOrder.user?.fullName || selectedOrder.user?.username || selectedOrder.customer_name || "N/A"}</p>
+                  <p className="text-sm"><span className="font-medium">Утас:</span> {selectedOrder.user?.phone || selectedOrder.customer_phone || "N/A"}</p>
+                  <p className="text-sm"><span className="font-medium">Имэйл:</span> {selectedOrder.user?.email || "N/A"}</p>
+                  {selectedOrder.address && <p className="text-sm"><span className="font-medium">Хаяг:</span> {selectedOrder.address}</p>}
                 </div>
                 <div>
-                  <h4 className="font-semibold">Захиалгын мэдээлэл</h4>
-                  <p>Үүссэн огноо: {selectedOrder.created_at}</p>
-                  <p>Төлөв: {statusOptions.find(s => s.value === selectedOrder.status)?.label}</p>
-                  <p>Төлбөрийн төлөв: {paymentOptions.find(p => p.value === selectedOrder.payment_status)?.label}</p>
+                  <h4 className="font-semibold mb-2">Захиалгын мэдээлэл</h4>
+                  <p className="text-sm"><span className="font-medium">Үүссэн огноо:</span> {selectedOrder.created_at}</p>
+                  <p className="text-sm"><span className="font-medium">Төлөв:</span> {statusOptions.find(s => s.value === selectedOrder.status)?.label}</p>
+                  <p className="text-sm"><span className="font-medium">Төлбөрийн төлөв:</span> {paymentOptions.find(p => p.value === selectedOrder.payment_status)?.label}</p>
                 </div>
               </div>
+
+              {selectedOrder.product && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-2">Бүтээгдэхүүний мэдээлэл</h4>
+                  <p className="text-sm"><span className="font-medium">Нэр:</span> {selectedOrder.product.title}</p>
+                  <p className="text-sm"><span className="font-medium">ID:</span> {selectedOrder.product.id}</p>
+                  <p className="text-sm"><span className="font-medium">Үнэ:</span> {selectedOrder.product.price?.toLocaleString()}₮</p>
+                </div>
+              )}
+
+              {selectedOrder.product?.author && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-2">Зохиогч (Журналист) мэдээлэл</h4>
+                  <p className="text-sm"><span className="font-medium">Нэр:</span> {selectedOrder.product.author.fullName || selectedOrder.product.author.username || "N/A"}</p>
+                  {selectedOrder.product.author.phone && (
+                    <p className="text-sm"><span className="font-medium">Утас:</span> {selectedOrder.product.author.phone}</p>
+                  )}
+                  {selectedOrder.product.author.email && (
+                    <p className="text-sm"><span className="font-medium">Имэйл:</span> {selectedOrder.product.author.email}</p>
+                  )}
+                  {selectedOrder.product.author.membership && (
+                    <p className="text-sm">
+                      <span className="font-medium">Гишүүнчлэл:</span> {selectedOrder.product.author.membership.name} ({selectedOrder.product.author.membership.percentage}%)
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <h4 className="font-semibold mb-2">Захиалгын бараанууд</h4>
@@ -522,8 +680,26 @@ function OrderPage() {
                 </div>
               </div>
 
-              <div className="text-right text-xl font-bold border-t pt-4">
-                Нийт дүн: {selectedOrder.total.toLocaleString()}₮
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between text-lg">
+                  <span className="font-semibold">Нийт дүн:</span>
+                  <span className="font-bold">{selectedOrder.total.toLocaleString()}₮</span>
+                </div>
+                {selectedOrder.commission && (
+                  <>
+                    <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                      <span>Tbarimt-д орох дүн:</span>
+                      <span className="font-semibold">{selectedOrder.commission.tbarimtAmount.toLocaleString()}₮</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-blue-600 dark:text-blue-400">
+                      <span>Журналист-д орох дүн:</span>
+                      <span className="font-semibold">
+                        {selectedOrder.commission.journalistAmount.toLocaleString()}₮ 
+                        ({selectedOrder.commission.commissionPercentage}%)
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}

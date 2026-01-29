@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, Users, Settings, Clock, ShoppingCart, FolderOpen, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
+import { Home, Users, Settings, Clock, ShoppingCart, FolderOpen, ChevronDown, ChevronRight, AlertTriangle, DollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const links = [
@@ -32,6 +32,11 @@ const links = [
     href: "/admin/reports", 
     label: "Мэдэгдэл", 
     icon: AlertTriangle,
+  },
+  { 
+    href: "/admin/income", 
+    label: "Орлого", 
+    icon: DollarSign,
   },
   { 
     href: "/admin/settings", 

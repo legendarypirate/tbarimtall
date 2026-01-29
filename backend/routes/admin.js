@@ -32,6 +32,9 @@ router.use(authorize('admin'));
 // Dashboard
 router.get('/dashboard/stats', adminController.getDashboardStats);
 
+// Income Analytics
+router.get('/income', adminController.getIncomeAnalytics);
+
 // Users CRUD
 router.get('/users', adminController.getAllUsers);
 router.get('/users/:id', adminController.getUserById);

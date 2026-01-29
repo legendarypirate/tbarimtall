@@ -56,6 +56,23 @@ export const dashboardApi = {
   },
 };
 
+// Income API
+export const incomeApi = {
+  getAnalytics: async (params?: { 
+    startDate?: string; 
+    endDate?: string; 
+    type?: 'subscription' | 'purchase' 
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    if (params?.type) queryParams.append('type', params.type);
+    
+    const query = queryParams.toString();
+    return apiCall(`/api/admin/income${query ? `?${query}` : ''}`);
+  },
+};
+
 // Users API
 export const usersApi = {
   getAll: async (params?: { page?: number; limit?: number; search?: string; role?: string }) => {
