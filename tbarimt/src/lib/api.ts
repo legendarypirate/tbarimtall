@@ -13,32 +13,43 @@ export async function fetchAPI(endpoint: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    let errorMessage = `API error: ${response.statusText || response.status}`;
-    try {
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const error = await response.json();
-        errorMessage = error.message || error.error || errorMessage;
-      } else {
-        const text = await response.text();
-        if (text) {
-          errorMessage = text;
+    if (!response.ok) {
+      let errorMessage = `API error: ${response.statusText || response.status}`;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          errorMessage = error.message || error.error || errorMessage;
+        } else {
+          const text = await response.text();
+          if (text) {
+            errorMessage = text;
+          }
         }
+      } catch (parseError) {
+        // If parsing fails, use the default error message
+        errorMessage = `API error: ${response.status} ${response.statusText}`;
       }
-    } catch (parseError) {
-      // If parsing fails, use the default error message
-      errorMessage = `API error: ${response.status} ${response.statusText}`;
+      throw new Error(errorMessage);
     }
-    throw new Error(errorMessage);
-  }
 
-  return response.json();
+    return response.json();
+  } catch (error) {
+    // Handle network errors (Failed to fetch)
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      const errorMessage = `Сервертэй холбогдох боломжгүй байна. API URL: ${API_BASE_URL}. Сервер ажиллаж байгаа эсэхийг шалгана уу.`;
+      console.error('Network error:', errorMessage);
+      throw new Error(errorMessage);
+    }
+    // Re-throw other errors
+    throw error;
+  }
 }
 
 // Products

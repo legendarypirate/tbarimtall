@@ -1409,7 +1409,9 @@ exports.getDashboardStats = async (req, res) => {
       totalRevenue,
       todayOrders,
       pendingProducts,
-      qpayOrders
+      qpayOrders,
+      publishedProducts,
+      newProducts
     ] = await Promise.all([
       User.count({ where: { isActive: true } }),
       User.count({ where: { role: 'journalist', isActive: true } }),
@@ -1428,7 +1430,9 @@ exports.getDashboardStats = async (req, res) => {
         }
       }),
       Product.count({ where: { isActive: false } }),
-      Order.count({ where: { paymentMethod: 'qpay', status: 'completed' } })
+      Order.count({ where: { paymentMethod: 'qpay', status: 'completed' } }),
+      Product.count({ where: { status: 'published', isActive: true } }), // Published products
+      Product.count({ where: { status: 'new' } }) // New products
     ]);
 
     // Count registered users (same as totalUsers - users with accounts)
@@ -1467,7 +1471,9 @@ exports.getDashboardStats = async (req, res) => {
         todayRevenue: parseFloat(todayRevenue) || 0,
         todayOrders,
         pendingProducts,
-        qpayOrders
+        qpayOrders,
+        publishedProducts,
+        newProducts
       }
     });
   } catch (error) {
@@ -1519,7 +1525,7 @@ exports.getAdminActionsLog = async (req, res) => {
           [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         },
         status: {
-          [Op.in]: ['processing', 'shipped', 'delivered', 'completed']
+          [Op.in]: ['pending', 'completed', 'failed', 'cancelled']
         }
       },
       order: [['updatedAt', 'DESC']],

@@ -55,7 +55,9 @@ export default function AdminHome() {
     todayRevenue: 0,
     todayOrders: 0,
     pendingProducts: 0,
-    qpayOrders: 0
+    qpayOrders: 0,
+    publishedProducts: 0,
+    newProducts: 0
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -756,19 +758,41 @@ export default function AdminHome() {
         if (order.userId && order.amount) {
           const current = userRevenue.get(order.userId) || { userId: order.userId, revenue: 0, user: order.user };
           current.revenue += parseFloat(order.amount) || 0;
+          // Preserve user data from order if available
+          if (order.user && !current.user) {
+            current.user = order.user;
+          }
           userRevenue.set(order.userId, current);
         }
       });
       
-      const topPayingUsers = Array.from(userRevenue.values())
+      // Get top paying user IDs
+      const topPayingUserIds = Array.from(userRevenue.values())
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5)
-        .map(item => ({
-          userId: item.userId,
-          revenue: item.revenue,
-          username: item.user?.username || item.user?.fullName || `User ${item.userId}`,
-          orderCount: userOrderCounts.get(item.userId) || 0
-        }));
+        .map(item => item.userId);
+      
+      // Create a map of all users for quick lookup
+      const usersMap = new Map<number, any>();
+      allUsers.forEach((user: any) => {
+        usersMap.set(user.id, user);
+      });
+      
+      // Build top paying users with full details
+      const topPayingUsers = topPayingUserIds.map((userId) => {
+        const revenueData = userRevenue.get(userId) || { revenue: 0, user: null };
+        const userData = usersMap.get(userId) || revenueData.user || {};
+        
+        return {
+          userId: userId,
+          revenue: revenueData.revenue,
+          fullName: userData.fullName || '',
+          username: userData.username || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          orderCount: userOrderCounts.get(userId) || 0
+        };
+      });
       
       // 4. Guest vs Registered Purchase
       const guestOrders = completedOrders.filter((o: any) => !o.userId);
@@ -1063,9 +1087,9 @@ export default function AdminHome() {
             <Package className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProducts}</div>
+            <div className="text-2xl font-bold">{stats.publishedProducts || 0}</div>
             <p className="text-xs text-orange-600">
-              {stats.pendingProducts} хүлээгдэж байна
+              {stats.newProducts || 0} шинэ
             </p>
           </CardContent>
         </Card>
@@ -1324,20 +1348,33 @@ export default function AdminHome() {
               <div className="bg-white/70 rounded-lg p-4 border border-pink-200">
                 <div className="text-sm font-semibold text-pink-700 mb-3">Top Paying Users (Хамгийн их орлого оруулсан хэрэглэгчид)</div>
                 {userBehavior.topPayingUsers.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {userBehavior.topPayingUsers.map((user, index) => (
-                      <div key={user.userId} className="flex items-center justify-between p-2 bg-white/50 rounded">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-pink-200 flex items-center justify-center text-pink-700 font-bold text-sm">
-                            {index + 1}
+                      <div key={user.userId} className="p-3 bg-white/50 rounded-lg border border-pink-100">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="w-8 h-8 rounded-full bg-pink-200 flex items-center justify-center text-pink-700 font-bold text-sm flex-shrink-0">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900">
+                                {user.fullName || user.username || `User ${user.userId}`}
+                              </div>
+                              {user.username && user.fullName && (
+                                <div className="text-xs text-gray-500">@{user.username}</div>
+                              )}
+                              <div className="text-xs text-gray-500 mt-1">
+                                {user.email || 'Email байхгүй'}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {user.phone || 'Утас байхгүй'}
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{user.username}</div>
+                          <div className="text-right ml-4">
+                            <div className="font-bold text-pink-900">{formatPrice(user.revenue)}</div>
                             <div className="text-xs text-gray-500">{user.orderCount} захиалга</div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-pink-900">{formatPrice(user.revenue)}</div>
                         </div>
                       </div>
                     ))}
