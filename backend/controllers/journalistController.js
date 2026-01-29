@@ -254,9 +254,13 @@ exports.getJournalistById = async (req, res) => {
       };
     }
 
-    // Get products
+    // Get products - only show published products (not 'new' status)
     const products = await Product.findAll({
-      where: { authorId: id, isActive: true },
+      where: { 
+        authorId: id, 
+        isActive: true,
+        status: 'published'
+      },
       include: [
         { model: require('../models').Category, as: 'category', attributes: ['id', 'name', 'icon'] }
       ],
@@ -265,7 +269,11 @@ exports.getJournalistById = async (req, res) => {
     });
 
     const postsCount = await Product.count({
-      where: { authorId: id, isActive: true }
+      where: { 
+        authorId: id, 
+        isActive: true,
+        status: 'published'
+      }
     });
 
     // Get real follower count

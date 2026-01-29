@@ -11,7 +11,11 @@ export const metadata: Metadata = {
   title: 'Контент Дэлгүүр - Бүх төрлийн контент нэг дороос',
   description: 'Реферат, дипломын ажил, тоглоом, програм хангамж болон бусад бүх төрлийн контент',
   icons: {
-    icon: '/tbarimt.jpeg',
+    icon: [
+      { url: '/fav.png', type: 'image/png' },
+    ],
+    shortcut: '/fav.png',
+    apple: '/fav.png',
   },
 }
 
