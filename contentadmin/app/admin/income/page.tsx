@@ -11,8 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calendar, DollarSign, ShoppingCart, CreditCard, Download, Filter, Loader2 } from "lucide-react";
 import { incomeApi } from "@/lib/api";
 
-// Line Chart Component
+// Line Chart Component with improved tooltips
 function DailyIncomeChart({ data, formatCurrency }: { data: DailyChartData[]; formatCurrency: (amount: number) => string }) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  const [chartContainer, setChartContainer] = useState<HTMLDivElement | null>(null);
+
   if (!data || data.length === 0) return null;
 
   // Calculate max value across all three series
@@ -64,7 +68,52 @@ function DailyIncomeChart({ data, formatCurrency }: { data: DailyChartData[]; fo
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full relative" ref={setChartContainer}>
+      {/* Tooltip */}
+      {hoveredIndex !== null && tooltipPosition && data[hoveredIndex] && (
+        <div
+          className="absolute z-50 bg-gray-900 text-white p-3 rounded-lg shadow-2xl pointer-events-none min-w-[200px]"
+          style={{
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y - 140}px`,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <div className="text-sm font-semibold mb-2 border-b border-gray-700 pb-2 text-center">
+            {new Date(data[hoveredIndex].date).toLocaleDateString('mn-MN', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </div>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span>Гишүүнчлэл:</span>
+              </div>
+              <span className="font-semibold">{formatCurrency(data[hoveredIndex].subscription)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span>Худалдан авалт:</span>
+              </div>
+              <span className="font-semibold">{formatCurrency(data[hoveredIndex].purchase)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                <span>Unique:</span>
+              </div>
+              <span className="font-semibold">{formatCurrency(data[hoveredIndex].isUnique)}</span>
+            </div>
+            <div className="pt-2 mt-2 border-t border-gray-700 font-bold text-center text-sm">
+              Нийт: {formatCurrency(data[hoveredIndex].total)}
+            </div>
+          </div>
+        </div>
+      )}
       <svg 
         viewBox={`0 0 ${chartAreaWidth} ${chartHeight}`} 
         preserveAspectRatio="xMidYMid meet"
@@ -144,24 +193,78 @@ function DailyIncomeChart({ data, formatCurrency }: { data: DailyChartData[]; fo
           className="hover:stroke-[#d97706] transition-colors"
         />
 
+        {/* Interactive hover area for tooltips */}
+        {data.map((day, index) => {
+          const x = getX(index, data.length);
+          const hoverAreaWidth = chartAreaWidth / data.length;
+          
+          return (
+            <rect
+              key={`hover-${day.date}`}
+              x={x - hoverAreaWidth / 2}
+              y={padding.top}
+              width={hoverAreaWidth}
+              height={chartAreaHeight}
+              fill="transparent"
+              className="cursor-pointer"
+              onMouseEnter={(e) => {
+                setHoveredIndex(index);
+                if (chartContainer) {
+                  const containerRect = chartContainer.getBoundingClientRect();
+                  const xPercent = (x / chartAreaWidth);
+                  setTooltipPosition({ 
+                    x: containerRect.left + (containerRect.width * xPercent), 
+                    y: containerRect.top + 20
+                  });
+                } else {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setTooltipPosition({ 
+                    x: rect.left + rect.width / 2, 
+                    y: rect.top - 10
+                  });
+                }
+              }}
+              onMouseLeave={() => {
+                setHoveredIndex(null);
+                setTooltipPosition(null);
+              }}
+            />
+          );
+        })}
+
         {/* Data points */}
         {data.map((day, index) => {
           const x = getX(index, data.length);
+          const isHovered = hoveredIndex === index;
           
           return (
             <g key={day.date}>
+              {/* Vertical line on hover */}
+              {isHovered && (
+                <line
+                  x1={x}
+                  y1={padding.top}
+                  x2={x}
+                  y2={padding.top + chartAreaHeight}
+                  stroke="#6b7280"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
+                  opacity="0.5"
+                />
+              )}
+              
               {/* Subscription point */}
               {day.subscription > 0 && (
                 <circle
                   cx={x}
                   cy={getY(day.subscription)}
-                  r="4"
+                  r={isHovered ? "6" : "4"}
                   fill="#3b82f6"
                   stroke="white"
-                  strokeWidth="2"
-                  className="hover:r-6 transition-all cursor-pointer"
+                  strokeWidth={isHovered ? "3" : "2"}
+                  className="transition-all cursor-pointer"
                 >
-                  <title>Захиалга: {formatCurrency(day.subscription)}</title>
+                  <title>Гишүүнчлэл: {formatCurrency(day.subscription)}</title>
                 </circle>
               )}
               
@@ -170,11 +273,11 @@ function DailyIncomeChart({ data, formatCurrency }: { data: DailyChartData[]; fo
                 <circle
                   cx={x}
                   cy={getY(day.purchase)}
-                  r="4"
+                  r={isHovered ? "6" : "4"}
                   fill="#10b981"
                   stroke="white"
-                  strokeWidth="2"
-                  className="hover:r-6 transition-all cursor-pointer"
+                  strokeWidth={isHovered ? "3" : "2"}
+                  className="transition-all cursor-pointer"
                 >
                   <title>Худалдан авалт: {formatCurrency(day.purchase)}</title>
                 </circle>
@@ -185,11 +288,11 @@ function DailyIncomeChart({ data, formatCurrency }: { data: DailyChartData[]; fo
                 <circle
                   cx={x}
                   cy={getY(day.isUnique)}
-                  r="4"
+                  r={isHovered ? "6" : "4"}
                   fill="#f59e0b"
                   stroke="white"
-                  strokeWidth="2"
-                  className="hover:r-6 transition-all cursor-pointer"
+                  strokeWidth={isHovered ? "3" : "2"}
+                  className="transition-all cursor-pointer"
                 >
                   <title>Unique: {formatCurrency(day.isUnique)}</title>
                 </circle>
@@ -210,19 +313,20 @@ function DailyIncomeChart({ data, formatCurrency }: { data: DailyChartData[]; fo
           );
         })}
 
-        {/* Legend */}
-        <g transform={`translate(${chartAreaWidth - padding.right - 120}, ${padding.top})`}>
+        {/* Enhanced Legend */}
+        <g transform={`translate(${chartAreaWidth - padding.right - 150}, ${padding.top})`}>
+          <rect x="-10" y="-5" width="140" height="70" fill="white" fillOpacity="0.9" rx="4" stroke="#e5e7eb" strokeWidth="1" />
           <g>
             <line x1={0} y1={8} x2={20} y2={8} stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" />
-            <text x={28} y={11} className="text-xs fill-gray-700" fontSize="12">Захиалга</text>
+            <text x={28} y={11} className="text-xs fill-gray-700 font-semibold" fontSize="12">Гишүүнчлэл</text>
           </g>
           <g transform="translate(0, 20)">
             <line x1={0} y1={8} x2={20} y2={8} stroke="#10b981" strokeWidth="3" strokeLinecap="round" />
-            <text x={28} y={11} className="text-xs fill-gray-700" fontSize="12">Худалдан авалт</text>
+            <text x={28} y={11} className="text-xs fill-gray-700 font-semibold" fontSize="12">Худалдан авалт</text>
           </g>
           <g transform="translate(0, 40)">
             <line x1={0} y1={8} x2={20} y2={8} stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
-            <text x={28} y={11} className="text-xs fill-gray-700" fontSize="12">Unique</text>
+            <text x={28} y={11} className="text-xs fill-gray-700 font-semibold" fontSize="12">Unique</text>
           </g>
         </g>
       </svg>
@@ -403,16 +507,21 @@ export default function IncomePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Орлогын мэдээлэл</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Орлогын мэдээлэл
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">
             Бүх захиалга болон захиалгын орлогын мэдээлэл
           </p>
         </div>
         {data && (
-          <Button onClick={exportToCSV} variant="outline">
+          <Button 
+            onClick={exportToCSV} 
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+          >
             <Download className="w-4 h-4 mr-2" />
             CSV татаж авах
           </Button>
@@ -420,39 +529,39 @@ export default function IncomePage() {
       </div>
 
       {/* Date Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="border-2 border-blue-200 dark:border-blue-800 shadow-xl bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-gray-900">
+        <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-lg">
+          <CardTitle className="flex items-center gap-2 text-white">
             <Filter className="w-5 h-5" />
             Шүүлт
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="startDate">Эхлэх огноо</Label>
+              <Label htmlFor="startDate" className="text-gray-700 dark:text-gray-300 font-semibold">Эхлэх огноо</Label>
               <Input
                 id="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1"
+                className="mt-1 border-2 border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
             </div>
             <div>
-              <Label htmlFor="endDate">Дуусах огноо</Label>
+              <Label htmlFor="endDate" className="text-gray-700 dark:text-gray-300 font-semibold">Дуусах огноо</Label>
               <Input
                 id="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="mt-1"
+                className="mt-1 border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
               />
             </div>
             <div className="flex items-end">
               <Button 
                 onClick={fetchIncomeData} 
-                className="w-full"
+                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 disabled={loading || !startDate || !endDate}
               >
                 {loading ? (
@@ -469,68 +578,201 @@ export default function IncomePage() {
         </CardContent>
       </Card>
 
+      {/* Key Metrics Row - ARPU, AOV, Revenue Structure */}
+      {data && (
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+          {/* ARPU Card */}
+          <Card className="border-2 border-cyan-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-cyan-50 via-blue-50 to-indigo-50 dark:from-cyan-900/20 dark:via-blue-900/20 dark:to-indigo-900/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">ARPU</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg">
+                <DollarSign className="h-5 w-5 text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+                {(() => {
+                  const uniqueUsers = new Set([
+                    ...(data.subscriptions || []).map(s => s.user?.id).filter(Boolean),
+                    ...(data.purchases || []).map(p => p.user?.id).filter(Boolean),
+                    ...(data.isUnique || []).map(u => u.user?.id).filter(Boolean),
+                  ]).size;
+                  return uniqueUsers > 0 
+                    ? formatCurrency(data.summary.grandTotal / uniqueUsers)
+                    : formatCurrency(0);
+                })()}
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                Нэг хэрэглэгчээс дунджаар орж буй орлого
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* AOV Card */}
+          <Card className="border-2 border-violet-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-900/20 dark:via-purple-900/20 dark:to-fuchsia-900/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">AOV</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
+                <ShoppingCart className="h-5 w-5 text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+                {(() => {
+                  const totalOrders = data.summary.subscriptionCount + data.summary.purchaseCount + (data.summary.isUniqueCount || 0);
+                  return totalOrders > 0 
+                    ? formatCurrency(data.summary.grandTotal / totalOrders)
+                    : formatCurrency(0);
+                })()}
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                Нэг захиалгын дундаж дүн
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Revenue Structure - Subscription % */}
+          <Card className="border-2 border-blue-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Гишүүнчлэл %</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                <CreditCard className="h-5 w-5 text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                {data.summary.grandTotal > 0 
+                  ? ((data.summary.subscriptionTotal / data.summary.grandTotal) * 100).toFixed(1)
+                  : '0.0'}%
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                Орлогын бүтэц
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Revenue Structure - Purchase % */}
+          <Card className="border-2 border-green-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-lime-900/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Худалдан авалт %</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+                <ShoppingCart className="h-5 w-5 text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                {data.summary.grandTotal > 0 
+                  ? ((data.summary.purchaseTotal / data.summary.grandTotal) * 100).toFixed(1)
+                  : '0.0'}%
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                Орлогын бүтэц
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Revenue Structure - Unique % */}
+          <Card className="border-2 border-amber-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-900/20 dark:via-orange-900/20 dark:to-yellow-900/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Unique %</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">
+                <DollarSign className="h-5 w-5 text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                {data.summary.grandTotal > 0 
+                  ? (((data.summary.isUniqueTotal || 0) / data.summary.grandTotal) * 100).toFixed(1)
+                  : '0.0'}%
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                Орлогын бүтэц
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Summary Cards */}
       {data && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card>
+          <Card className="border-2 border-gradient-to-br from-emerald-400 to-teal-600 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-900/20 dark:via-teal-900/20 dark:to-cyan-900/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Нийт орлого</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Нийт орлого</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-lg">
+                <DollarSign className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(data.summary.grandTotal)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                {formatCurrency(data.summary.grandTotal)}
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
                 {data.summary.subscriptionCount + data.summary.purchaseCount + (data.summary.isUniqueCount || 0)} захиалга
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-blue-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Захиалгын орлого</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Гишүүнчлэлийн орлого</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                <CreditCard className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(data.summary.subscriptionTotal)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                {formatCurrency(data.summary.subscriptionTotal)}
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
                 {data.summary.subscriptionCount} захиалга
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-green-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-lime-900/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Худалдан авалтын орлого</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Файлын орлого</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+                <ShoppingCart className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(data.summary.purchaseTotal)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                {formatCurrency(data.summary.purchaseTotal)}
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
                 {data.summary.purchaseCount} захиалга
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-amber-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-900/20 dark:via-orange-900/20 dark:to-yellow-900/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unique орлого</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Ads орлого</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">
+                <DollarSign className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(data.summary.isUniqueTotal || 0)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                {formatCurrency(data.summary.isUniqueTotal || 0)}
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
                 {data.summary.isUniqueCount || 0} захиалга
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-2 border-purple-400 shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-rose-900/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Огнооны хүрээ</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Огнооны хүрээ</CardTitle>
+              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg">
+                <Calendar className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-sm font-medium">
+              <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 {startDate && endDate ? (
                   <>
                     {new Date(startDate).toLocaleDateString('mn-MN')} - {new Date(endDate).toLocaleDateString('mn-MN')}
@@ -546,9 +788,9 @@ export default function IncomePage() {
 
       {/* Daily Chart */}
       {data && data.dailyChart && data.dailyChart.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Өдрийн орлогын харьцуулалт</CardTitle>
+        <Card className="border-2 border-indigo-200 dark:border-indigo-800 shadow-2xl bg-gradient-to-br from-white via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-indigo-900/20 dark:to-purple-900/20">
+          <CardHeader className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-t-lg">
+            <CardTitle className="text-white text-xl font-bold">Өдрийн орлогын харьцуулалт</CardTitle>
           </CardHeader>
           <CardContent className="w-full p-6">
             <div className="w-full min-h-[400px]">
@@ -567,48 +809,79 @@ export default function IncomePage() {
         </Card>
       ) : data ? (
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">Бүгд</TabsTrigger>
-            <TabsTrigger value="subscription">Захиалга</TabsTrigger>
-            <TabsTrigger value="purchase">Худалдан авалт</TabsTrigger>
-            <TabsTrigger value="isUnique">Unique</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 p-1 rounded-lg">
+            <TabsTrigger 
+              value="all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white font-semibold transition-all"
+            >
+              Бүгд
+            </TabsTrigger>
+            <TabsTrigger 
+              value="subscription"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-blue-600 data-[state=active]:text-white font-semibold transition-all"
+            >
+              Захиалга
+            </TabsTrigger>
+            <TabsTrigger 
+              value="purchase"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white font-semibold transition-all"
+            >
+              Худалдан авалт
+            </TabsTrigger>
+            <TabsTrigger 
+              value="isUnique"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white font-semibold transition-all"
+            >
+              Unique
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
             {/* Subscription Orders */}
             {data.subscriptions && data.subscriptions.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Захиалгын орлого</CardTitle>
+              <Card className="border-2 border-indigo-200 dark:border-indigo-800 shadow-xl bg-gradient-to-br from-white to-indigo-50 dark:from-gray-800 dark:to-indigo-900/20">
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-t-lg">
+                  <CardTitle className="text-white text-lg font-bold">Захиалгын орлого</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Хэрэглэгч</TableHead>
-                        <TableHead>Захиалгын төрөл</TableHead>
-                        <TableHead>Дүн</TableHead>
-                        <TableHead>Төлбөрийн арга</TableHead>
-                        <TableHead>Огноо</TableHead>
+                      <TableRow className="bg-gradient-to-r from-indigo-100 to-blue-100 dark:from-indigo-900/50 dark:to-blue-900/50">
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">ID</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Хэрэглэгч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Захиалгын төрөл</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Дүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Төлбөрийн арга</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Огноо</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.subscriptions.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">#{order.id}</TableCell>
+                      {data.subscriptions.map((order, index) => (
+                        <TableRow 
+                          key={order.id}
+                          className={`hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 dark:hover:from-indigo-900/30 dark:hover:to-blue-900/30 transition-colors ${
+                            index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                          }`}
+                        >
+                          <TableCell className="font-bold text-indigo-600 dark:text-indigo-400">#{order.id}</TableCell>
                           <TableCell>
-                            {order.user?.fullName || order.user?.username || 'Guest'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.user?.fullName || order.user?.username || 'Guest'}
+                            </div>
                             {order.user?.email && (
-                              <div className="text-xs text-muted-foreground">{order.user.email}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{order.user.email}</div>
                             )}
                           </TableCell>
                           <TableCell>
-                            {order.membership?.name || 'N/A'}
+                            <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                              {order.membership?.name || 'N/A'}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="font-semibold">{formatCurrency(order.amount)}</TableCell>
+                          <TableCell className="font-bold text-green-600 dark:text-green-400 text-lg">
+                            {formatCurrency(order.amount)}
+                          </TableCell>
                           <TableCell>{getPaymentMethodBadge(order.paymentMethod)}</TableCell>
-                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">{formatDate(order.createdAt)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -619,42 +892,55 @@ export default function IncomePage() {
 
             {/* Purchase Orders */}
             {data.purchases && data.purchases.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Худалдан авалтын орлого</CardTitle>
+              <Card className="border-2 border-green-200 dark:border-green-800 shadow-xl bg-gradient-to-br from-white to-green-50 dark:from-gray-800 dark:to-green-900/20">
+                <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg">
+                  <CardTitle className="text-white text-lg font-bold">Худалдан авалтын орлого</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Хэрэглэгч</TableHead>
-                        <TableHead>Бүтээгдэхүүн</TableHead>
-                        <TableHead>Зохиогч</TableHead>
-                        <TableHead>Дүн</TableHead>
-                        <TableHead>Төлбөрийн арга</TableHead>
-                        <TableHead>Огноо</TableHead>
+                      <TableRow className="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50">
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">ID</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Хэрэглэгч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Бүтээгдэхүүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Зохиогч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Дүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Төлбөрийн арга</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Огноо</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.purchases.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">#{order.id}</TableCell>
+                      {data.purchases.map((order, index) => (
+                        <TableRow 
+                          key={order.id}
+                          className={`hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 transition-colors ${
+                            index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                          }`}
+                        >
+                          <TableCell className="font-bold text-green-600 dark:text-green-400">#{order.id}</TableCell>
                           <TableCell>
-                            {order.user?.fullName || order.user?.username || 'Guest'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.user?.fullName || order.user?.username || 'Guest'}
+                            </div>
                             {order.user?.email && (
-                              <div className="text-xs text-muted-foreground">{order.user.email}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{order.user.email}</div>
                             )}
                           </TableCell>
                           <TableCell>
-                            {order.product?.title || 'N/A'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.product?.title || 'N/A'}
+                            </div>
                           </TableCell>
                           <TableCell>
-                            {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="font-semibold">{formatCurrency(order.amount)}</TableCell>
+                          <TableCell className="font-bold text-green-600 dark:text-green-400 text-lg">
+                            {formatCurrency(order.amount)}
+                          </TableCell>
                           <TableCell>{getPaymentMethodBadge(order.paymentMethod)}</TableCell>
-                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">{formatDate(order.createdAt)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -665,42 +951,55 @@ export default function IncomePage() {
 
             {/* isUnique Orders */}
             {data.isUnique && data.isUnique.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Unique орлого</CardTitle>
+              <Card className="border-2 border-amber-200 dark:border-amber-800 shadow-xl bg-gradient-to-br from-white to-amber-50 dark:from-gray-800 dark:to-amber-900/20">
+                <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-t-lg">
+                  <CardTitle className="text-white text-lg font-bold">Unique орлого</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Хэрэглэгч</TableHead>
-                        <TableHead>Бүтээгдэхүүн</TableHead>
-                        <TableHead>Зохиогч</TableHead>
-                        <TableHead>Дүн</TableHead>
-                        <TableHead>Төлбөрийн арга</TableHead>
-                        <TableHead>Огноо</TableHead>
+                      <TableRow className="bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50">
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">ID</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Хэрэглэгч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Бүтээгдэхүүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Зохиогч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Дүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Төлбөрийн арга</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Огноо</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.isUnique.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">#{order.id}</TableCell>
+                      {data.isUnique.map((order, index) => (
+                        <TableRow 
+                          key={order.id}
+                          className={`hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 dark:hover:from-amber-900/30 dark:hover:to-orange-900/30 transition-colors ${
+                            index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                          }`}
+                        >
+                          <TableCell className="font-bold text-amber-600 dark:text-amber-400">#{order.id}</TableCell>
                           <TableCell>
-                            {order.user?.fullName || order.user?.username || 'Guest'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.user?.fullName || order.user?.username || 'Guest'}
+                            </div>
                             {order.user?.email && (
-                              <div className="text-xs text-muted-foreground">{order.user.email}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{order.user.email}</div>
                             )}
                           </TableCell>
                           <TableCell>
-                            {order.product?.title || 'N/A'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.product?.title || 'N/A'}
+                            </div>
                           </TableCell>
                           <TableCell>
-                            {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                            <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                              {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="font-semibold">{formatCurrency(order.amount)}</TableCell>
+                          <TableCell className="font-bold text-amber-600 dark:text-amber-400 text-lg">
+                            {formatCurrency(order.amount)}
+                          </TableCell>
                           <TableCell>{getPaymentMethodBadge(order.paymentMethod)}</TableCell>
-                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">{formatDate(order.createdAt)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -722,38 +1021,49 @@ export default function IncomePage() {
 
           <TabsContent value="subscription">
             {data.subscriptions && data.subscriptions.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Захиалгын орлого</CardTitle>
+              <Card className="border-2 border-indigo-200 dark:border-indigo-800 shadow-xl bg-gradient-to-br from-white to-indigo-50 dark:from-gray-800 dark:to-indigo-900/20">
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-t-lg">
+                  <CardTitle className="text-white text-lg font-bold">Захиалгын орлого</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Хэрэглэгч</TableHead>
-                        <TableHead>Захиалгын төрөл</TableHead>
-                        <TableHead>Дүн</TableHead>
-                        <TableHead>Төлбөрийн арга</TableHead>
-                        <TableHead>Огноо</TableHead>
+                      <TableRow className="bg-gradient-to-r from-indigo-100 to-blue-100 dark:from-indigo-900/50 dark:to-blue-900/50">
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">ID</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Хэрэглэгч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Захиалгын төрөл</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Дүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Төлбөрийн арга</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Огноо</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.subscriptions.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">#{order.id}</TableCell>
+                      {data.subscriptions.map((order, index) => (
+                        <TableRow 
+                          key={order.id}
+                          className={`hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 dark:hover:from-indigo-900/30 dark:hover:to-blue-900/30 transition-colors ${
+                            index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                          }`}
+                        >
+                          <TableCell className="font-bold text-indigo-600 dark:text-indigo-400">#{order.id}</TableCell>
                           <TableCell>
-                            {order.user?.fullName || order.user?.username || 'Guest'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.user?.fullName || order.user?.username || 'Guest'}
+                            </div>
                             {order.user?.email && (
-                              <div className="text-xs text-muted-foreground">{order.user.email}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{order.user.email}</div>
                             )}
                           </TableCell>
                           <TableCell>
-                            {order.membership?.name || 'N/A'}
+                            <Badge className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                              {order.membership?.name || 'N/A'}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="font-semibold">{formatCurrency(order.amount)}</TableCell>
+                          <TableCell className="font-bold text-green-600 dark:text-green-400 text-lg">
+                            {formatCurrency(order.amount)}
+                          </TableCell>
                           <TableCell>{getPaymentMethodBadge(order.paymentMethod)}</TableCell>
-                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">{formatDate(order.createdAt)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -761,9 +1071,9 @@ export default function IncomePage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="border-2 border-gray-200 dark:border-gray-700">
                 <CardContent className="flex items-center justify-center py-12">
-                  <p className="text-muted-foreground">Захиалгын орлого олдсонгүй</p>
+                  <p className="text-muted-foreground text-lg">Захиалгын орлого олдсонгүй</p>
                 </CardContent>
               </Card>
             )}
@@ -771,42 +1081,55 @@ export default function IncomePage() {
 
           <TabsContent value="purchase">
             {data.purchases && data.purchases.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Худалдан авалтын орлого</CardTitle>
+              <Card className="border-2 border-green-200 dark:border-green-800 shadow-xl bg-gradient-to-br from-white to-green-50 dark:from-gray-800 dark:to-green-900/20">
+                <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg">
+                  <CardTitle className="text-white text-lg font-bold">Худалдан авалтын орлого</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Хэрэглэгч</TableHead>
-                        <TableHead>Бүтээгдэхүүн</TableHead>
-                        <TableHead>Зохиогч</TableHead>
-                        <TableHead>Дүн</TableHead>
-                        <TableHead>Төлбөрийн арга</TableHead>
-                        <TableHead>Огноо</TableHead>
+                      <TableRow className="bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50">
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">ID</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Хэрэглэгч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Бүтээгдэхүүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Зохиогч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Дүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Төлбөрийн арга</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Огноо</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.purchases.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">#{order.id}</TableCell>
+                      {data.purchases.map((order, index) => (
+                        <TableRow 
+                          key={order.id}
+                          className={`hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-green-900/30 dark:hover:to-emerald-900/30 transition-colors ${
+                            index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                          }`}
+                        >
+                          <TableCell className="font-bold text-green-600 dark:text-green-400">#{order.id}</TableCell>
                           <TableCell>
-                            {order.user?.fullName || order.user?.username || 'Guest'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.user?.fullName || order.user?.username || 'Guest'}
+                            </div>
                             {order.user?.email && (
-                              <div className="text-xs text-muted-foreground">{order.user.email}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{order.user.email}</div>
                             )}
                           </TableCell>
                           <TableCell>
-                            {order.product?.title || 'N/A'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.product?.title || 'N/A'}
+                            </div>
                           </TableCell>
                           <TableCell>
-                            {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="font-semibold">{formatCurrency(order.amount)}</TableCell>
+                          <TableCell className="font-bold text-green-600 dark:text-green-400 text-lg">
+                            {formatCurrency(order.amount)}
+                          </TableCell>
                           <TableCell>{getPaymentMethodBadge(order.paymentMethod)}</TableCell>
-                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">{formatDate(order.createdAt)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -814,9 +1137,9 @@ export default function IncomePage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="border-2 border-gray-200 dark:border-gray-700">
                 <CardContent className="flex items-center justify-center py-12">
-                  <p className="text-muted-foreground">Худалдан авалтын орлого олдсонгүй</p>
+                  <p className="text-muted-foreground text-lg">Худалдан авалтын орлого олдсонгүй</p>
                 </CardContent>
               </Card>
             )}
@@ -824,42 +1147,55 @@ export default function IncomePage() {
 
           <TabsContent value="isUnique">
             {data.isUnique && data.isUnique.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Unique орлого</CardTitle>
+              <Card className="border-2 border-amber-200 dark:border-amber-800 shadow-xl bg-gradient-to-br from-white to-amber-50 dark:from-gray-800 dark:to-amber-900/20">
+                <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-t-lg">
+                  <CardTitle className="text-white text-lg font-bold">Unique орлого</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Хэрэглэгч</TableHead>
-                        <TableHead>Бүтээгдэхүүн</TableHead>
-                        <TableHead>Зохиогч</TableHead>
-                        <TableHead>Дүн</TableHead>
-                        <TableHead>Төлбөрийн арга</TableHead>
-                        <TableHead>Огноо</TableHead>
+                      <TableRow className="bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50">
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">ID</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Хэрэглэгч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Бүтээгдэхүүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Зохиогч</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Дүн</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Төлбөрийн арга</TableHead>
+                        <TableHead className="font-bold text-gray-700 dark:text-gray-300">Огноо</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.isUnique.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">#{order.id}</TableCell>
+                      {data.isUnique.map((order, index) => (
+                        <TableRow 
+                          key={order.id}
+                          className={`hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 dark:hover:from-amber-900/30 dark:hover:to-orange-900/30 transition-colors ${
+                            index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'
+                          }`}
+                        >
+                          <TableCell className="font-bold text-amber-600 dark:text-amber-400">#{order.id}</TableCell>
                           <TableCell>
-                            {order.user?.fullName || order.user?.username || 'Guest'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.user?.fullName || order.user?.username || 'Guest'}
+                            </div>
                             {order.user?.email && (
-                              <div className="text-xs text-muted-foreground">{order.user.email}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{order.user.email}</div>
                             )}
                           </TableCell>
                           <TableCell>
-                            {order.product?.title || 'N/A'}
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {order.product?.title || 'N/A'}
+                            </div>
                           </TableCell>
                           <TableCell>
-                            {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                            <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                              {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="font-semibold">{formatCurrency(order.amount)}</TableCell>
+                          <TableCell className="font-bold text-amber-600 dark:text-amber-400 text-lg">
+                            {formatCurrency(order.amount)}
+                          </TableCell>
                           <TableCell>{getPaymentMethodBadge(order.paymentMethod)}</TableCell>
-                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">{formatDate(order.createdAt)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -867,9 +1203,9 @@ export default function IncomePage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="border-2 border-gray-200 dark:border-gray-700">
                 <CardContent className="flex items-center justify-center py-12">
-                  <p className="text-muted-foreground">Unique орлого олдсонгүй</p>
+                  <p className="text-muted-foreground text-lg">Unique орлого олдсонгүй</p>
                 </CardContent>
               </Card>
             )}

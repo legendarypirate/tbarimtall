@@ -1403,6 +1403,9 @@ exports.getDashboardStats = async (req, res) => {
       totalJournalists,
       totalProducts,
       totalOrders,
+      newOrders,
+      activeOrders,
+      cancelledOrders,
       totalRevenue,
       todayOrders,
       pendingProducts,
@@ -1411,7 +1414,10 @@ exports.getDashboardStats = async (req, res) => {
       User.count({ where: { isActive: true } }),
       User.count({ where: { role: 'journalist', isActive: true } }),
       Product.count({ where: { isActive: true } }),
-      Order.count({ where: { status: 'completed' } }),
+      Order.count(), // Total orders (all statuses)
+      Order.count({ where: { status: 'pending' } }), // New orders (pending)
+      Order.count({ where: { status: 'completed' } }), // Active orders (completed)
+      Order.count({ where: { status: 'cancelled' } }), // Cancelled orders
       Order.sum('amount', { where: { status: 'completed' } }) || 0,
       Order.count({
         where: {
@@ -1425,6 +1431,18 @@ exports.getDashboardStats = async (req, res) => {
       Order.count({ where: { paymentMethod: 'qpay', status: 'completed' } })
     ]);
 
+    // Count registered users (same as totalUsers - users with accounts)
+    const registeredUsers = totalUsers;
+
+    // Count guest buyers - each unauthenticated purchase counts as 1
+    // Count completed orders where userId is null
+    const guestBuyers = await Order.count({
+      where: {
+        userId: null,
+        status: 'completed'
+      }
+    });
+
     const todayRevenue = await Order.sum('amount', {
       where: {
         status: 'completed',
@@ -1437,9 +1455,14 @@ exports.getDashboardStats = async (req, res) => {
     res.json({
       stats: {
         totalUsers,
+        registeredUsers,
+        guestBuyers,
         totalJournalists,
         totalProducts,
         totalOrders,
+        newOrders,
+        activeOrders,
+        cancelledOrders,
         totalRevenue: parseFloat(totalRevenue) || 0,
         todayRevenue: parseFloat(todayRevenue) || 0,
         todayOrders,
@@ -1448,6 +1471,192 @@ exports.getDashboardStats = async (req, res) => {
       }
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get Admin Actions Log
+exports.getAdminActionsLog = async (req, res) => {
+  try {
+    const { Product, Order } = require('../models');
+    const { Op } = require('sequelize');
+    
+    // Get recent product creations (last 30 days)
+    const recentProducts = await Product.findAll({
+      where: {
+        createdAt: {
+          [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        }
+      },
+      order: [['createdAt', 'DESC']],
+      limit: 50,
+      attributes: ['id', 'title', 'price', 'createdAt', 'updatedAt'],
+      include: [{
+        model: require('../models').User,
+        as: 'author',
+        attributes: ['id', 'username', 'fullName']
+      }]
+    });
+
+    // Get recent price changes (products updated in last 30 days)
+    const priceChanges = [];
+    for (const product of recentProducts) {
+      if (product.updatedAt > product.createdAt) {
+        // This product was updated after creation, likely a price change
+        priceChanges.push({
+          id: product.id,
+          title: product.title,
+          currentPrice: product.price,
+          updatedAt: product.updatedAt
+        });
+      }
+    }
+
+    // Get recent order status changes (last 30 days)
+    const recentOrders = await Order.findAll({
+      where: {
+        updatedAt: {
+          [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        },
+        status: {
+          [Op.in]: ['processing', 'shipped', 'delivered', 'completed']
+        }
+      },
+      order: [['updatedAt', 'DESC']],
+      limit: 50,
+      attributes: ['id', 'status', 'amount', 'updatedAt'],
+      include: [{
+        model: Product,
+        as: 'product',
+        attributes: ['id', 'title']
+      }]
+    });
+
+    // Format actions log
+    const actions = [];
+    
+    // Add product creations
+    recentProducts.forEach(product => {
+      actions.push({
+        id: `product-${product.id}`,
+        action: 'Контент нэмсэн',
+        admin: product.author?.fullName || product.author?.username || 'System',
+        target: product.title || `Product #${product.id}`,
+        timestamp: product.createdAt
+      });
+    });
+
+    // Add price changes
+    priceChanges.forEach(product => {
+      actions.push({
+        id: `price-${product.id}`,
+        action: 'Үнэ өөрчилсөн',
+        admin: 'Admin',
+        target: product.title || `Product #${product.id}`,
+        timestamp: product.updatedAt
+      });
+    });
+
+    // Add order edits
+    recentOrders.forEach(order => {
+      actions.push({
+        id: `order-${order.id}`,
+        action: 'Захиалга зассан',
+        admin: 'Admin',
+        target: order.product?.title || `Order #${order.id}`,
+        status: order.status,
+        timestamp: order.updatedAt
+      });
+    });
+
+    // Sort by timestamp descending
+    actions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    res.json({
+      actions: actions.slice(0, 20) // Return last 20 actions
+    });
+  } catch (error) {
+    console.error('Error fetching admin actions log:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get System Health
+exports.getSystemHealth = async (req, res) => {
+  try {
+    const axios = require('axios');
+    const { DownloadToken } = require('../models');
+    const { Op } = require('sequelize');
+
+    // Check QPay API status
+    let paymentApiStatus = 'unknown';
+    let paymentApiMessage = '';
+    
+    try {
+      const QPAY_BASE_URL = process.env.QPAY_BASE_URL || 'https://merchant-sandbox.qpay.mn';
+      const QPAY_USERNAME = process.env.QPAY_USERNAME;
+      const QPAY_PASSWORD = process.env.QPAY_PASSWORD;
+
+      if (QPAY_USERNAME && QPAY_PASSWORD) {
+        // Try to get QPay token (light check)
+        const response = await axios.post(
+          `${QPAY_BASE_URL}/auth/token`,
+          {},
+          {
+            auth: {
+              username: QPAY_USERNAME,
+              password: QPAY_PASSWORD
+            },
+            timeout: 5000 // 5 second timeout
+          }
+        );
+
+        if (response.data && response.data.access_token) {
+          paymentApiStatus = 'healthy';
+          paymentApiMessage = 'QPay API is operational';
+        } else {
+          paymentApiStatus = 'warning';
+          paymentApiMessage = 'QPay API responded but no token received';
+        }
+      } else {
+        paymentApiStatus = 'warning';
+        paymentApiMessage = 'QPay credentials not configured';
+      }
+    } catch (error) {
+      paymentApiStatus = 'error';
+      paymentApiMessage = error.response?.status 
+        ? `QPay API error: ${error.response.status}` 
+        : `QPay API error: ${error.message}`;
+    }
+
+    // Count download errors (expired or used tokens in last 24 hours)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const downloadErrorCount = await DownloadToken.count({
+      where: {
+        [Op.or]: [
+          { isUsed: true },
+          { expiresAt: { [Op.lt]: new Date() } }
+        ],
+        updatedAt: {
+          [Op.gte]: oneDayAgo
+        }
+      }
+    });
+
+    res.json({
+      health: {
+        paymentApi: {
+          status: paymentApiStatus,
+          message: paymentApiMessage
+        },
+        downloadErrors: {
+          count: downloadErrorCount,
+          period: '24 hours'
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching system health:', error);
     res.status(500).json({ error: error.message });
   }
 };

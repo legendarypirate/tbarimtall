@@ -54,6 +54,12 @@ export const dashboardApi = {
   getStats: async () => {
     return apiCall('/api/admin/dashboard/stats');
   },
+  getAdminActionsLog: async () => {
+    return apiCall('/api/admin/dashboard/actions-log');
+  },
+  getSystemHealth: async () => {
+    return apiCall('/api/admin/dashboard/system-health');
+  },
 };
 
 // Income API

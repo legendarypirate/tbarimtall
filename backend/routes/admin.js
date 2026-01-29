@@ -31,6 +31,8 @@ router.use(authorize('admin'));
 
 // Dashboard
 router.get('/dashboard/stats', adminController.getDashboardStats);
+router.get('/dashboard/actions-log', adminController.getAdminActionsLog);
+router.get('/dashboard/system-health', adminController.getSystemHealth);
 
 // Income Analytics
 router.get('/income', adminController.getIncomeAnalytics);
