@@ -45,7 +45,11 @@ exports.getCategoryById = async (req, res) => {
 
     // Get products count
     const productsCount = await Product.count({
-      where: { categoryId: id, isActive: true }
+      where: { 
+        categoryId: id, 
+        status: 'published', // Only count published products
+        isActive: true 
+      }
     });
 
     res.json({ category, productsCount });
@@ -61,7 +65,11 @@ exports.getCategoryProducts = async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     const { count, rows } = await Product.findAndCountAll({
-      where: { categoryId: id, isActive: true },
+      where: { 
+        categoryId: id, 
+        status: 'published', // Only show published products
+        isActive: true 
+      },
       include: [
         { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
         { model: require('../models').User, as: 'author', attributes: ['id', 'username', 'fullName', 'avatar'] }
@@ -104,7 +112,11 @@ exports.getSubcategoryById = async (req, res) => {
 
     // Get products count
     const productsCount = await Product.count({
-      where: { subcategoryId: id, isActive: true }
+      where: { 
+        subcategoryId: id, 
+        status: 'published', // Only count published products
+        isActive: true 
+      }
     });
 
     res.json({ subcategory, productsCount });
@@ -121,7 +133,11 @@ exports.getSubcategoryProducts = async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     const { count, rows } = await Product.findAndCountAll({
-      where: { subcategoryId: id, isActive: true },
+      where: { 
+        subcategoryId: id, 
+        status: 'published', // Only show published products
+        isActive: true 
+      },
       include: [
         { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
         { model: Subcategory, as: 'subcategory', attributes: ['id', 'name'], required: false },
