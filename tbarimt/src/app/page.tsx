@@ -372,7 +372,24 @@ export default function Home() {
       }
     } catch (error: any) {
       console.error('Error creating membership invoice:', error)
-      setPaymentError(error.message || 'Төлбөрийн хуудас үүсгэхэд алдаа гарлаа')
+      
+      // Check if error is due to authentication (401, Unauthorized, or Invalid token)
+      const errorMessage = error.message || ''
+      const isAuthError = 
+        errorMessage.includes('401') || 
+        errorMessage.includes('Unauthorized') || 
+        errorMessage.includes('Invalid token') ||
+        errorMessage.toLowerCase().includes('unauthorized')
+      
+      if (isAuthError) {
+        // Clear invalid token and show auth modal
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setShowAuthModal(true)
+        setPaymentError(null)
+      } else {
+        setPaymentError(errorMessage || 'Төлбөрийн хуудас үүсгэхэд алдаа гарлаа')
+      }
     } finally {
       setIsCreatingInvoice(false)
     }
@@ -1904,6 +1921,25 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Auth Modal - Always available for subscription buttons */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => {
+          setShowAuthModal(false)
+          // Clear OAuth flag when modal is closed
+          if (sessionStorage.getItem('oauth_flow_started')) {
+            sessionStorage.removeItem('oauth_flow_started')
+            sessionStorage.removeItem('oauth_flow_timestamp')
+          }
+        }}
+        onSelectGoogle={() => {
+          setShowAuthModal(false)
+        }}
+        onSelectFacebook={() => {
+          setShowAuthModal(false)
+        }}
+      />
 
       <Footer />
     </main>
