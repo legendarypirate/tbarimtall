@@ -1500,11 +1500,44 @@ exports.getIncomeAnalytics = async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
     
-    // Get purchase income (product orders)
+    // Get purchase income (product orders, excluding isUnique payments)
     const purchaseOrders = await Order.findAll({
       where: {
         ...baseFilter,
-        productId: { [Op.ne]: null }
+        productId: { [Op.ne]: null },
+        amount: { [Op.ne]: 2000 } // Exclude isUnique payments (2000₮)
+      },
+      include: [
+        {
+          model: Product,
+          as: 'product',
+          required: false,
+          attributes: ['id', 'title', 'price'],
+          include: [
+            {
+              model: User,
+              as: 'author',
+              required: false,
+              attributes: ['id', 'username', 'fullName']
+            }
+          ]
+        },
+        {
+          model: User,
+          as: 'user',
+          required: false,
+          attributes: ['id', 'username', 'fullName', 'email']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    
+    // Get isUnique income (orders with amount = 2000₮ and productId set)
+    const isUniqueOrders = await Order.findAll({
+      where: {
+        ...baseFilter,
+        productId: { [Op.ne]: null },
+        amount: 2000
       },
       include: [
         {
@@ -1540,20 +1573,66 @@ exports.getIncomeAnalytics = async (req, res) => {
       return sum + parseFloat(order.amount || 0);
     }, 0);
     
-    const grandTotal = subscriptionTotal + purchaseTotal;
+    const isUniqueTotal = isUniqueOrders.reduce((sum, order) => {
+      return sum + parseFloat(order.amount || 0);
+    }, 0);
+    
+    const grandTotal = subscriptionTotal + purchaseTotal + isUniqueTotal;
+    
+    // Generate daily chart data
+    const dailyData = {};
+    const allOrders = [
+      ...subscriptionOrders.map(o => ({ ...o.toJSON(), type: 'subscription' })),
+      ...purchaseOrders.map(o => ({ ...o.toJSON(), type: 'purchase' })),
+      ...isUniqueOrders.map(o => ({ ...o.toJSON(), type: 'isUnique' }))
+    ];
+    
+    allOrders.forEach(order => {
+      const date = new Date(order.createdAt).toISOString().split('T')[0]; // YYYY-MM-DD
+      if (!dailyData[date]) {
+        dailyData[date] = {
+          date,
+          subscription: 0,
+          purchase: 0,
+          isUnique: 0,
+          total: 0
+        };
+      }
+      const amount = parseFloat(order.amount || 0);
+      dailyData[date][order.type] += amount;
+      dailyData[date].total += amount;
+    });
+    
+    // Convert to array and sort by date
+    const dailyChartData = Object.values(dailyData)
+      .map(day => ({
+        date: day.date,
+        subscription: parseFloat(day.subscription.toFixed(2)),
+        purchase: parseFloat(day.purchase.toFixed(2)),
+        isUnique: parseFloat(day.isUnique.toFixed(2)),
+        total: parseFloat(day.total.toFixed(2))
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
     
     // Format response based on type filter
     let response = {
       summary: {
         subscriptionTotal: parseFloat(subscriptionTotal.toFixed(2)),
         purchaseTotal: parseFloat(purchaseTotal.toFixed(2)),
+        isUniqueTotal: parseFloat(isUniqueTotal.toFixed(2)),
         grandTotal: parseFloat(grandTotal.toFixed(2)),
         subscriptionCount: subscriptionOrders.length,
-        purchaseCount: purchaseOrders.length
-      }
+        purchaseCount: purchaseOrders.length,
+        isUniqueCount: isUniqueOrders.length
+      },
+      dailyChart: dailyChartData
     };
     
-    if (!type || type === 'subscription') {
+    if (type === 'isUnique') {
+      // Only return isUnique orders
+      response.subscriptions = [];
+      response.purchases = [];
+    } else if (!type || type === 'subscription') {
       response.subscriptions = subscriptionOrders.map(order => ({
         id: order.id,
         amount: parseFloat(order.amount),
@@ -1573,8 +1652,35 @@ exports.getIncomeAnalytics = async (req, res) => {
       }));
     }
     
-    if (!type || type === 'purchase') {
+    if (type === 'isUnique') {
+      // Already handled above
+    } else if (!type || type === 'purchase') {
       response.purchases = purchaseOrders.map(order => ({
+        id: order.id,
+        amount: parseFloat(order.amount),
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+        product: order.product ? {
+          id: order.product.id,
+          title: order.product.title,
+          price: parseFloat(order.product.price),
+          author: order.product.author ? {
+            id: order.product.author.id,
+            username: order.product.author.username,
+            fullName: order.product.author.fullName
+          } : null
+        } : null,
+        user: order.user ? {
+          id: order.user.id,
+          username: order.user.username,
+          fullName: order.user.fullName,
+          email: order.user.email
+        } : null
+      }));
+    }
+    
+    if (!type || type === 'isUnique') {
+      response.isUnique = isUniqueOrders.map(order => ({
         id: order.id,
         amount: parseFloat(order.amount),
         paymentMethod: order.paymentMethod,

@@ -11,12 +11,241 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calendar, DollarSign, ShoppingCart, CreditCard, Download, Filter, Loader2 } from "lucide-react";
 import { incomeApi } from "@/lib/api";
 
+// Line Chart Component
+function DailyIncomeChart({ data, formatCurrency }: { data: DailyChartData[]; formatCurrency: (amount: number) => string }) {
+  if (!data || data.length === 0) return null;
+
+  // Calculate max value across all three series
+  const maxValue = Math.max(
+    ...data.map(d => Math.max(d.subscription, d.purchase, d.isUnique)),
+    1 // Ensure at least 1 to avoid division by zero
+  );
+
+  const chartHeight = 400;
+  const padding = { top: 20, right: 20, bottom: 60, left: 60 };
+  const chartAreaHeight = chartHeight - padding.top - padding.bottom;
+  const chartAreaWidth = 1000; // Base width for calculations, will scale via viewBox
+
+  // Helper function to get Y coordinate for a value
+  const getY = (value: number) => {
+    if (maxValue === 0) return padding.top + chartAreaHeight;
+    return padding.top + chartAreaHeight - (value / maxValue) * chartAreaHeight;
+  };
+
+  // Helper function to get X coordinate for an index
+  const getX = (index: number, total: number) => {
+    if (total <= 1) return padding.left;
+    return padding.left + (index / (total - 1)) * (chartAreaWidth - padding.left - padding.right);
+  };
+
+  // Generate path data for a line
+  const generatePath = (getValue: (day: DailyChartData) => number) => {
+    if (data.length === 0) return '';
+    
+    const points = data.map((day, index) => {
+      const x = getX(index, data.length);
+      const y = getY(getValue(day));
+      return `${x},${y}`;
+    });
+
+    return `M ${points.join(' L ')}`;
+  };
+
+  // Generate area path (for fill under line)
+  const generateAreaPath = (getValue: (day: DailyChartData) => number) => {
+    if (data.length === 0) return '';
+    
+    const linePath = generatePath(getValue);
+    const firstX = getX(0, data.length);
+    const lastX = getX(data.length - 1, data.length);
+    const baseY = padding.top + chartAreaHeight;
+    
+    return `${linePath} L ${lastX},${baseY} L ${firstX},${baseY} Z`;
+  };
+
+  return (
+    <div className="w-full">
+      <svg 
+        viewBox={`0 0 ${chartAreaWidth} ${chartHeight}`} 
+        preserveAspectRatio="xMidYMid meet"
+        className="w-full h-full min-h-[400px]"
+      >
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
+          const value = maxValue * ratio;
+          const y = getY(value);
+          return (
+            <g key={i}>
+              <line
+                x1={padding.left}
+                y1={y}
+                x2={chartAreaWidth - padding.right}
+                y2={y}
+                stroke="#e5e7eb"
+                strokeWidth="1"
+                strokeDasharray="4 4"
+              />
+              <text
+                x={padding.left - 10}
+                y={y + 4}
+                textAnchor="end"
+                className="text-xs fill-gray-600"
+                fontSize="12"
+              >
+                {new Intl.NumberFormat('mn-MN', { maximumFractionDigits: 0 }).format(value)}₮
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Area fills under lines */}
+        <path
+          d={generateAreaPath(d => d.subscription)}
+          fill="#3b82f6"
+          fillOpacity="0.1"
+        />
+        <path
+          d={generateAreaPath(d => d.purchase)}
+          fill="#10b981"
+          fillOpacity="0.1"
+        />
+        <path
+          d={generateAreaPath(d => d.isUnique)}
+          fill="#f59e0b"
+          fillOpacity="0.1"
+        />
+
+        {/* Lines */}
+        <path
+          d={generatePath(d => d.subscription)}
+          fill="none"
+          stroke="#3b82f6"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="hover:stroke-[#2563eb] transition-colors"
+        />
+        <path
+          d={generatePath(d => d.purchase)}
+          fill="none"
+          stroke="#10b981"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="hover:stroke-[#059669] transition-colors"
+        />
+        <path
+          d={generatePath(d => d.isUnique)}
+          fill="none"
+          stroke="#f59e0b"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="hover:stroke-[#d97706] transition-colors"
+        />
+
+        {/* Data points */}
+        {data.map((day, index) => {
+          const x = getX(index, data.length);
+          
+          return (
+            <g key={day.date}>
+              {/* Subscription point */}
+              {day.subscription > 0 && (
+                <circle
+                  cx={x}
+                  cy={getY(day.subscription)}
+                  r="4"
+                  fill="#3b82f6"
+                  stroke="white"
+                  strokeWidth="2"
+                  className="hover:r-6 transition-all cursor-pointer"
+                >
+                  <title>Захиалга: {formatCurrency(day.subscription)}</title>
+                </circle>
+              )}
+              
+              {/* Purchase point */}
+              {day.purchase > 0 && (
+                <circle
+                  cx={x}
+                  cy={getY(day.purchase)}
+                  r="4"
+                  fill="#10b981"
+                  stroke="white"
+                  strokeWidth="2"
+                  className="hover:r-6 transition-all cursor-pointer"
+                >
+                  <title>Худалдан авалт: {formatCurrency(day.purchase)}</title>
+                </circle>
+              )}
+              
+              {/* isUnique point */}
+              {day.isUnique > 0 && (
+                <circle
+                  cx={x}
+                  cy={getY(day.isUnique)}
+                  r="4"
+                  fill="#f59e0b"
+                  stroke="white"
+                  strokeWidth="2"
+                  className="hover:r-6 transition-all cursor-pointer"
+                >
+                  <title>Unique: {formatCurrency(day.isUnique)}</title>
+                </circle>
+              )}
+
+              {/* Date label */}
+              <text
+                x={x}
+                y={chartHeight - padding.bottom + 20}
+                textAnchor="middle"
+                className="text-xs fill-gray-600"
+                fontSize="11"
+                transform={`rotate(-45 ${x} ${chartHeight - padding.bottom + 20})`}
+              >
+                {new Date(day.date).toLocaleDateString('mn-MN', { month: 'short', day: 'numeric' })}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Legend */}
+        <g transform={`translate(${chartAreaWidth - padding.right - 120}, ${padding.top})`}>
+          <g>
+            <line x1={0} y1={8} x2={20} y2={8} stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" />
+            <text x={28} y={11} className="text-xs fill-gray-700" fontSize="12">Захиалга</text>
+          </g>
+          <g transform="translate(0, 20)">
+            <line x1={0} y1={8} x2={20} y2={8} stroke="#10b981" strokeWidth="3" strokeLinecap="round" />
+            <text x={28} y={11} className="text-xs fill-gray-700" fontSize="12">Худалдан авалт</text>
+          </g>
+          <g transform="translate(0, 40)">
+            <line x1={0} y1={8} x2={20} y2={8} stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
+            <text x={28} y={11} className="text-xs fill-gray-700" fontSize="12">Unique</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 interface IncomeSummary {
   subscriptionTotal: number;
   purchaseTotal: number;
+  isUniqueTotal: number;
   grandTotal: number;
   subscriptionCount: number;
   purchaseCount: number;
+  isUniqueCount: number;
+}
+
+interface DailyChartData {
+  date: string;
+  subscription: number;
+  purchase: number;
+  isUnique: number;
+  total: number;
 }
 
 interface SubscriptionOrder {
@@ -64,6 +293,8 @@ interface IncomeData {
   summary: IncomeSummary;
   subscriptions?: SubscriptionOrder[];
   purchases?: PurchaseOrder[];
+  isUnique?: PurchaseOrder[];
+  dailyChart?: DailyChartData[];
 }
 
 export default function IncomePage() {
@@ -240,7 +471,7 @@ export default function IncomePage() {
 
       {/* Summary Cards */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Нийт орлого</CardTitle>
@@ -249,7 +480,7 @@ export default function IncomePage() {
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(data.summary.grandTotal)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                {data.summary.subscriptionCount + data.summary.purchaseCount} захиалга
+                {data.summary.subscriptionCount + data.summary.purchaseCount + (data.summary.isUniqueCount || 0)} захиалга
               </p>
             </CardContent>
           </Card>
@@ -282,6 +513,19 @@ export default function IncomePage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Unique орлого</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(data.summary.isUniqueTotal || 0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {data.summary.isUniqueCount || 0} захиалга
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Огнооны хүрээ</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -300,6 +544,20 @@ export default function IncomePage() {
         </div>
       )}
 
+      {/* Daily Chart */}
+      {data && data.dailyChart && data.dailyChart.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Өдрийн орлогын харьцуулалт</CardTitle>
+          </CardHeader>
+          <CardContent className="w-full p-6">
+            <div className="w-full min-h-[400px]">
+              <DailyIncomeChart data={data.dailyChart} formatCurrency={formatCurrency} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Data Tables */}
       {loading ? (
         <Card>
@@ -309,10 +567,11 @@ export default function IncomePage() {
         </Card>
       ) : data ? (
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">Бүгд</TabsTrigger>
             <TabsTrigger value="subscription">Захиалга</TabsTrigger>
             <TabsTrigger value="purchase">Худалдан авалт</TabsTrigger>
+            <TabsTrigger value="isUnique">Unique</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -404,8 +663,55 @@ export default function IncomePage() {
               </Card>
             )}
 
+            {/* isUnique Orders */}
+            {data.isUnique && data.isUnique.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Unique орлого</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Хэрэглэгч</TableHead>
+                        <TableHead>Бүтээгдэхүүн</TableHead>
+                        <TableHead>Зохиогч</TableHead>
+                        <TableHead>Дүн</TableHead>
+                        <TableHead>Төлбөрийн арга</TableHead>
+                        <TableHead>Огноо</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.isUnique.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">#{order.id}</TableCell>
+                          <TableCell>
+                            {order.user?.fullName || order.user?.username || 'Guest'}
+                            {order.user?.email && (
+                              <div className="text-xs text-muted-foreground">{order.user.email}</div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {order.product?.title || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                          </TableCell>
+                          <TableCell className="font-semibold">{formatCurrency(order.amount)}</TableCell>
+                          <TableCell>{getPaymentMethodBadge(order.paymentMethod)}</TableCell>
+                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
             {(!data.subscriptions || data.subscriptions.length === 0) && 
-             (!data.purchases || data.purchases.length === 0) && (
+             (!data.purchases || data.purchases.length === 0) && 
+             (!data.isUnique || data.isUnique.length === 0) && (
               <Card>
                 <CardContent className="flex items-center justify-center py-12">
                   <p className="text-muted-foreground">Мэдээлэл олдсонгүй</p>
@@ -511,6 +817,59 @@ export default function IncomePage() {
               <Card>
                 <CardContent className="flex items-center justify-center py-12">
                   <p className="text-muted-foreground">Худалдан авалтын орлого олдсонгүй</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="isUnique">
+            {data.isUnique && data.isUnique.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Unique орлого</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Хэрэглэгч</TableHead>
+                        <TableHead>Бүтээгдэхүүн</TableHead>
+                        <TableHead>Зохиогч</TableHead>
+                        <TableHead>Дүн</TableHead>
+                        <TableHead>Төлбөрийн арга</TableHead>
+                        <TableHead>Огноо</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.isUnique.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">#{order.id}</TableCell>
+                          <TableCell>
+                            {order.user?.fullName || order.user?.username || 'Guest'}
+                            {order.user?.email && (
+                              <div className="text-xs text-muted-foreground">{order.user.email}</div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {order.product?.title || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {order.product?.author?.fullName || order.product?.author?.username || 'N/A'}
+                          </TableCell>
+                          <TableCell className="font-semibold">{formatCurrency(order.amount)}</TableCell>
+                          <TableCell>{getPaymentMethodBadge(order.paymentMethod)}</TableCell>
+                          <TableCell>{formatDate(order.createdAt)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="flex items-center justify-center py-12">
+                  <p className="text-muted-foreground">Unique орлого олдсонгүй</p>
                 </CardContent>
               </Card>
             )}

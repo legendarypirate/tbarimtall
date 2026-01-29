@@ -104,22 +104,40 @@ function OrderPage() {
     }
   };
 
-  // Map backend payment status to frontend payment status
-  const mapPaymentStatus = (status: number | string): Order["payment_status"] => {
-    if (typeof status === 'string') {
-      switch (status.toLowerCase()) {
-        case 'paid': return "paid";
-        case 'refunded': return "refunded";
+  // Map backend order status to frontend payment status
+  // QPay orders: status 'completed' means paid, 'pending' means unpaid, 'cancelled' means refunded
+  const mapPaymentStatus = (orderStatus: string, paymentStatus?: number | string): Order["payment_status"] => {
+    // First check if there's an explicit paymentStatus field (legacy support)
+    if (paymentStatus !== undefined && paymentStatus !== null) {
+      if (typeof paymentStatus === 'string') {
+        switch (paymentStatus.toLowerCase()) {
+          case 'paid': return "paid";
+          case 'refunded': return "refunded";
+          default: return "unpaid";
+        }
+      }
+      switch (paymentStatus) {
+        case 1: return "paid";
+        case 3: return "refunded";
+        case 0:
+        case 2:
         default: return "unpaid";
       }
     }
-    switch (status) {
-      case 1: return "paid";
-      case 3: return "refunded";
-      case 0:
-      case 2:
-      default: return "unpaid";
+    
+    // Map order status to payment status
+    // This is the primary way to determine payment status for QPay orders
+    if (typeof orderStatus === 'string') {
+      switch (orderStatus.toLowerCase()) {
+        case 'completed': return "paid";
+        case 'cancelled': return "refunded";
+        case 'failed': return "unpaid";
+        case 'pending':
+        default: return "unpaid";
+      }
     }
+    
+    return "unpaid";
   };
 
   // Format date
@@ -147,7 +165,7 @@ function OrderPage() {
           id: order.id || String(order.id),
           created_at: formatDate(order.createdAt || order.created_at),
           status: mapOrderStatus(order.status || 0),
-          payment_status: mapPaymentStatus(order.paymentStatus || order.payment_status || 0),
+          payment_status: mapPaymentStatus(order.status || 'pending', order.paymentStatus || order.payment_status),
           items: order.product ? [{
             name: order.product.title || order.product.name || "Бараа",
             qty: order.quantity || 1,

@@ -61,7 +61,7 @@ export const incomeApi = {
   getAnalytics: async (params?: { 
     startDate?: string; 
     endDate?: string; 
-    type?: 'subscription' | 'purchase' 
+    type?: 'subscription' | 'purchase' | 'isUnique' 
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.startDate) queryParams.append('startDate', params.startDate);
