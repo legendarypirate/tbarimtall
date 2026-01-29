@@ -312,6 +312,33 @@ exports.getFeaturedProducts = async (req, res) => {
   }
 };
 
+exports.getRecentProducts = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 8;
+    
+    // Get the most recently created products (no date filter, just newest first)
+    const products = await Product.findAll({
+      where: { 
+        isActive: true,
+        status: 'published'
+      },
+      include: [
+        { model: Category, as: 'category', attributes: ['id', 'name', 'icon'] },
+        { model: User, as: 'author', attributes: ['id', 'username', 'fullName', 'avatar'] }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit
+    });
+
+    // Sanitize products and convert image paths to URLs
+    const sanitizedProducts = products.map(product => sanitizeProduct(product));
+
+    res.json({ products: sanitizedProducts });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getRecommendedProducts = async (req, res) => {
   try {
     const { productId, limit = 8 } = req.query;

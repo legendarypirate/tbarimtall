@@ -84,8 +84,16 @@ export async function getFeaturedProducts(limit: number = 8) {
   return fetchAPI(`/products/featured?limit=${limit}`);
 }
 
+export async function getRecentProducts(limit: number = 8) {
+  return fetchAPI(`/products/recent?limit=${limit}`);
+}
+
 export async function getRecommendedProducts(productId: string | number, limit: number = 8) {
   return fetchAPI(`/products/recommended?productId=${productId}&limit=${limit}`);
+}
+
+export async function getBestSellingProducts(limit: number = 5) {
+  return fetchAPI(`/products?limit=${limit}&sortBy=downloads`);
 }
 
 // Categories

@@ -22,6 +22,48 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showCategoriesDrawer, setShowCategoriesDrawer] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
+  const [weather, setWeather] = useState<{ temp: number; description: string; icon: string } | null>(null)
+  
+  // Map WMO weather codes to descriptions and icons
+  const getWeatherInfo = (code: number, isDay: number): { description: string; icon: string } => {
+    const isDayTime = isDay === 1
+    // WMO Weather Code mapping
+    const weatherMap: { [key: number]: { description: string; icon: string } } = {
+      0: { description: 'Тод тэнгэр', icon: isDayTime ? '☀️' : '🌙' },
+      1: { description: 'Голчлон тод', icon: isDayTime ? '🌤️' : '☁️' },
+      2: { description: 'Хэсэгчлэн үүлтэй', icon: isDayTime ? '⛅' : '☁️' },
+      3: { description: 'Үүлтэй', icon: '☁️' },
+      45: { description: 'Манан', icon: '🌫️' },
+      48: { description: 'Хөлдсөн манан', icon: '🌫️' },
+      51: { description: 'Бага зэргийн бороо', icon: '🌦️' },
+      53: { description: 'Дунд зэргийн бороо', icon: '🌦️' },
+      55: { description: 'Хүчтэй бороо', icon: '🌧️' },
+      56: { description: 'Хөлдсөн бага бороо', icon: '🌨️' },
+      57: { description: 'Хөлдсөн хүчтэй бороо', icon: '🌨️' },
+      61: { description: 'Бага бороо', icon: '🌦️' },
+      63: { description: 'Дунд бороо', icon: '🌧️' },
+      65: { description: 'Хүчтэй бороо', icon: '🌧️' },
+      66: { description: 'Хөлдсөн бага бороо', icon: '🌨️' },
+      67: { description: 'Хөлдсөн хүчтэй бороо', icon: '🌨️' },
+      71: { description: 'Бага цас', icon: '🌨️' },
+      73: { description: 'Дунд цас', icon: '❄️' },
+      75: { description: 'Хүчтэй цас', icon: '❄️' },
+      77: { description: 'Цасны ширхэг', icon: '❄️' },
+      80: { description: 'Бага борооны шүүрэл', icon: '🌦️' },
+      81: { description: 'Дунд борооны шүүрэл', icon: '🌧️' },
+      82: { description: 'Хүчтэй борооны шүүрэл', icon: '⛈️' },
+      85: { description: 'Бага цасны шүүрэл', icon: '🌨️' },
+      86: { description: 'Хүчтэй цасны шүүрэл', icon: '❄️' },
+      95: { description: 'Аянгатай бороо', icon: '⛈️' },
+      96: { description: 'Аянгатай мөндөртэй бороо', icon: '⛈️' },
+      99: { description: 'Хүчтэй аянгатай мөндөр', icon: '⛈️' },
+    }
+    
+    return weatherMap[code] || { description: 'Тодорхойгүй', icon: '🌤️' }
+  }
+  const [currency, setCurrency] = useState<{ usd: number; eur: number } | null>(null)
+  const [loadingWeather, setLoadingWeather] = useState(false)
+  const [loadingCurrency, setLoadingCurrency] = useState(false)
 
   useEffect(() => {
     // Check if user is logged in as journalist
@@ -61,6 +103,100 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
     }
 
     fetchCategories()
+  }, [])
+
+  // Fetch weather data using Open-Meteo API
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        setLoadingWeather(true)
+        // Using Open-Meteo API for Ulaanbaatar, Mongolia
+        // Coordinates: lat=47.92, lon=106.92
+        const lat = 47.92
+        const lon = 106.92
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+        
+        const response = await fetch(url)
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.current_weather) {
+            const { temperature, weathercode, is_day } = data.current_weather
+            const weatherInfo = getWeatherInfo(weathercode, is_day)
+            
+            setWeather({
+              temp: Math.round(temperature),
+              description: weatherInfo.description,
+              icon: weatherInfo.icon
+            })
+          } else {
+            setWeather(null)
+          }
+        } else {
+          // Handle non-ok responses
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }))
+          console.error('Weather API error:', response.status, errorData)
+          setWeather(null)
+        }
+      } catch (error) {
+        console.error('Error fetching weather:', error)
+        setWeather(null)
+      } finally {
+        setLoadingWeather(false)
+      }
+    }
+
+    fetchWeather()
+    // Refresh weather every 30 minutes
+    const weatherInterval = setInterval(fetchWeather, 30 * 60 * 1000)
+    return () => clearInterval(weatherInterval)
+  }, [])
+
+  // Fetch currency exchange rates (Mongolian Bank rates)
+  useEffect(() => {
+    const fetchCurrency = async () => {
+      try {
+        setLoadingCurrency(true)
+        // Using exchangerate-api.com - fetching USD as base to get MNT rate
+        // For production, consider using Bank of Mongolia's official API
+        const url = 'https://api.exchangerate-api.com/v4/latest/USD'
+        
+        const response = await fetch(url)
+        if (response.ok) {
+          const data = await response.json()
+          // Get USD to MNT rate (1 USD = X MNT)
+          const usdToMnt = data.rates?.MNT || 3400
+          // Get EUR rate first, then calculate EUR to MNT
+          const eurRate = data.rates?.EUR || 0.92
+          const eurToMnt = Math.round(usdToMnt / eurRate)
+          
+          setCurrency({
+            usd: Math.round(usdToMnt),
+            eur: eurToMnt
+          })
+        } else {
+          // Fallback rates (approximate Mongolian bank rates)
+          setCurrency({
+            usd: 3400,
+            eur: 3700
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching currency:', error)
+        // Set fallback currency data (approximate rates)
+        setCurrency({
+          usd: 3400,
+          eur: 3700
+        })
+      } finally {
+        setLoadingCurrency(false)
+      }
+    }
+
+    fetchCurrency()
+    // Refresh currency every 5 minutes
+    const currencyInterval = setInterval(fetchCurrency, 5 * 60 * 1000)
+    return () => clearInterval(currencyInterval)
   }, [])
 
   useEffect(() => {
@@ -235,19 +371,70 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
       <nav className="bg-[#004e6c] dark:bg-gray-800 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
-            <div className="flex items-center">
-             
+            {/* Weather and Currency Widget - Left Side */}
+            <div className="flex items-center space-x-6">
+              {/* Weather Widget */}
+              {weather && (
+                <div className="flex items-center space-x-2 bg-white/10 dark:bg-gray-700/30 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20 dark:border-gray-600/30 hover:bg-white/15 dark:hover:bg-gray-700/40 transition-all group">
+                  {loadingWeather ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-center w-8 h-8 bg-white/20 dark:bg-gray-600/30 rounded-lg text-lg">
+                        <span>{weather.icon}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white leading-tight">{weather.temp}°C</span>
+                        <span className="text-xs text-white/80 capitalize leading-tight">{weather.description}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Currency Widget */}
+              {currency && (
+                <div className="flex items-center space-x-2 bg-white/10 dark:bg-gray-700/30 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20 dark:border-gray-600/30">
+                  {loadingCurrency ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      {/* USD */}
+                      <div className="flex items-center space-x-1.5 px-2 py-1 bg-white/10 dark:bg-gray-600/20 rounded-lg hover:bg-white/15 dark:hover:bg-gray-600/30 transition-all group">
+                        <span className="text-base" title="United States">🇺🇸</span>
+                        <div className="flex flex-col">
+                          <span className="text-xs text-white/70 font-medium leading-tight">USD</span>
+                          <span className="text-xs font-bold text-white leading-tight">{currency.usd.toLocaleString('mn-MN')}</span>
+                        </div>
+                      </div>
+                      {/* EUR */}
+                      <div className="flex items-center space-x-1.5 px-2 py-1 bg-white/10 dark:bg-gray-600/20 rounded-lg hover:bg-white/15 dark:hover:bg-gray-600/30 transition-all group">
+                        <span className="text-base" title="European Union">🇪🇺</span>
+                        <div className="flex flex-col">
+                          <span className="text-xs text-white/70 font-medium leading-tight">EUR</span>
+                          <span className="text-xs font-bold text-white leading-tight">{currency.eur.toLocaleString('mn-MN')}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex items-center space-x-8">
+
+            {/* Navigation Links - Right Side */}
+            <div className="flex items-center space-x-6">
               <button 
                 type="button"
                 onClick={(e) => {
                   e.preventDefault()
                   setShowCategoriesDrawer(true)
                 }}
-                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30"
               >
-                {getTranslation(language, 'categories')}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                <span>{getTranslation(language, 'categories')}</span>
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
               <button 
@@ -256,9 +443,12 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/howitworks')
                 }}
-                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30"
               >
-                {getTranslation(language, 'howItWorks')}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>{getTranslation(language, 'howItWorks')}</span>
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
               <button 
@@ -267,9 +457,12 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/membership')
                 }}
-                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30"
               >
-                {getTranslation(language, 'pricing')}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{getTranslation(language, 'pricing')}</span>
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
               <button 
@@ -278,9 +471,12 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/faq')
                 }}
-                className="text-white/90 hover:text-white transition-colors font-semibold text-sm relative group"
+                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30"
               >
-                {getTranslation(language, 'faq')}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{getTranslation(language, 'faq')}</span>
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
               </button>
             </div>

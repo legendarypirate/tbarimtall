@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getTranslation } from '@/lib/translations'
-import { getCategories, getFeaturedProducts, getTopJournalists, getActiveMemberships, getHeroSliders, createMembershipInvoice, checkMembershipPaymentStatus } from '@/lib/api'
+import { getCategories, getFeaturedProducts, getTopJournalists, getActiveMemberships, getHeroSliders, createMembershipInvoice, checkMembershipPaymentStatus, getBestSellingProducts, getRecentProducts } from '@/lib/api'
 import { getCategoryIcon } from '@/lib/categoryIcon'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -213,6 +213,8 @@ export default function Home() {
   const [heroSliders, setHeroSliders] = useState<any[]>([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [bestSellingProducts, setBestSellingProducts] = useState<Product[]>([])
+  const [recentProducts, setRecentProducts] = useState<Product[]>([])
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [isJournalist, setIsJournalist] = useState(false)
@@ -382,12 +384,14 @@ export default function Home() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [categoriesRes, productsRes, journalistsRes, membershipsRes, slidersRes] = await Promise.all([
+        const [categoriesRes, productsRes, journalistsRes, membershipsRes, slidersRes, bestSellingRes, recentRes] = await Promise.all([
           getCategories().catch(() => ({ categories: defaultCategories })),
           getFeaturedProducts(8).catch(() => ({ products: defaultFeaturedProducts })),
           getTopJournalists(4).catch(() => ({ journalists: [] })),
           getActiveMemberships().catch(() => ({ memberships: [] })),
-          getHeroSliders().catch(() => ({ sliders: [] }))
+          getHeroSliders().catch(() => ({ sliders: [] })),
+          getBestSellingProducts(5).catch(() => ({ products: [] })),
+          getRecentProducts(6).catch(() => ({ products: [] }))
         ])
 
         if (categoriesRes.categories) {
@@ -435,6 +439,12 @@ export default function Home() {
         }
         if (slidersRes.sliders && Array.isArray(slidersRes.sliders)) {
           setHeroSliders(slidersRes.sliders)
+        }
+        if (bestSellingRes.products && Array.isArray(bestSellingRes.products)) {
+          setBestSellingProducts(bestSellingRes.products.slice(0, 5))
+        }
+        if (recentRes.products && Array.isArray(recentRes.products)) {
+          setRecentProducts(recentRes.products.slice(0, 6))
         }
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -514,6 +524,15 @@ export default function Home() {
   // Show only first 8 products (2 rows x 4 columns)
   const displayedProducts = filteredProducts.slice(0, 8)
 
+  // Helper function to check if product is new (created within last 7 days)
+  const isNewProduct = (product: Product) => {
+    if (!product.createdAt) return false
+    const createdAt = new Date(product.createdAt)
+    const now = new Date()
+    const daysDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
+    return daysDiff <= 7 // New if created within last 7 days
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
@@ -529,11 +548,10 @@ export default function Home() {
     <main className="min-h-screen bg-white dark:bg-gray-900">
       <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      {/* Hero Section - Carousel Slider */}
+      {/* Hero Section - Carousel Slider - COMMENTED OUT */}
+      {/*
       <section className="relative w-full overflow-hidden">
-        {/* Carousel Container */}
         <div className="relative w-full h-[480px] md:h-[560px]">
-          {/* Default slide (shown when no sliders exist) */}
           {heroSliders.length === 0 ? (
             <div 
               className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
@@ -541,12 +559,10 @@ export default function Home() {
                 backgroundImage: `url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`,
               }}
             >
-              {/* Dark overlay for better text readability */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#004e6c]/85 via-[#004e6c]/75 to-[#004e6c]/85"></div>
             </div>
           ) : (
             <>
-              {/* Slider Images */}
               {heroSliders.map((slider, index) => (
                 <div
                   key={slider.id}
@@ -557,27 +573,23 @@ export default function Home() {
                     backgroundImage: `url('${slider.imageUrl}')`,
                   }}
                 >
-                  {/* Dark overlay for better text readability */}
                   <div className="absolute inset-0 bg-gradient-to-br from-[#004e6c]/85 via-[#004e6c]/75 to-[#004e6c]/85"></div>
                 </div>
               ))}
             </>
           )}
           
-          {/* Abstract background graphics */}
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute top-20 left-10 w-96 h-96 bg-[#004e6c]/20 rounded-full blur-3xl"></div>
             <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#004e6c]/10 rounded-full blur-3xl"></div>
           </div>
-          {/* Pattern overlay */}
           <div className="absolute inset-0 opacity-[0.05]" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}></div>
           
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
             <div className="text-center">
-              {/* Dynamic Title and Subtitle from slider or default */}
               {heroSliders.length > 0 && heroSliders[currentSlide] ? (
                 <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
                   {heroSliders[currentSlide].title || getTranslation(language, 'heroTitle')}
@@ -600,7 +612,6 @@ export default function Home() {
                 </h2>
               )}
             
-              {/* Action Buttons - Same for all slides */}
               <div className="flex flex-col sm:flex-row gap-5 justify-center">
                 <button 
                   onClick={() => router.push('/products')}
@@ -612,33 +623,26 @@ export default function Home() {
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    // Clear any stale OAuth flags before opening modal
                     if (sessionStorage.getItem('oauth_flow_started')) {
                       sessionStorage.removeItem('oauth_flow_started')
                       sessionStorage.removeItem('oauth_flow_timestamp')
                     }
                     
-                    // Check if user is authenticated
                     const token = localStorage.getItem('token')
                     const storedUser = localStorage.getItem('user')
                     
                     if (token && storedUser) {
                       try {
                         const user = JSON.parse(storedUser)
-                        // Check if user has accepted terms
                         if (!user.termsAccepted) {
-                          // User is authenticated but hasn't accepted terms - show terms modal
                           setShowTermsModal(true)
                           return
                         }
-                        // User is authenticated and has accepted terms - navigate to journalist page
                         router.push('/account/journalist')
                         return
                       } catch (e) {
-                        // If parsing fails, continue to show auth modal
                       }
                     }
-                    // If not authenticated, show auth modal
                     setShowAuthModal(true)
                   }}
                   className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c] dark:border-gray-600 px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#004e6c] dark:hover:bg-[#006b8f] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
@@ -650,6 +654,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      */}
 
       {/* Stats Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 -mt-12 relative z-20">
@@ -727,6 +732,124 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Trending / Best Seller Section */}
+      {bestSellingProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gradient-to-br from-orange-50 via-red-50 to-orange-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <span className="text-4xl animate-pulse">🔥</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200">
+                Trending / Best Seller
+              </h2>
+              <span className="text-4xl animate-pulse">🔥</span>
+            </div>
+            <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
+              Хамгийн их зарагдсан контентууд - бусад хүмүүс юу авч байна вэ?
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            {bestSellingProducts.map((product, index) => {
+              const isUnique = (product as any).isUnique === true;
+              const isNew = isNewProduct(product);
+              return (
+                <div
+                  key={product.id}
+                  onClick={() => router.push(`/products/${product.uuid || product.id}`)}
+                  className={`group relative rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer ${
+                    isUnique 
+                      ? 'border-2 border-green-400 bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/20 dark:to-emerald-900/20' 
+                      : 'bg-white dark:bg-gray-800 border-2 border-orange-200 dark:border-orange-800/30 hover:border-orange-400 dark:hover:border-orange-600'
+                  }`}
+                >
+                  {/* Trending Badge - Top Left */}
+                  <div className="absolute top-3 left-3 z-10">
+                    <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg flex items-center space-x-1.5 animate-pulse">
+                      <span className="text-sm">🔥</span>
+                      <span className="text-xs font-bold">#{index + 1}</span>
+                    </div>
+                  </div>
+
+                  {/* Product Image */}
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-orange-100 dark:from-gray-700 to-red-100 dark:to-gray-600">
+                    <img
+                      src={product.image}
+                      alt={product.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    {/* New Badge - Top Right */}
+                    {isNew && (
+                      <div className="absolute top-3 right-3 z-10">
+                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-2.5 py-1 rounded-full shadow-lg text-xs font-bold animate-pulse">
+                          ШИНЭ
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Unique Badge - Below New Badge if both exist */}
+                    {isUnique && (
+                      <div className={`absolute ${isNew ? 'top-12' : 'top-3'} right-3 z-10`}>
+                        <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-2 py-1 rounded-full shadow-lg text-xs font-bold">
+                          UNIQUE
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="p-4">
+                    <h3 className="text-base font-bold text-[#004e6c] dark:text-gray-200 mb-2 line-clamp-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors min-h-[2.5rem]">
+                      {product.title}
+                    </h3>
+                    
+                    {/* Purchase Count - Prominent */}
+                    <div className="flex items-center space-x-2 mb-3 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg">
+                      <span className="text-orange-600 dark:text-orange-400 font-bold">🛒</span>
+                      <span className="text-sm font-bold text-orange-700 dark:text-orange-300">
+                        {product.downloads || 0} худалдан авалт
+                      </span>
+                    </div>
+
+                    {/* Price and Rating */}
+                    <div className="flex items-center justify-between pt-3 border-t border-orange-200 dark:border-orange-800/30">
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold text-[#ff6b35] dark:text-[#ff8555]">
+                          {product.price.toLocaleString()}₮
+                        </span>
+                        <div className="flex items-center space-x-1 mt-1">
+                          <span className="text-yellow-400 text-xs">⭐</span>
+                          <span className="text-xs font-semibold text-[#004e6c]/70 dark:text-gray-400">
+                            {product.rating || 0}
+                          </span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/products/${product.uuid || product.id}`)
+                        }}
+                        className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+                        aria-label={getTranslation(language, 'details')}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* All Categories Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
@@ -1112,6 +1235,7 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {displayedProducts.map((product) => {
             const isUnique = (product as any).isUnique === true;
+            const isNew = isNewProduct(product);
             return (
               <div
                 key={product.id}
@@ -1148,9 +1272,20 @@ export default function Home() {
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 dark:from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    {/* Unique Badge */}
-                    {isUnique && (
+                    
+                    {/* New Badge - Top Left */}
+                    {isNew && (
                       <div className="absolute top-3 left-3 z-10">
+                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                          <span className="text-xs">✨</span>
+                          <span className="text-xs font-bold">ШИНЭ</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Unique Badge - Below New Badge if both exist, otherwise top left */}
+                    {isUnique && (
+                      <div className={`absolute ${isNew ? 'top-12 left-3' : 'top-3 left-3'} z-10`}>
                         <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -1159,8 +1294,9 @@ export default function Home() {
                         </div>
                       </div>
                     )}
+                    
                     {/* Star Rating and Wishlist Icon - positioned together on the right */}
-                    <div className={`absolute ${isUnique ? 'top-12 right-4' : 'top-4 right-4'} flex items-center space-x-2`}>
+                    <div className={`absolute ${(isUnique || isNew) ? 'top-12 right-4' : 'top-4 right-4'} flex items-center space-x-2`}>
                       {/* Wishlist Heart Icon */}
                       <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 rounded-full shadow-lg">
                         <WishlistHeartIcon 
@@ -1177,7 +1313,7 @@ export default function Home() {
                       </div>
                     </div>
                     {/* Category Badge - positioned at bottom left */}
-                    <div className={`absolute ${isUnique ? 'top-12 left-4' : 'bottom-4 left-4'}`}>
+                    <div className={`absolute ${(isUnique || isNew) ? 'top-12 left-4' : 'bottom-4 left-4'}`}>
                       <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
                         {typeof product.category === 'object' && product.category?.name
                           ? product.category.name
@@ -1256,17 +1392,123 @@ export default function Home() {
 
       {/* Membership Section */}
       {memberships.length > 0 && (
-        <section className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+        <section className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Header */}
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
                 {getTranslation(language, 'membershipPlans') || 'Membership Plans'}
               </h2>
-              <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="text-xl text-[#004e6c]/70 dark:text-gray-400 max-w-3xl mx-auto">
                 {getTranslation(language, 'chooseMembershipPlan') || 'Choose the perfect membership plan for your needs'}
               </p>
             </div>
+
+            {/* Subscription Value Proposition Section */}
+            <div className="bg-gradient-to-r from-[#004e6c] to-[#ff6b35] dark:from-[#006b8f] dark:to-[#ff8555] rounded-3xl shadow-2xl p-8 md:p-12 mb-16 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-48 -mt-48"></div>
+              <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -ml-48 -mb-48"></div>
+              
+              <div className="relative z-10">
+                <div className="text-center mb-8">
+                  <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                    Subscription-ийн үнэ цэнэ
+                  </h3>
+                  <p className="text-xl opacity-90 max-w-2xl mx-auto">
+                    Нэг удаагийн худалдааны оронд subscription авах нь илүү хэмнэлттэй, тохиромжтой
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  {/* Advantages */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                    <div className="text-4xl mb-4">🎯</div>
+                    <h4 className="text-xl font-bold mb-3">Ямар давуу талтай вэ?</h4>
+                    <ul className="space-y-2 text-sm opacity-90">
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold">✓</span>
+                        <span>Хязгааргүй нийтлэх боломж</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold">✓</span>
+                        <span>Өндөр комиссын хувь</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold">✓</span>
+                        <span>Онцгой тэмдэглэгээ</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold">✓</span>
+                        <span>Тогтмол орлого олох</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Opportunities */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                    <div className="text-4xl mb-4">🚀</div>
+                    <h4 className="text-xl font-bold mb-3">Ямар боломж нээгдэх вэ?</h4>
+                    <ul className="space-y-2 text-sm opacity-90">
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold">✓</span>
+                        <span>Илүү олон бүтээгдэхүүн борлуулах</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold">✓</span>
+                        <span>Илүү их орлого олох</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold">✓</span>
+                        <span>Брендээ бэхжүүлэх</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold">✓</span>
+                        <span>Тогтвортой бизнес хөгжүүлэх</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Savings Calculator */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                    <div className="text-4xl mb-4">💰</div>
+                    <h4 className="text-xl font-bold mb-3">Хэмнэлтийн тооцоо</h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="bg-white/10 rounded-lg p-3">
+                        <div className="opacity-75 mb-1">Нэг удаагийн худалдаа:</div>
+                        <div className="text-lg font-bold">~50,000₮</div>
+                        <div className="text-xs opacity-75 mt-1">(жишээ: 10 бүтээгдэхүүн)</div>
+                      </div>
+                      <div className="bg-white/20 rounded-lg p-3 border-2 border-white/30">
+                        <div className="opacity-90 mb-1">Subscription:</div>
+                        <div className="text-2xl font-bold">~30,000₮</div>
+                        <div className="text-xs opacity-90 mt-1 font-semibold">40% хэмнэлт! 🎉</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA Button */}
+                <div className="text-center">
+                  <button
+                    onClick={() => {
+                      const paidMembership = memberships.find((m: any) => {
+                        const price = typeof m.price === 'number' ? m.price : parseFloat(String(m.price))
+                        return price > 0
+                      })
+                      if (paidMembership) {
+                        handleMembershipSelect(paidMembership)
+                      }
+                    }}
+                    disabled={isCreatingInvoice}
+                    className="bg-white text-[#004e6c] dark:text-[#006b8f] px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 dark:hover:bg-gray-200 transition-all shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Subscription авах'}
+                  </button>
+                </div>
+              </div>
+            </div>
             
+            {/* Membership Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {memberships.map((membership) => {
                 const isFree = typeof membership.price === 'number' ? membership.price === 0 : parseFloat(String(membership.price)) === 0
@@ -1279,7 +1521,7 @@ export default function Home() {
                 return (
                   <div
                     key={membership.id}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 hover:shadow-2xl"
+                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-2 hover:shadow-2xl"
                   >
                     <div className={`p-6 relative overflow-hidden ${
                       isFree 
@@ -1292,6 +1534,9 @@ export default function Home() {
                         <div className="text-3xl font-bold mb-2">
                           {formatPrice(membership.price)}
                         </div>
+                        {!isFree && (
+                          <div className="text-sm opacity-90">/ сар</div>
+                        )}
                       </div>
                     </div>
 
@@ -1299,7 +1544,9 @@ export default function Home() {
                       <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Нийтлэх хязгаар:</span>
-                          <span className="font-bold text-[#004e6c] dark:text-gray-200">{membership.maxPosts}</span>
+                          <span className="font-bold text-[#004e6c] dark:text-gray-200">
+                            {membership.maxPosts === 0 ? 'Хязгааргүй' : membership.maxPosts}
+                          </span>
                         </div>
                         {membership.description && (
                           <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mt-2 font-medium">
@@ -1332,7 +1579,7 @@ export default function Home() {
                               : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] hover:shadow-xl transform hover:-translate-y-0.5'
                           }`}
                         >
-                          {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : (getTranslation(language, 'selectPlan') || 'Сонгох')}
+                          {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Subscription авах'}
                         </button>
                       )}
                     </div>
@@ -1431,6 +1678,231 @@ export default function Home() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Trust & Authority Block */}
+      <section className="bg-gradient-to-br from-[#004e6c] via-[#006b8f] to-[#004e6c] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-20 relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#ff6b35] rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Tbarimt - Албан ёсны, найдвартай систем
+            </h2>
+            <p className="text-xl text-white/90 max-w-3xl mx-auto">
+              Монгол улсын төрийн, бизнесийн байгууллагуудын сонголт
+            </p>
+          </div>
+
+          {/* Trust Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Official System */}
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  Албан ёсны систем
+                </h3>
+                <p className="text-white/80 leading-relaxed">
+                  Бүртгэлтэй, хууль ёсны байгууллага. Бүх үйл ажиллагаа нь хууль тогтоомжид нийцсэн.
+                </p>
+              </div>
+            </div>
+
+            {/* Government & Business Usage */}
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  Төрийн, бизнесийн хэрэглээ
+                </h3>
+                <p className="text-white/80 leading-relaxed">
+                  Төрийн байгууллагууд болон томоохон компаниудын итгэл хүлээсэн платформ.
+                </p>
+              </div>
+            </div>
+
+            {/* QPay Secure Payment */}
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  QPay, аюулгүй төлбөр
+                </h3>
+                <p className="text-white/80 leading-relaxed">
+                  Монгол улсын хамгийн найдвартай төлбөрийн систем QPay-аар аюулгүй, хурдан төлбөр төлөх.
+                </p>
+              </div>
+            </div>
+
+            {/* Legal & Tax Standards */}
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">
+                  Хууль, татварын стандарт
+                </h3>
+                <p className="text-white/80 leading-relaxed">
+                  Бүх гүйлгээ нь хууль ёсны, татварын хуультай нийцсэн. Баримт бичиг автоматаар гаргана.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Badge / Certification */}
+          <div className="mt-16 text-center">
+            <div className="inline-flex items-center space-x-4 bg-white/10 backdrop-blur-md rounded-full px-8 py-4 border border-white/20">
+              <div className="flex items-center space-x-2">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-white font-semibold text-lg">Бүртгэлтэй байгууллага</span>
+              </div>
+              <div className="w-px h-8 bg-white/30"></div>
+              <div className="flex items-center space-x-2">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-white font-semibold text-lg">Хууль ёсны үйл ажиллагаа</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Сүүлд нэмэгдсэн контент Section - Right above Footer */}
+      {recentProducts.length >= 1 && (
+        <section className="bg-white dark:bg-gray-900 py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center mb-12">
+              <div className="flex items-center space-x-3">
+                <h3 className="text-xl md:text-2xl font-medium text-[#004e6c] dark:text-gray-200">
+                  Сүүлд нэмэгдсэн контент
+                </h3>
+                <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1">
+                  <span className="text-xs">✨</span>
+                  <span className="text-xs font-bold">ШИНЭ</span>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {recentProducts.map((product) => {
+                return (
+                  <div
+                    key={product.id}
+                    className="rounded-2xl transition-all duration-300 transform hover:-translate-y-3 border-2 border-[#004e6c]/10 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-[#004e6c]/30 dark:hover:border-gray-600"
+                  >
+                    <div
+                      onClick={() => router.push(`/products/${product.uuid || product.id}`)}
+                      className="rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                    >
+                      {/* Product Image */}
+                      <div className="relative h-52 overflow-hidden bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700/20 to-[#006b8f]/10 dark:to-gray-600/20">
+                        <img
+                          src={product.image}
+                          alt={product.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 dark:from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        {/* New Badge - Top Left */}
+                        <div className="absolute top-3 left-3 z-10">
+                          <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                            <span className="text-xs">✨</span>
+                            <span className="text-xs font-bold">ШИНЭ</span>
+                          </div>
+                        </div>
+                        
+                        {/* Star Rating and Wishlist Icon */}
+                        <div className="absolute top-12 right-4 flex items-center space-x-2">
+                          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 rounded-full shadow-lg">
+                            <WishlistHeartIcon 
+                              productId={product.uuid || product.id} 
+                              size="md"
+                            />
+                          </div>
+                          <div className="flex items-center space-x-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                            <span className="text-yellow-400 text-sm">⭐</span>
+                            <span className="text-xs font-bold text-[#004e6c] dark:text-gray-200">
+                              {product.rating}
+                            </span>
+                          </div>
+                        </div>
+                        {/* Category Badge */}
+                        <div className="absolute top-12 left-4">
+                          <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
+                            {typeof product.category === 'object' && product.category?.name
+                              ? product.category.name
+                              : typeof product.category === 'string'
+                              ? product.category
+                              : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-6">
+                        <h4 className="text-lg font-bold mb-4 line-clamp-2 transition-colors min-h-[3.5rem] text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]">
+                          {product.title}
+                        </h4>
+                        <div className="flex items-center justify-between text-sm text-[#004e6c]/70 dark:text-gray-400 mb-5 font-medium">
+                          <span className="flex items-center space-x-2">
+                            <span>📄</span>
+                            <span>{product.pages ? `${product.pages} ${getTranslation(language, 'pages')}` : product.size}</span>
+                          </span>
+                          <span className="flex items-center space-x-2">
+                            <span>⬇️</span>
+                            <span>{product.downloads}</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between pt-5 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
+                          <span className="text-2xl font-bold transition-colors text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]">
+                            {product.price.toLocaleString()}₮
+                          </span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/products/${product.uuid || product.id}`)
+                            }}
+                            className="w-10 h-10 rounded-xl bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center group"
+                            aria-label={getTranslation(language, 'details')}
+                          >
+                            <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       )}
 
       <Footer />
