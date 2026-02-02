@@ -8,7 +8,7 @@ export const translations = {
     categories: 'Ангилал',
     howItWorks: 'Хэрхэн ажиллах вэ',
     pricing: 'Үнэ',
-    faq: 'Түгээмэл асуулт хариулт',
+    faq: 'Бүх контент',
     wishlist: 'Хүслийн жагсаалт',
     
     // Home page
@@ -81,7 +81,7 @@ export const translations = {
     categories: 'Categories',
     howItWorks: 'How It Works',
     pricing: 'Pricing',
-    faq: 'FAQ',
+    faq: 'All Content',
     wishlist: 'Wishlist',
     
     // Home page
