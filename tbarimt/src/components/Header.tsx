@@ -767,20 +767,20 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
             </div>
 
             {/* Navigation Links - Right Side - Hidden on Mobile */}
-            <div className="hidden lg:flex items-center space-x-4">
+            <div className="hidden lg:flex items-center space-x-2 relative z-10 pointer-events-auto">
               <button 
                 type="button"
                 onClick={(e) => {
                   e.preventDefault()
                   setShowCategoriesDrawer(true)
                 }}
-                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-5 py-3 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[44px] cursor-pointer"
+                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
                 <span>{getTranslation(language, 'categories')}</span>
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                <span className="pointer-events-none absolute bottom-1 left-3 right-3 w-0 h-0.5 bg-white/90 group-hover:w-[calc(100%-1.5rem)] transition-all duration-300"></span>
               </button>
               <button 
                 type="button"
@@ -788,13 +788,13 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/howitworks')
                 }}
-                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-5 py-3 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[44px] cursor-pointer"
+                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span>{getTranslation(language, 'howItWorks')}</span>
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                <span className="pointer-events-none absolute bottom-1 left-3 right-3 w-0 h-0.5 bg-white/90 group-hover:w-[calc(100%-1.5rem)] transition-all duration-300"></span>
               </button>
               <button 
                 type="button"
@@ -802,27 +802,27 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/membership')
                 }}
-                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-5 py-3 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[44px] cursor-pointer"
+                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{getTranslation(language, 'pricing')}</span>
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                <span className="pointer-events-none absolute bottom-1 left-3 right-3 w-0 h-0.5 bg-white/90 group-hover:w-[calc(100%-1.5rem)] transition-all duration-300"></span>
               </button>
               <button 
                 type="button"
                 onClick={(e) => {
                   e.preventDefault()
-                  router.push('/products')
+                  router.push('/faq')
                 }}
-                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-5 py-3 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[44px] cursor-pointer"
+                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
                 <span>{getTranslation(language, 'faq')}</span>
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300"></span>
+                <span className="pointer-events-none absolute bottom-1 left-3 right-3 w-0 h-0.5 bg-white/90 group-hover:w-[calc(100%-1.5rem)] transition-all duration-300"></span>
               </button>
             </div>
           </div>

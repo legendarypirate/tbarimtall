@@ -674,7 +674,9 @@ export default function Home() {
       */}
 
       {/* Stats Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 -mt-12 relative z-20">
+      {/* Note: this used to overlap the hero section via `-mt-12`, but the hero is currently disabled.
+          Keeping the negative margin causes the stats cards to overlap the header/nav and intercept clicks. */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mt-0 relative z-20">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Users Stat */}
           <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
