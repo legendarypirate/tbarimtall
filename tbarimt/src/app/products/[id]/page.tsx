@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
-import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice, payWithWallet, getCurrentUser, createCopyrightReport, getRecommendedProducts } from '@/lib/api'
+import { getProductById, getBanners, createQPayInvoice, checkQPayPaymentStatus, getOrderByInvoice, payWithWallet, getCurrentUser, createCopyrightReport, getRecommendedProducts, createSimilarFileRequest } from '@/lib/api'
 import WishlistHeartIcon from '@/components/WishlistHeartIcon'
+import AuthModal from '@/components/AuthModal'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +47,12 @@ export default function ProductDetail() {
   const [reportSuccess, setReportSuccess] = useState(false)
   const [recommendedProducts, setRecommendedProducts] = useState<any[]>([])
   const [loadingRecommended, setLoadingRecommended] = useState(false)
+  const [isSimilarFileRequestModalOpen, setIsSimilarFileRequestModalOpen] = useState(false)
+  const [similarFileRequestDescription, setSimilarFileRequestDescription] = useState('')
+  const [isSubmittingSimilarFileRequest, setIsSubmittingSimilarFileRequest] = useState(false)
+  const [similarFileRequestError, setSimilarFileRequestError] = useState<string | null>(null)
+  const [similarFileRequestSuccess, setSimilarFileRequestSuccess] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -1265,6 +1272,29 @@ export default function ProductDetail() {
               >
                 🛒 Одоо худалдаж авах
               </button>
+
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    try {
+                      // Remember where the user was so we can bring them back after OAuth login
+                      sessionStorage.setItem('post_login_redirect', `/products/${productId}`)
+                    } catch {
+                      // ignore storage errors
+                    }
+                    setShowAuthModal(true)
+                    return
+                  }
+                  setIsSimilarFileRequestModalOpen(true)
+                  setSimilarFileRequestDescription('')
+                  setSimilarFileRequestError(null)
+                  setSimilarFileRequestSuccess(false)
+                }}
+                className="w-full flex items-center justify-center bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all shadow-md hover:shadow-lg mb-4"
+              >
+                <span className="mr-2">📋</span>
+                <span>Ижил төстэй файл захиалах</span>
+              </button>
            
               <button
                 onClick={() => {
@@ -2149,6 +2179,145 @@ export default function ProductDetail() {
         </div>
       )}
 
+      {/* Similar File Request Modal */}
+      {isSimilarFileRequestModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            if (!isSubmittingSimilarFileRequest) {
+              setIsSimilarFileRequestModalOpen(false)
+              setSimilarFileRequestDescription('')
+              setSimilarFileRequestError(null)
+              setSimilarFileRequestSuccess(false)
+            }
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                📋 Ижил төстэй файл захиалах
+              </h3>
+              <button
+                onClick={() => {
+                  if (!isSubmittingSimilarFileRequest) {
+                    setIsSimilarFileRequestModalOpen(false)
+                    setSimilarFileRequestDescription('')
+                    setSimilarFileRequestError(null)
+                    setSimilarFileRequestSuccess(false)
+                  }
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                disabled={isSubmittingSimilarFileRequest}
+              >
+                ×
+              </button>
+            </div>
+
+            {similarFileRequestSuccess ? (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">✅</div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Хүсэлт илгээгдлээ
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Таны хүсэлтийг админ хэсэгт илгээлээ. Админ шалгаж, баталгаажуулсны дараа нийтлэгчид дамжуулна.
+                </p>
+                <button
+                  onClick={() => {
+                    setIsSimilarFileRequestModalOpen(false)
+                    setSimilarFileRequestDescription('')
+                    setSimilarFileRequestError(null)
+                    setSimilarFileRequestSuccess(false)
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all"
+                >
+                  Хаах
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Бүтээгдэхүүн:
+                  </label>
+                  <p className="text-gray-900 dark:text-white font-semibold">
+                    {product.title}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Тайлбар (сонголттой)
+                  </label>
+                  <textarea
+                    value={similarFileRequestDescription}
+                    onChange={(e) => setSimilarFileRequestDescription(e.target.value)}
+                    placeholder="Ямар төрлийн ижил төстэй контент хэрэгтэй байгаагаа тайлбарлана уу..."
+                    rows={5}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                    disabled={isSubmittingSimilarFileRequest}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Тайлбар нь нийтлэгчид туслах болно
+                  </p>
+                </div>
+
+                {similarFileRequestError && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <p className="text-red-800 dark:text-red-200 text-sm">{similarFileRequestError}</p>
+                  </div>
+                )}
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    onClick={async () => {
+                      try {
+                        setIsSubmittingSimilarFileRequest(true)
+                        setSimilarFileRequestError(null)
+
+                        const requestProductId = product.id || product.uuid || productId
+                        await createSimilarFileRequest({
+                          productId: typeof requestProductId === 'string' ? parseInt(requestProductId) || requestProductId : requestProductId,
+                          description: similarFileRequestDescription.trim() || undefined
+                        })
+
+                        setSimilarFileRequestSuccess(true)
+                      } catch (error: any) {
+                        console.error('Error submitting similar file request:', error)
+                        setSimilarFileRequestError(error.message || 'Хүсэлт илгээхэд алдаа гарлаа')
+                      } finally {
+                        setIsSubmittingSimilarFileRequest(false)
+                      }
+                    }}
+                    disabled={isSubmittingSimilarFileRequest}
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmittingSimilarFileRequest ? 'Илгээж байна...' : 'Илгээх'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!isSubmittingSimilarFileRequest) {
+                        setIsSimilarFileRequestModalOpen(false)
+                        setSimilarFileRequestDescription('')
+                        setSimilarFileRequestError(null)
+                        setSimilarFileRequestSuccess(false)
+                      }
+                    }}
+                    disabled={isSubmittingSimilarFileRequest}
+                    className="flex-1 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Цуцлах
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Copyright Report Modal */}
       {isCopyrightReportModalOpen && (
         <div
@@ -2314,6 +2483,14 @@ export default function ProductDetail() {
           </div>
         </div>
       )}
+
+      {/* Auth Modal - for actions that require login */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSelectGoogle={() => setShowAuthModal(false)}
+        onSelectFacebook={() => setShowAuthModal(false)}
+      />
     </div>
     </>
   )

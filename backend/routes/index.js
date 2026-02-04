@@ -15,6 +15,7 @@ const qpayRoutes = require('./qpay');
 const wishlistRoutes = require('./wishlist');
 const copyrightReportRoutes = require('./copyrightReports');
 const heroSliderRoutes = require('./heroSliders');
+const similarFileRequestRoutes = require('./similarFileRequests');
 
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
@@ -30,6 +31,7 @@ router.use('/qpay', qpayRoutes);
 router.use('/wishlist', wishlistRoutes);
 router.use('/copyright-reports', copyrightReportRoutes);
 router.use('/hero-sliders', heroSliderRoutes);
+router.use('/similar-file-requests', similarFileRequestRoutes);
 
 module.exports = router;
 

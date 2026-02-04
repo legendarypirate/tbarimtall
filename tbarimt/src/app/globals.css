@@ -24,3 +24,116 @@ body {
     rgb(var(--background-start-rgb));
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Star animation keyframes */
+@keyframes starRotate {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes starFloat {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-3px) translateX(2px);
+  }
+  50% {
+    transform: translateY(-5px) translateX(0px);
+  }
+  75% {
+    transform: translateY(-3px) translateX(-2px);
+  }
+}
+
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes starPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.animate-star-rotate {
+  animation: starRotate 3s linear infinite;
+}
+
+.animate-star-float {
+  animation: starFloat 2s ease-in-out infinite;
+}
+
+.animate-star-twinkle {
+  animation: starTwinkle 1.5s ease-in-out infinite;
+}
+
+.animate-star-pulse {
+  animation: starPulse 2s ease-in-out infinite;
+}
+
+/* Vertical line sweep animation */
+@keyframes sweepRightToLeft {
+  0% {
+    right: -4px;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    right: 100%;
+    opacity: 0;
+  }
+}
+
+.animate-sweep-line {
+  animation: sweepRightToLeft 3s ease-in-out infinite;
+}
+
+/* Vertical silver line animation - moves from right to left */
+@keyframes silverLineSweep {
+  0% {
+    right: -2px;
+    opacity: 0;
+  }
+  2% {
+    opacity: 1;
+  }
+  98% {
+    opacity: 1;
+  }
+  100% {
+    right: 100%;
+    opacity: 0;
+  }
+}
+
+.animate-silver-line {
+  animation: silverLineSweep 3s ease-in-out infinite;
+}

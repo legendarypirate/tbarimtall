@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, Users, Settings, Clock, ShoppingCart, FolderOpen, ChevronDown, ChevronRight, AlertTriangle, DollarSign } from "lucide-react";
+import { Home, Users, Settings, Clock, ShoppingCart, FolderOpen, ChevronDown, ChevronRight, AlertTriangle, DollarSign, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const links = [
@@ -15,6 +15,7 @@ const links = [
     children: [
       { href: "/admin/users/list", label: "Хэрэглэгчдийн жагсаалт" },
       { href: "/admin/users/income-request", label: "Орлогын хүсэлт" },
+      { href: "/admin/similar-file-requests", label: "Ижил төстэй файл хүсэлт" },
     ]
   },
   { 

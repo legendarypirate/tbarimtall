@@ -241,6 +241,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
     return () => window.removeEventListener('popstate', handleRouteChange)
   }, [])
 
+
   const handleSearchChange = (value: string) => {
     setSearchQuery(value)
     if (onSearchChange) {
@@ -254,11 +255,24 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
     }
   }
 
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    if (typeof window === 'undefined') return false
+    const token = localStorage.getItem('token')
+    return !!token
+  }
+
+  // Handle wishlist button click
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setShowAuthModal(true)
+  }
+
   return (
     <>
       {/* Top Header - Logo, Search, Upload/Dipbard */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-[#004e6c]/10 dark:border-gray-700/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-[#004e6c]/10 dark:border-gray-700/50 shadow-sm relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 relative z-10">
           {/* Mobile Layout */}
           <div className="flex lg:hidden items-center justify-between py-3">
             {/* Logo */}
@@ -272,14 +286,19 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
             <div className="flex items-center space-x-2">
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  router.push('/wishlist')
-                }}
-                className="p-2 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200 relative"
+                onClick={handleWishlistClick}
+                className="p-2 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200 relative overflow-hidden"
                 aria-label={getTranslation(language, 'wishlist') || 'Wishlist'}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* Animated silver vertical line */}
+                <div 
+                  className="absolute top-0 bottom-0 w-0.5 bg-silver animate-silver-line z-10"
+                  style={{
+                    backgroundColor: '#c0c0c0',
+                    boxShadow: '0 0 4px rgba(192, 192, 192, 0.8)',
+                  }}
+                />
+                <svg className="w-5 h-5 relative z-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
@@ -335,15 +354,20 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
               {/* Wishlist Icon Button */}
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  router.push('/wishlist')
-                }}
-                className="p-2.5 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200 relative"
+                onClick={handleWishlistClick}
+                className="p-2.5 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200 relative overflow-hidden"
                 aria-label={getTranslation(language, 'wishlist') || 'Wishlist'}
                 title={getTranslation(language, 'wishlist') || 'Wishlist'}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* Animated silver vertical line */}
+                <div 
+                  className="absolute top-0 bottom-0 w-0.5 bg-silver animate-silver-line z-10"
+                  style={{
+                    backgroundColor: '#c0c0c0',
+                    boxShadow: '0 0 4px rgba(192, 192, 192, 0.8)',
+                  }}
+                />
+                <svg className="w-5 h-5 relative z-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
@@ -382,36 +406,82 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
               </button>
               
               {isJournalist ? (
-                <div className="relative">
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-[#004e6c] via-[#ff6b35] to-[#004e6c] rounded-xl opacity-75 group-hover:opacity-100 blur-sm transition-all duration-500 animate-pulse"></div>
+                  {/* Floating stars around button */}
+                  <div className="absolute -top-2 -left-2 animate-star-float">
+                    <svg className="w-2 h-2 animate-star-pulse text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                    </svg>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 animate-star-float" style={{ animationDelay: '0.5s' }}>
+                    <svg className="w-2 h-2 animate-star-pulse text-yellow-200" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                    </svg>
+                  </div>
                   <button 
                     type="button"
                     onClick={(e) => {
                       e.preventDefault()
                       router.push('/account/journalist')
                     }}
-                    className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    className="relative bg-gradient-to-r from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#0080a8] text-white px-5 py-2.5 rounded-xl hover:from-[#ff6b35] hover:to-[#ff8555] dark:hover:from-[#ff8555] dark:hover:to-[#ff9f75] transition-all duration-300 font-semibold flex items-center space-x-2 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105 active:scale-95 overflow-visible"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    {/* Animated star icon */}
+                    <svg className="w-5 h-5 animate-star-rotate text-yellow-300 drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
-                    <span>{getTranslation(language, 'uploadContent')}</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <span className="relative z-10">{getTranslation(language, 'uploadContent')}</span>
+                    {/* Floating star decoration */}
+                    <div className="absolute -top-1 -right-1">
+                      <svg className="w-3 h-3 animate-star-twinkle text-yellow-200" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                      </svg>
+                    </div>
+                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   </button>
                 </div>
               ) : (
                 <>
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setShowAuthModal(true)
-                    }}
-                    className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-5 py-2.5 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                  >
-                    {getTranslation(language, 'uploadContent')}
-                  </button>
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#004e6c] via-[#ff6b35] to-[#004e6c] rounded-xl opacity-60 group-hover:opacity-100 blur-sm transition-all duration-500 animate-pulse"></div>
+                    {/* Floating stars around button */}
+                    <div className="absolute -top-2 -left-2 animate-star-float">
+                      <svg className="w-2 h-2 animate-star-pulse text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                      </svg>
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 animate-star-float" style={{ animationDelay: '0.5s' }}>
+                      <svg className="w-2 h-2 animate-star-pulse text-yellow-200" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                      </svg>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setShowAuthModal(true)
+                      }}
+                      className="relative bg-gradient-to-r from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#0080a8] text-white px-5 py-2.5 rounded-xl hover:from-[#ff6b35] hover:to-[#ff8555] dark:hover:from-[#ff8555] dark:hover:to-[#ff9f75] transition-all duration-300 font-semibold shadow-lg hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center space-x-2 overflow-visible"
+                    >
+                      {/* Animated star icon */}
+                      <svg className="w-5 h-5 animate-star-rotate text-yellow-300 drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                      <span className="relative z-10">{getTranslation(language, 'uploadContent')}</span>
+                      {/* Floating star decoration */}
+                      <div className="absolute -top-1 -right-1">
+                        <svg className="w-3 h-3 animate-star-twinkle text-yellow-200" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                        </svg>
+                      </div>
+                      <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </button>
+                  </div>
                   <AuthModal
                     isOpen={showAuthModal}
                     onClose={() => setShowAuthModal(false)}
@@ -550,30 +620,84 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   </button>
                 </div>
                 {isJournalist ? (
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      router.push('/account/journalist')
-                      setShowMobileMenu(false)
-                    }}
-                    className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-4 py-2 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all font-semibold text-sm"
-                  >
-                    {getTranslation(language, 'uploadContent')}
-                  </button>
-                ) : (
-                  <>
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#004e6c] via-[#ff6b35] to-[#004e6c] rounded-xl opacity-75 group-hover:opacity-100 blur-sm transition-all duration-500 animate-pulse"></div>
+                    {/* Floating stars around button */}
+                    <div className="absolute -top-2 -left-2 animate-star-float">
+                      <svg className="w-2 h-2 animate-star-pulse text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                      </svg>
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 animate-star-float" style={{ animationDelay: '0.5s' }}>
+                      <svg className="w-2 h-2 animate-star-pulse text-yellow-200" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                      </svg>
+                    </div>
                     <button 
                       type="button"
                       onClick={(e) => {
                         e.preventDefault()
-                        setShowAuthModal(true)
+                        router.push('/account/journalist')
                         setShowMobileMenu(false)
                       }}
-                      className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-4 py-2 rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all font-semibold text-sm"
+                      className="relative bg-gradient-to-r from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#0080a8] text-white px-4 py-2 rounded-xl hover:from-[#ff6b35] hover:to-[#ff8555] dark:hover:from-[#ff8555] dark:hover:to-[#ff9f75] transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center space-x-2 overflow-visible"
                     >
-                      {getTranslation(language, 'uploadContent')}
+                      {/* Animated star icon */}
+                      <svg className="w-4 h-4 animate-star-rotate text-yellow-300 drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                      <span className="relative z-10">{getTranslation(language, 'uploadContent')}</span>
+                      {/* Floating star decoration */}
+                      <div className="absolute -top-1 -right-1">
+                        <svg className="w-2.5 h-2.5 animate-star-twinkle text-yellow-200" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                        </svg>
+                      </div>
+                      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
                     </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative group">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#004e6c] via-[#ff6b35] to-[#004e6c] rounded-xl opacity-60 group-hover:opacity-100 blur-sm transition-all duration-500 animate-pulse"></div>
+                      {/* Floating stars around button */}
+                      <div className="absolute -top-2 -left-2 animate-star-float">
+                        <svg className="w-2 h-2 animate-star-pulse text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                        </svg>
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 animate-star-float" style={{ animationDelay: '0.5s' }}>
+                        <svg className="w-2 h-2 animate-star-pulse text-yellow-200" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                        </svg>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setShowAuthModal(true)
+                          setShowMobileMenu(false)
+                        }}
+                        className="relative bg-gradient-to-r from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#0080a8] text-white px-4 py-2 rounded-xl hover:from-[#ff6b35] hover:to-[#ff8555] dark:hover:from-[#ff8555] dark:hover:to-[#ff9f75] transition-all duration-300 font-semibold text-sm shadow-lg hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center space-x-2 overflow-visible"
+                      >
+                        {/* Animated star icon */}
+                        <svg className="w-4 h-4 animate-star-rotate text-yellow-300 drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        <span className="relative z-10">{getTranslation(language, 'uploadContent')}</span>
+                        {/* Floating star decoration */}
+                        <div className="absolute -top-1 -right-1">
+                          <svg className="w-2.5 h-2.5 animate-star-twinkle text-yellow-200" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l2.4 4.85L20 8.5l-3.9 3.8.9 5.3L12 16.5l-5 2.1.9-5.3L4 8.5l5.6-1.65L12 2z" />
+                          </svg>
+                        </div>
+                        <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </button>
+                    </div>
                     <AuthModal
                       isOpen={showAuthModal}
                       onClose={() => setShowAuthModal(false)}
@@ -643,14 +767,14 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
             </div>
 
             {/* Navigation Links - Right Side - Hidden on Mobile */}
-            <div className="hidden lg:flex items-center space-x-6">
+            <div className="hidden lg:flex items-center space-x-4">
               <button 
                 type="button"
                 onClick={(e) => {
                   e.preventDefault()
                   setShowCategoriesDrawer(true)
                 }}
-                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30"
+                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-5 py-3 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[44px] cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -664,7 +788,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/howitworks')
                 }}
-                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30"
+                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-5 py-3 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[44px] cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -678,7 +802,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/membership')
                 }}
-                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30"
+                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-5 py-3 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[44px] cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -692,7 +816,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/products')
                 }}
-                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-3 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30"
+                className="flex items-center space-x-2 text-white/90 hover:text-white transition-all font-semibold text-sm relative group px-5 py-3 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[44px] cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -825,6 +949,14 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
           </div>
         </>
       )}
+
+      {/* Auth Modal - Always available for wishlist and other auth needs */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSelectGoogle={() => setShowAuthModal(false)}
+        onSelectFacebook={() => setShowAuthModal(false)}
+      />
     </>
   )
 }

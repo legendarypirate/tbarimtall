@@ -559,3 +559,33 @@ export async function getFAQs() {
   return fetchAPI('/faqs');
 }
 
+// Similar File Requests
+export async function createSimilarFileRequest(data: {
+  productId: number | string;
+  description?: string;
+}) {
+  return fetchAPI('/similar-file-requests', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getMySimilarFileRequests(status?: string) {
+  const query = status ? `?status=${status}` : '';
+  return fetchAPI(`/similar-file-requests/my-requests${query}`);
+}
+
+export async function getJournalistSimilarFileRequests(status?: string) {
+  const query = status ? `?status=${status}` : '';
+  return fetchAPI(`/similar-file-requests/journalist/requests${query}`);
+}
+
+export async function completeSimilarFileRequest(id: string, data?: {
+  journalistNotes?: string;
+}) {
+  return fetchAPI(`/similar-file-requests/journalist/${id}/complete`, {
+    method: 'PUT',
+    body: JSON.stringify(data || {}),
+  });
+}
+

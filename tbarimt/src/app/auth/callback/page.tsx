@@ -12,11 +12,22 @@ export default function AuthCallbackPage() {
   const [loading, setLoading] = useState(true)
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [userData, setUserData] = useState<any>(null)
+  const [postLoginRedirect, setPostLoginRedirect] = useState<string | null>(null)
 
   useEffect(() => {
     const token = searchParams.get('token')
     const userParam = searchParams.get('user')
     const error = searchParams.get('error')
+
+    // Capture any stored redirect target (e.g. user clicked an action that requires login)
+    try {
+      const redirect = sessionStorage.getItem('post_login_redirect')
+      if (redirect) {
+        setPostLoginRedirect(redirect)
+      }
+    } catch {
+      // ignore storage errors
+    }
 
     // Clear OAuth flow flag when callback is reached
     if (sessionStorage.getItem('oauth_flow_started')) {
@@ -63,6 +74,16 @@ export default function AuthCallbackPage() {
               
               // Only redirect if terms are accepted
               setLoading(false)
+              // Prefer redirecting back to the original page (if any)
+              if (postLoginRedirect) {
+                try {
+                  sessionStorage.removeItem('post_login_redirect')
+                } catch {
+                  // ignore
+                }
+                router.push(postLoginRedirect)
+                return
+              }
               if (data.user.role === 'journalist') {
                 router.push('/account/journalist')
               } else {
@@ -84,6 +105,15 @@ export default function AuthCallbackPage() {
               
               // Only redirect if terms are accepted
               setLoading(false)
+              if (postLoginRedirect) {
+                try {
+                  sessionStorage.removeItem('post_login_redirect')
+                } catch {
+                  // ignore
+                }
+                router.push(postLoginRedirect)
+                return
+              }
               if (user.role === 'journalist') {
                 router.push('/account/journalist')
               } else {
@@ -108,6 +138,15 @@ export default function AuthCallbackPage() {
             
             // Only redirect if terms are accepted
             setLoading(false)
+            if (postLoginRedirect) {
+              try {
+                sessionStorage.removeItem('post_login_redirect')
+              } catch {
+                // ignore
+              }
+              router.push(postLoginRedirect)
+              return
+            }
             if (user.role === 'journalist') {
               router.push('/account/journalist')
             } else {
@@ -128,6 +167,16 @@ export default function AuthCallbackPage() {
 
   const handleTermsAccepted = () => {
     setShowTermsModal(false)
+    // Prefer redirecting back to the original page (if any)
+    if (postLoginRedirect) {
+      try {
+        sessionStorage.removeItem('post_login_redirect')
+      } catch {
+        // ignore
+      }
+      router.push(postLoginRedirect)
+      return
+    }
     // Redirect based on user role
     if (userData?.role === 'journalist') {
       router.push('/account/journalist')

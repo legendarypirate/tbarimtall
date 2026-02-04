@@ -404,7 +404,7 @@ export default function Home() {
         const [categoriesRes, productsRes, journalistsRes, membershipsRes, slidersRes, bestSellingRes, recentRes] = await Promise.all([
           getCategories().catch(() => ({ categories: defaultCategories })),
           getFeaturedProducts(8).catch(() => ({ products: defaultFeaturedProducts })),
-          getTopJournalists(4).catch(() => ({ journalists: [] })),
+          getTopJournalists(12).catch(() => ({ journalists: [] })),
           getActiveMemberships().catch(() => ({ memberships: [] })),
           getHeroSliders().catch(() => ({ sliders: [] })),
           getBestSellingProducts(5).catch(() => ({ products: [] })),
@@ -755,18 +755,18 @@ export default function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gradient-to-br from-orange-50 via-red-50 to-orange-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              <span className="text-4xl animate-pulse">🔥</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200">
+              <span className="text-2xl animate-pulse">🔥</span>
+              <h2 className="text-xl md:text-2xl font-bold text-[#004e6c] dark:text-gray-200">
                 Trending / Best Seller
               </h2>
-              <span className="text-4xl animate-pulse">🔥</span>
+              <span className="text-2xl animate-pulse">🔥</span>
             </div>
             <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
               Хамгийн их зарагдсан контентууд - бусад хүмүүс юу авч байна вэ?
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {bestSellingProducts.map((product, index) => {
               const isUnique = (product as any).isUnique === true;
               const isNew = isNewProduct(product);
@@ -774,22 +774,22 @@ export default function Home() {
                 <div
                   key={product.id}
                   onClick={() => router.push(`/products/${product.uuid || product.id}`)}
-                  className={`group relative rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer ${
+                  className={`group relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ${
                     isUnique 
                       ? 'border-2 border-green-400 bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/20 dark:to-emerald-900/20' 
                       : 'bg-white dark:bg-gray-800 border-2 border-orange-200 dark:border-orange-800/30 hover:border-orange-400 dark:hover:border-orange-600'
                   }`}
                 >
                   {/* Trending Badge - Top Left */}
-                  <div className="absolute top-3 left-3 z-10">
-                    <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white px-3 py-1.5 rounded-full shadow-lg flex items-center space-x-1.5 animate-pulse">
-                      <span className="text-sm">🔥</span>
-                      <span className="text-xs font-bold">#{index + 1}</span>
+                  <div className="absolute top-2 left-2 z-10">
+                    <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white px-2 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                      <span className="text-xs">🔥</span>
+                      <span className="text-[10px] font-bold">#{index + 1}</span>
                     </div>
                   </div>
 
                   {/* Product Image */}
-                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-orange-100 dark:from-gray-700 to-red-100 dark:to-gray-600">
+                  <div className="relative h-32 overflow-hidden bg-gradient-to-br from-orange-100 dark:from-gray-700 to-red-100 dark:to-gray-600">
                     <img
                       src={product.image}
                       alt={product.title}
@@ -803,8 +803,8 @@ export default function Home() {
                     
                     {/* New Badge - Top Right */}
                     {isNew && (
-                      <div className="absolute top-3 right-3 z-10">
-                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-2.5 py-1 rounded-full shadow-lg text-xs font-bold animate-pulse">
+                      <div className="absolute top-2 right-2 z-10">
+                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-1.5 py-0.5 rounded-full shadow-lg text-[10px] font-bold animate-pulse">
                           ШИНЭ
                         </div>
                       </div>
@@ -812,8 +812,8 @@ export default function Home() {
                     
                     {/* Unique Badge - Below New Badge if both exist */}
                     {isUnique && (
-                      <div className={`absolute ${isNew ? 'top-12' : 'top-3'} right-3 z-10`}>
-                        <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-2 py-1 rounded-full shadow-lg text-xs font-bold">
+                      <div className={`absolute ${isNew ? 'top-8' : 'top-2'} right-2 z-10`}>
+                        <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-1.5 py-0.5 rounded-full shadow-lg text-[10px] font-bold">
                           UNIQUE
                         </div>
                       </div>
@@ -821,28 +821,28 @@ export default function Home() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="p-4">
-                    <h3 className="text-base font-bold text-[#004e6c] dark:text-gray-200 mb-2 line-clamp-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors min-h-[2.5rem]">
+                  <div className="p-2.5">
+                    <h3 className="text-xs font-bold text-[#004e6c] dark:text-gray-200 mb-1.5 line-clamp-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors min-h-[2rem]">
                       {product.title}
                     </h3>
                     
                     {/* Purchase Count - Prominent */}
-                    <div className="flex items-center space-x-2 mb-3 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg">
-                      <span className="text-orange-600 dark:text-orange-400 font-bold">🛒</span>
-                      <span className="text-sm font-bold text-orange-700 dark:text-orange-300">
+                    <div className="flex items-center space-x-1 mb-2 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
+                      <span className="text-orange-600 dark:text-orange-400 font-bold text-xs">🛒</span>
+                      <span className="text-[10px] font-bold text-orange-700 dark:text-orange-300">
                         {product.downloads || 0} худалдан авалт
                       </span>
                     </div>
 
                     {/* Price and Rating */}
-                    <div className="flex items-center justify-between pt-3 border-t border-orange-200 dark:border-orange-800/30">
+                    <div className="flex items-center justify-between pt-2 border-t border-orange-200 dark:border-orange-800/30">
                       <div className="flex flex-col">
-                        <span className="text-xl font-bold text-[#ff6b35] dark:text-[#ff8555]">
+                        <span className="text-sm font-bold text-[#ff6b35] dark:text-[#ff8555]">
                           {product.price.toLocaleString()}₮
                         </span>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <span className="text-yellow-400 text-xs">⭐</span>
-                          <span className="text-xs font-semibold text-[#004e6c]/70 dark:text-gray-400">
+                        <div className="flex items-center space-x-0.5 mt-0.5">
+                          <span className="text-yellow-400 text-[10px]">⭐</span>
+                          <span className="text-[10px] font-semibold text-[#004e6c]/70 dark:text-gray-400">
                             {product.rating || 0}
                           </span>
                         </div>
@@ -852,10 +852,10 @@ export default function Home() {
                           e.stopPropagation()
                           router.push(`/products/${product.uuid || product.id}`)
                         }}
-                        className="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+                        className="w-8 h-8 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
                         aria-label={getTranslation(language, 'details')}
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
@@ -928,8 +928,8 @@ export default function Home() {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {topBloggers.slice(0, 4).map((journalist: any) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {topBloggers.slice(0, 12).map((journalist: any) => {
                 const getAvatarUrl = () => {
                   if (journalist.avatar) return journalist.avatar
                   const seed = journalist.name || journalist.username || journalist.userId || 'default'
@@ -968,45 +968,42 @@ export default function Home() {
                   <div
                     key={journalist.userId || journalist.id}
                     onClick={() => router.push(`/journalist/${journalist.userId || journalist.id}`)}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 hover:shadow-2xl cursor-pointer group"
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 hover:shadow-xl cursor-pointer group"
                   >
-                    <div className="p-6 text-center">
-                      <div className="relative inline-block mb-4">
+                    <div className="p-4 text-center">
+                      <div className="relative inline-block mb-3">
                         <img
                           src={getAvatarUrl()}
                           alt={journalist.name || journalist.username || 'Journalist'}
-                          className="w-24 h-24 rounded-full border-4 border-[#004e6c] dark:border-[#006b8f] shadow-lg group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
+                          className="w-16 h-16 rounded-full border-2 border-[#004e6c] dark:border-[#006b8f] shadow-md group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
                           onError={(e) => {
                             const seed = journalist.name || journalist.username || journalist.userId || 'default'
                             ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                           }}
                         />
                         {/* Membership Badge in corner */}
-                        <div className={`absolute -bottom-1 -right-1 ${badgeColor} text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border-2 border-white dark:border-gray-800 z-20 uppercase`}>
+                        <div className={`absolute -bottom-1 -right-1 ${badgeColor} text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md border-2 border-white dark:border-gray-800 z-20 uppercase`}>
                           {membershipName}
                         </div>
                       </div>
-                      <h3 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-1 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+                      <h3 className="text-base font-bold text-[#004e6c] dark:text-gray-200 mb-1 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors line-clamp-1">
                         {journalist.name || journalist.username || 'Unknown'}
                       </h3>
                       {journalist.username && (
-                        <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mb-4">
+                        <p className="text-xs text-[#004e6c]/60 dark:text-gray-400 mb-2 line-clamp-1">
                           {journalist.username.startsWith('@') ? journalist.username : `@${journalist.username}`}
                         </p>
                       )}
                       
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center justify-center space-x-2">
-                          <span className="text-yellow-400">⭐</span>
-                          <span className="text-sm font-semibold text-[#004e6c] dark:text-gray-200">
+                      <div className="space-y-1.5 mb-3">
+                        <div className="flex items-center justify-center space-x-1.5">
+                          <span className="text-yellow-400 text-xs">⭐</span>
+                          <span className="text-xs font-semibold text-[#004e6c] dark:text-gray-200">
                             {typeof journalist.rating === 'number' ? journalist.rating.toFixed(1) : parseFloat(journalist.rating ?? 0).toFixed(1)}
                           </span>
-                          <span className="text-xs text-[#004e6c]/50 dark:text-gray-500">
-                            {getTranslation(language, 'rating')}
-                          </span>
                         </div>
-                        <div className="flex items-center justify-center space-x-4 text-sm text-[#004e6c]/70 dark:text-gray-400">
-                          <span className="flex items-center space-x-1">
+                        <div className="flex items-center justify-center space-x-2 text-xs text-[#004e6c]/70 dark:text-gray-400">
+                          <span className="flex items-center space-x-0.5">
                             <span>👥</span>
                             <span>
                               {(() => {
@@ -1017,12 +1014,10 @@ export default function Home() {
                                 return followers.toLocaleString()
                               })()}
                             </span>
-                            <span className="text-xs">{getTranslation(language, 'followers')}</span>
                           </span>
-                          <span className="flex items-center space-x-1">
+                          <span className="flex items-center space-x-0.5">
                             <span>📝</span>
                             <span>{journalist.posts ?? 0}</span>
-                            <span className="text-xs">{getTranslation(language, 'posts')}</span>
                           </span>
                         </div>
                       </div>
@@ -1032,7 +1027,7 @@ export default function Home() {
                           e.stopPropagation()
                           router.push(`/journalist/${journalist.userId || journalist.id}`)
                         }}
-                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-2 rounded-xl font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                       >
                         {getTranslation(language, 'viewProfile')}
                       </button>
@@ -1249,22 +1244,22 @@ export default function Home() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {displayedProducts.map((product) => {
             const isUnique = (product as any).isUnique === true;
             const isNew = isNewProduct(product);
             return (
               <div
                 key={product.id}
-                className={`rounded-2xl transition-all duration-300 transform hover:-translate-y-3 ${
+                className={`rounded-xl transition-all duration-300 transform hover:-translate-y-2 ${
                   isUnique 
-                    ? 'p-0.5 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 shadow-lg hover:shadow-2xl' 
+                    ? 'p-0.5 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 shadow-md hover:shadow-lg' 
                     : ''
                 }`}
               >
                 <div
                   onClick={() => router.push(`/products/${product.uuid || product.id}`)}
-                  className={`rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer ${
+                  className={`rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer ${
                     isUnique 
                       ? 'bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/20 dark:to-emerald-900/20' 
                       : 'border-2 border-[#004e6c]/10 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-[#004e6c]/30 dark:hover:border-gray-600'
@@ -1274,7 +1269,7 @@ export default function Home() {
                   } : {}}
                 >
                   {/* Product Image */}
-                  <div className={`relative h-52 overflow-hidden ${
+                  <div className={`relative h-36 overflow-hidden ${
                     isUnique 
                       ? 'bg-gradient-to-br from-green-50 dark:from-green-900/20 to-emerald-50 dark:to-emerald-900/20' 
                       : 'bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700/20 to-[#006b8f]/10 dark:to-gray-600/20'
@@ -1292,46 +1287,46 @@ export default function Home() {
                     
                     {/* New Badge - Top Left */}
                     {isNew && (
-                      <div className="absolute top-3 left-3 z-10">
-                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
-                          <span className="text-xs">✨</span>
-                          <span className="text-xs font-bold">ШИНЭ</span>
+                      <div className="absolute top-2 left-2 z-10">
+                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center space-x-0.5 animate-pulse">
+                          <span className="text-[10px]">✨</span>
+                          <span className="text-[10px] font-bold">ШИНЭ</span>
                         </div>
                       </div>
                     )}
                     
                     {/* Unique Badge - Below New Badge if both exist, otherwise top left */}
                     {isUnique && (
-                      <div className={`absolute ${isNew ? 'top-12 left-3' : 'top-3 left-3'} z-10`}>
-                        <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <div className={`absolute ${isNew ? 'top-8 left-2' : 'top-2 left-2'} z-10`}>
+                        <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center space-x-0.5 animate-pulse">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                           </svg>
-                          <span className="text-xs font-bold">UNIQUE</span>
+                          <span className="text-[10px] font-bold">UNIQUE</span>
                         </div>
                       </div>
                     )}
                     
                     {/* Star Rating and Wishlist Icon - positioned together on the right */}
-                    <div className={`absolute ${(isUnique || isNew) ? 'top-12 right-4' : 'top-4 right-4'} flex items-center space-x-2`}>
+                    <div className={`absolute ${(isUnique || isNew) ? 'top-8 right-2' : 'top-2 right-2'} flex items-center space-x-1.5`}>
                       {/* Wishlist Heart Icon */}
-                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 rounded-full shadow-lg">
+                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-1.5 rounded-full shadow-md">
                         <WishlistHeartIcon 
                           productId={product.uuid || product.id} 
-                          size="md"
+                          size="sm"
                         />
                       </div>
                       {/* Star Rating */}
-                      <div className="flex items-center space-x-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-                        <span className="text-yellow-400 text-sm">⭐</span>
-                        <span className="text-xs font-bold text-[#004e6c] dark:text-gray-200">
+                      <div className="flex items-center space-x-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-md">
+                        <span className="text-yellow-400 text-xs">⭐</span>
+                        <span className="text-[10px] font-bold text-[#004e6c] dark:text-gray-200">
                           {product.rating}
                         </span>
                       </div>
                     </div>
                     {/* Category Badge - positioned at bottom left */}
-                    <div className={`absolute ${(isUnique || isNew) ? 'top-12 left-4' : 'bottom-4 left-4'}`}>
-                      <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
+                    <div className={`absolute ${(isUnique || isNew) ? 'top-8 left-2' : 'bottom-2 left-2'}`}>
+                      <span className="text-[10px] font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-2 py-1 rounded-full shadow-md group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
                         {typeof product.category === 'object' && product.category?.name
                           ? product.category.name
                           : typeof product.category === 'string'
@@ -1340,26 +1335,26 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
-                  <div className="p-6">
-                    <h4 className={`text-lg font-bold mb-4 line-clamp-2 transition-colors min-h-[3.5rem] ${
+                  <div className="p-3">
+                    <h4 className={`text-sm font-bold mb-2 line-clamp-2 transition-colors min-h-[2.5rem] ${
                       isUnique 
                         ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400' 
                         : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
                     }`}>
                       {product.title}
                     </h4>
-                    <div className="flex items-center justify-between text-sm text-[#004e6c]/70 dark:text-gray-400 mb-5 font-medium">
-                      <span className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between text-xs text-[#004e6c]/70 dark:text-gray-400 mb-3 font-medium">
+                      <span className="flex items-center space-x-1">
                         <span>📄</span>
                         <span>{product.pages ? `${product.pages} ${getTranslation(language, 'pages')}` : product.size}</span>
                       </span>
-                      <span className="flex items-center space-x-2">
+                      <span className="flex items-center space-x-1">
                         <span>⬇️</span>
                         <span>{product.downloads}</span>
                       </span>
                     </div>
-                    <div className="flex items-center justify-between pt-5 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                      <span className={`text-2xl font-bold transition-colors ${
+                    <div className="flex items-center justify-between pt-3 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-2">
+                      <span className={`text-lg font-bold transition-colors ${
                         isUnique 
                           ? 'text-green-600 dark:text-green-400' 
                           : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
@@ -1371,14 +1366,14 @@ export default function Home() {
                           e.stopPropagation()
                           router.push(`/products/${product.id}`)
                         }}
-                        className={`w-10 h-10 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center group ${
+                        className={`w-8 h-8 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center group ${
                           isUnique
                             ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
                             : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
                         }`}
                         aria-label={getTranslation(language, 'details')}
                       >
-                        <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>

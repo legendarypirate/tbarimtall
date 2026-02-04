@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 
 exports.getTopJournalists = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = Math.max(parseInt(req.query.limit) || 12, 12); // Minimum 12
 
     // Fetch users directly from users table where role = 'journalist'
     const { Membership } = require('../models');
@@ -19,7 +19,7 @@ exports.getTopJournalists = async (req, res) => {
         required: false,
         attributes: ['id', 'name']
       }],
-      limit: limit * 2 // Get more users initially, we'll filter and sort later
+      limit: limit * 3 // Get more users initially to ensure we have enough after sorting
     });
 
     if (journalistUsers.length === 0) {
@@ -56,6 +56,18 @@ exports.getTopJournalists = async (req, res) => {
     // Get product counts
     const productCounts = await sequelize.query(
       `SELECT "authorId", COUNT(*) as count 
+       FROM products 
+       WHERE "authorId" IN (:userIds) AND "isActive" = true 
+       GROUP BY "authorId"`,
+      {
+        replacements: { userIds },
+        type: QueryTypes.SELECT
+      }
+    );
+
+    // Get total downloads per author (sum of all product downloads)
+    const downloadCounts = await sequelize.query(
+      `SELECT "authorId", COALESCE(SUM(downloads), 0) as total_downloads 
        FROM products 
        WHERE "authorId" IN (:userIds) AND "isActive" = true 
        GROUP BY "authorId"`,
@@ -109,6 +121,11 @@ exports.getTopJournalists = async (req, res) => {
       countMap[item.authorId] = parseInt(item.count) || 0;
     });
 
+    const downloadMap = {};
+    downloadCounts.forEach(item => {
+      downloadMap[item.authorId] = parseInt(item.total_downloads) || 0;
+    });
+
     const ratingMap = {};
     // First, use journalist reviews if available
     journalistRatings.forEach(item => {
@@ -153,6 +170,7 @@ exports.getTopJournalists = async (req, res) => {
         rating: ratingMap[userId] || 0,
         followers: followerMap[userId] || 0,
         posts: countMap[userId] || 0,
+        downloads: downloadMap[userId] || 0,
         membership_type: user.membership_type || null,
         membership: user.membership ? {
           id: user.membership.id,
@@ -161,8 +179,11 @@ exports.getTopJournalists = async (req, res) => {
       };
     });
 
-    // Sort by rating first, then by followers, then by posts
+    // Sort by total downloads (descending), then by rating, then by followers, then by posts
     journalistsWithData.sort((a, b) => {
+      if (b.downloads !== a.downloads) {
+        return b.downloads - a.downloads;
+      }
       if (b.rating !== a.rating) {
         return b.rating - a.rating;
       }

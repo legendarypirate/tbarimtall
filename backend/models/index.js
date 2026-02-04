@@ -17,6 +17,7 @@ const CopyrightReport = require('./CopyrightReport');
 const HeroSlider = require('./HeroSlider');
 const JournalistReview = require('./JournalistReview');
 const Follow = require('./Follow');
+const SimilarFileRequest = require('./SimilarFileRequest');
 
 // Define associations
 User.hasMany(Product, { foreignKey: 'authorId', as: 'products' });
@@ -81,6 +82,15 @@ User.hasMany(Follow, { foreignKey: 'followerId', as: 'following' });
 User.belongsTo(Membership, { foreignKey: 'membership_type', as: 'membership', constraints: false });
 Membership.hasMany(User, { foreignKey: 'membership_type', as: 'users', constraints: false });
 
+// Similar File Request associations
+User.hasMany(SimilarFileRequest, { foreignKey: 'userId', as: 'similarFileRequests' });
+SimilarFileRequest.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Product.hasMany(SimilarFileRequest, { foreignKey: 'productId', as: 'similarFileRequests' });
+SimilarFileRequest.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
+User.hasMany(SimilarFileRequest, { foreignKey: 'authorId', as: 'authorSimilarFileRequests' });
+SimilarFileRequest.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+SimilarFileRequest.belongsTo(User, { foreignKey: 'processedBy', as: 'processedByUser' });
+
 module.exports = {
   sequelize,
   User,
@@ -100,6 +110,7 @@ module.exports = {
   CopyrightReport,
   HeroSlider,
   JournalistReview,
-  Follow
+  Follow,
+  SimilarFileRequest
 };
 

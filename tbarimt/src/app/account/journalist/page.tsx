@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
-import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus, updateProfile, getMyMembership } from '@/lib/api'
+import { createWithdrawalRequest, getMyWithdrawalRequests, getMyProducts, getMyStatistics, getCategories, createProductWithFiles, updateProduct, createUniqueProductInvoice, checkQPayPaymentStatus, getProductById, createWalletRechargeInvoice, checkWalletRechargeStatus, updateProfile, getMyMembership, getJournalistSimilarFileRequests, completeSimilarFileRequest } from '@/lib/api'
 import MembershipBar from '@/components/MembershipBar'
 import TermsAndConditionsModal from '@/components/TermsAndConditionsModal'
 
@@ -67,6 +67,9 @@ export default function JournalistAccount() {
     notes: ''
   })
   const [withdrawalLoading, setWithdrawalLoading] = useState(false)
+  const [similarFileRequests, setSimilarFileRequests] = useState<any[]>([])
+  const [loadingSimilarFileRequests, setLoadingSimilarFileRequests] = useState(false)
+  const [completingRequestId, setCompletingRequestId] = useState<string | null>(null)
   const [categories, setCategories] = useState<Array<{ id: number; name: string; icon?: string }>>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const [editingProduct, setEditingProduct] = useState<ProductData | null>(null)
@@ -235,6 +238,7 @@ export default function JournalistAccount() {
     // Fetch withdrawal requests when earnings tab is active
     if (activeTab === 'earnings' && user) {
       fetchWithdrawalRequests()
+      fetchSimilarFileRequests()
     }
   }, [activeTab, user])
 
@@ -246,6 +250,34 @@ export default function JournalistAccount() {
       }
     } catch (error) {
       console.error('Error fetching withdrawal requests:', error)
+    }
+  }
+
+  const fetchSimilarFileRequests = async () => {
+    try {
+      setLoadingSimilarFileRequests(true)
+      const response = await getJournalistSimilarFileRequests('approved')
+      if (response.requests) {
+        setSimilarFileRequests(response.requests)
+      }
+    } catch (error) {
+      console.error('Error fetching similar file requests:', error)
+    } finally {
+      setLoadingSimilarFileRequests(false)
+    }
+  }
+
+  const handleCompleteRequest = async (requestId: string) => {
+    try {
+      setCompletingRequestId(requestId)
+      await completeSimilarFileRequest(requestId)
+      await fetchSimilarFileRequests()
+      alert('Хүсэлт дууссан гэж тэмдэглэгдлээ')
+    } catch (error: any) {
+      console.error('Error completing request:', error)
+      alert(error.message || 'Алдаа гарлаа')
+    } finally {
+      setCompletingRequestId(null)
     }
   }
 
@@ -1239,6 +1271,76 @@ export default function JournalistAccount() {
                       </div>
                     </div>
                   ))
+                )}
+
+                <h3 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 mt-8">
+                  Ижил төстэй файл захиалгын хүсэлт
+                </h3>
+                {loadingSimilarFileRequests ? (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border-2 border-[#004e6c]/10 dark:border-gray-700 text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#004e6c]"></div>
+                    <p className="mt-2 text-[#004e6c]/70 dark:text-gray-400 font-medium">Ачааллаж байна...</p>
+                  </div>
+                ) : similarFileRequests.length === 0 ? (
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border-2 border-[#004e6c]/10 dark:border-gray-700 text-center">
+                    <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Ижил төстэй файл захиалгын хүсэлт байхгүй байна</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {similarFileRequests.map((request) => (
+                      <div
+                        key={request.id}
+                        className="bg-white dark:bg-gray-800 rounded-xl p-4 border-2 border-[#004e6c]/10 dark:border-gray-700 hover:shadow-lg hover:border-[#004e6c]/20 dark:hover:border-gray-600 transition-all"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
+                              {request.product?.title || 'Бараа'}
+                            </h4>
+                            <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 font-medium mb-2">
+                              Хэрэглэгч: {request.user?.fullName || request.user?.username || 'N/A'}
+                              {request.user?.phone && ` (${request.user.phone})`}
+                            </p>
+                            {request.description && (
+                              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 mb-2">
+                                <strong>Тайлбар:</strong> {request.description}
+                              </p>
+                            )}
+                            {request.adminNotes && (
+                              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 mb-2 italic">
+                                <strong>Админий тайлбар:</strong> {request.adminNotes}
+                              </p>
+                            )}
+                            <p className="text-xs text-[#004e6c]/50 dark:text-gray-500">
+                              {new Date(request.createdAt).toLocaleDateString('mn-MN', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <div className="ml-4">
+                            {request.status === 'approved' && (
+                              <button
+                                onClick={() => handleCompleteRequest(request.id)}
+                                disabled={completingRequestId === request.id}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {completingRequestId === request.id ? 'Хүлээгдэж байна...' : 'Дуусгах'}
+                              </button>
+                            )}
+                            {request.status === 'completed' && (
+                              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-semibold">
+                                Дууссан
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
