@@ -1893,7 +1893,7 @@ export default function Home() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between pt-5 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                          <span className="text-2xl font-bold transition-colors text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]">
+                          <span className="text-lg font-bold transition-colors text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]">
                             {product.price.toLocaleString()}₮
                           </span>
                           <button 
