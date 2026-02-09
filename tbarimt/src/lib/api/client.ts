@@ -18,7 +18,7 @@ class ApiClient {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      let errorMessage = ERROR_MESSAGES.SERVER_ERROR;
+      let errorMessage: string = ERROR_MESSAGES.SERVER_ERROR;
       
       try {
         const contentType = response.headers.get('content-type');
