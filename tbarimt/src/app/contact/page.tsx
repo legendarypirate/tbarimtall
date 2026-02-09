@@ -55,12 +55,12 @@ export default function ContactPage() {
 
      
       {/* Contact Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white">
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Contact Form */}
-          <div className="bg-white border-2 border-[#004e6c]/20 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300">
-            <h3 className="text-2xl font-bold text-[#004e6c] mb-6">
+          <div className="bg-white border-2 border-[#004e6c]/20 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 className="text-xl font-bold text-[#004e6c] mb-4">
               Мессеж илгээх
             </h3>
             
@@ -70,7 +70,7 @@ export default function ContactPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Нэр *
@@ -173,13 +173,13 @@ export default function ContactPage() {
           </div>
 
           {/* Contact Information */}
-          <div className="space-y-8">
-            <div className="bg-white border-2 border-[#004e6c]/20 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300">
-              <h3 className="text-2xl font-bold text-[#004e6c] mb-6">
+          <div className="space-y-4">
+            <div className="bg-white border-2 border-[#004e6c]/20 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <h3 className="text-xl font-bold text-[#004e6c] mb-4">
                 Холбоо барих мэдээлэл
               </h3>
               
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-xl flex items-center justify-center shadow-lg">
                     <span className="text-2xl">📧</span>
@@ -231,14 +231,14 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-2xl p-8 text-white shadow-2xl">
-              <h3 className="text-2xl font-bold mb-4">Шууд хариу авах</h3>
-              <p className="mb-6 text-white/90 font-medium">
+            <div className="bg-gradient-to-br from-[#004e6c] to-[#006b8f] rounded-xl p-6 text-white shadow-xl">
+              <h3 className="text-xl font-bold mb-3">Шууд хариу авах</h3>
+              <p className="mb-4 text-white/90 font-medium text-sm">
                 Яаралтай асуулт байвал бидэнтэй шууд утсаар холбогдоорой. Бид танд туслахдаа баяртай байх болно.
               </p>
               <a
                 href="tel:93000022"
-                className="inline-block bg-white text-[#004e6c] px-6 py-3 rounded-xl font-semibold hover:bg-[#ff6b35] hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="inline-block bg-white text-[#004e6c] px-5 py-2 rounded-lg font-semibold hover:bg-[#ff6b35] hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
               >
                 Одоо залгах
               </a>

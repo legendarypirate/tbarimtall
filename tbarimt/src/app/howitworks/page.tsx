@@ -85,16 +85,16 @@ export default function HowItWorksPage() {
       {/* Hero Section */}
      
       {/* For Buyers Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
-        <div className="text-center mb-12">
-          <h3 className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900">
+        <div className="text-center mb-6">
+          <h3 className="text-xl md:text-2xl font-bold text-[#004e6c] dark:text-gray-200 mb-2">
             {t.forBuyers}
           </h3>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Step 1 */}
-          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
               <div className="w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
@@ -110,48 +110,48 @@ export default function HowItWorksPage() {
           </div>
 
           {/* Step 2 */}
-          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-                <span className="text-3xl font-bold text-white">2</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-lg flex items-center justify-center mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+                <span className="text-2xl font-bold text-white">2</span>
               </div>
-              <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+              <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {t.step2Title}
               </h4>
-              <p className="text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
+              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
                 {t.step2DescBuyer}
               </p>
             </div>
           </div>
 
           {/* Step 3 */}
-          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-                <span className="text-3xl font-bold text-white">3</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-lg flex items-center justify-center mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+                <span className="text-2xl font-bold text-white">3</span>
               </div>
-              <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+              <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {t.step3Title}
               </h4>
-              <p className="text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
+              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
                 {t.step3DescBuyer}
               </p>
             </div>
           </div>
 
           {/* Step 4 */}
-          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-                <span className="text-3xl font-bold text-white">4</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-lg flex items-center justify-center mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+                <span className="text-2xl font-bold text-white">4</span>
               </div>
-              <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+              <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {t.step4Title}
               </h4>
-              <p className="text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
+              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
                 {t.step4DescBuyer}
               </p>
             </div>
@@ -160,73 +160,73 @@ export default function HowItWorksPage() {
       </section>
 
       {/* For Sellers Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-100 dark:bg-gray-800">
-        <div className="text-center mb-12">
-          <h3 className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gray-100 dark:bg-gray-800">
+        <div className="text-center mb-6">
+          <h3 className="text-xl md:text-2xl font-bold text-[#004e6c] dark:text-gray-200 mb-2">
             {t.forSellers}
           </h3>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Step 1 */}
-          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-                <span className="text-3xl font-bold text-white">1</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-lg flex items-center justify-center mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+                <span className="text-2xl font-bold text-white">1</span>
               </div>
-              <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+              <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {t.step1Title}
               </h4>
-              <p className="text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
+              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
                 {t.step1Desc}
               </p>
             </div>
           </div>
 
           {/* Step 2 */}
-          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-                <span className="text-3xl font-bold text-white">2</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-lg flex items-center justify-center mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+                <span className="text-2xl font-bold text-white">2</span>
               </div>
-              <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+              <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {t.step2Title}
               </h4>
-              <p className="text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
+              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
                 {t.step2DescSeller}
               </p>
             </div>
           </div>
 
           {/* Step 3 */}
-          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-                <span className="text-3xl font-bold text-white">3</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-lg flex items-center justify-center mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+                <span className="text-2xl font-bold text-white">3</span>
               </div>
-              <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+              <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {t.step3Title}
               </h4>
-              <p className="text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
+              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
                 {t.step3DescSeller}
               </p>
             </div>
           </div>
 
           {/* Step 4 */}
-          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
             <div className="relative z-10">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-                <span className="text-3xl font-bold text-white">4</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-lg flex items-center justify-center mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+                <span className="text-2xl font-bold text-white">4</span>
               </div>
-              <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+              <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
                 {t.step4Title}
               </h4>
-              <p className="text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
+              <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 leading-relaxed font-medium">
                 {t.step4DescSeller}
               </p>
             </div>
@@ -235,70 +235,70 @@ export default function HowItWorksPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
-        <div className="text-center mb-12">
-          <h3 className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900">
+        <div className="text-center mb-6">
+          <h3 className="text-xl md:text-2xl font-bold text-[#004e6c] dark:text-gray-200 mb-2">
             {t.benefitsTitle}
           </h3>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Benefit 1 */}
-          <div className="text-center bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-2xl mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-3 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+            <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
               {t.benefit1Title}
             </h4>
-            <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
+            <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 font-medium">
               {t.benefit1Desc}
             </p>
           </div>
 
           {/* Benefit 2 */}
-          <div className="text-center bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-2xl mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-3 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+            <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
               {t.benefit2Title}
             </h4>
-            <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
+            <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 font-medium">
               {t.benefit2Desc}
             </p>
           </div>
 
           {/* Benefit 3 */}
-          <div className="text-center bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-2xl mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-3 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+            <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
               {t.benefit3Title}
             </h4>
-            <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
+            <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 font-medium">
               {t.benefit3Desc}
             </p>
           </div>
 
           {/* Benefit 4 */}
-          <div className="text-center bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-2xl mb-6 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             </div>
-            <h4 className="text-xl font-bold text-[#004e6c] dark:text-gray-200 mb-3 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
+            <h4 className="text-lg font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors">
               {t.benefit4Title}
             </h4>
-            <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
+            <p className="text-sm text-[#004e6c]/70 dark:text-gray-400 font-medium">
               {t.benefit4Desc}
             </p>
           </div>
@@ -306,30 +306,30 @@ export default function HowItWorksPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative w-full py-24 overflow-hidden bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c]">
+      <section className="relative w-full py-12 overflow-hidden bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c]">
         {/* Abstract background graphics */}
         <div className="absolute inset-0 overflow-hidden opacity-20">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 left-0 w-64 h-64 bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white dark:text-gray-200 mb-6">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white dark:text-gray-200 mb-4">
             {t.ctaTitle}
           </h2>
-          <p className="text-xl md:text-2xl text-white/90 dark:text-gray-300 mb-10 max-w-2xl mx-auto font-medium">
+          <p className="text-lg md:text-xl text-white/90 dark:text-gray-300 mb-6 max-w-2xl mx-auto font-medium">
             {t.ctaDesc}
           </p>
-          <div className="flex flex-col sm:flex-row gap-5 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
               onClick={() => router.push('/login')}
-              className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+              className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-8 py-3 rounded-xl text-base font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
             >
               {t.ctaButton}
             </button>
             <button 
               onClick={() => router.push('/products')}
-              className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-white dark:border-gray-600 px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+              className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-white dark:border-gray-600 px-8 py-3 rounded-xl text-base font-bold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
               {t.browseButton}
             </button>

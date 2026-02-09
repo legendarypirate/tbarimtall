@@ -596,7 +596,7 @@ export default function ProductsPage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                    <span className={`text-lg font-bold ${
+                    <span className={`text-base font-semibold ${
                       isUnique 
                         ? 'text-green-600 dark:text-green-400' 
                         : 'text-[#004e6c] dark:text-gray-200'
@@ -625,8 +625,8 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-bold text-[#004e6c] dark:text-gray-200 mb-2">
+            <div className="text-2xl mb-4">🔍</div>
+            <h3 className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
               Бүтээгдэхүүн олдсонгүй
             </h3>
             <p className="text-[#004e6c]/70 dark:text-gray-400 mb-6 font-medium">

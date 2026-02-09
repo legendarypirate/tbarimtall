@@ -608,7 +608,7 @@ export default function Home() {
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
             <div className="text-center">
               {heroSliders.length > 0 && heroSliders[currentSlide] ? (
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
+                <h2 className="text-lg md:text-xl lg:text-xl font-semibold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
                   {heroSliders[currentSlide].title || getTranslation(language, 'heroTitle')}
                   {heroSliders[currentSlide].subtitle ? (
                     <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
@@ -621,7 +621,7 @@ export default function Home() {
                   )}
                 </h2>
               ) : (
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
+                <h2 className="text-lg md:text-xl lg:text-xl font-semibold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
                   {getTranslation(language, 'heroTitle')}
                   <span className="block mt-2 text-[#ff6b35] drop-shadow-md">
                     {getTranslation(language, 'heroSubtitle')}
@@ -632,7 +632,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-5 justify-center">
                 <button 
                   onClick={() => router.push('/products')}
-                  className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+                  className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-10 py-3 rounded-2xl text-sm font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
                 >
                   {getTranslation(language, 'viewAllContent')}
                 </button>
@@ -662,7 +662,7 @@ export default function Home() {
                     }
                     setShowAuthModal(true)
                   }}
-                  className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c] dark:border-gray-600 px-10 py-4 rounded-2xl text-lg font-bold hover:bg-[#004e6c] dark:hover:bg-[#006b8f] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  className="bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c] dark:border-gray-600 px-10 py-3 rounded-2xl text-sm font-semibold hover:bg-[#004e6c] dark:hover:bg-[#006b8f] hover:text-white hover:border-[#ff6b35] dark:hover:border-[#ff8555] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   {getTranslation(language, 'addYourContent')}
                 </button>
@@ -687,7 +687,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
                 10,742
               </div>
               <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
@@ -705,7 +705,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
                 1,204
               </div>
               <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
@@ -723,7 +723,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
                 9,300
               </div>
               <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
@@ -741,7 +741,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
                 ₮ 120,116,400
               </div>
               <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
@@ -757,8 +757,8 @@ export default function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gradient-to-br from-orange-50 via-red-50 to-orange-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              <span className="text-2xl animate-pulse">🔥</span>
-              <h2 className="text-xl md:text-2xl font-bold text-[#004e6c] dark:text-gray-200">
+              <span className="text-base animate-pulse">🔥</span>
+              <h2 className="text-base font-semibold text-[#004e6c] dark:text-gray-200">
                 Trending / Best Seller
               </h2>
               <span className="text-2xl animate-pulse">🔥</span>
@@ -871,23 +871,23 @@ export default function Home() {
       )}
 
       {/* All Categories Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
-        <div className="flex justify-between items-center mb-8">
-          <h3 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-base md:text-lg font-medium text-[#004e6c] dark:text-gray-200">
             {getTranslation(language, 'allCategories')}
           </h3>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-1.5">
           {/* All Categories Button */}
           <button
             onClick={() => {
               setSelectedCategory(null)
               setSearchQuery('')
             }}
-            className={`px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 ${
+            className={`px-3 py-1.5 rounded-lg font-medium text-[10px] md:text-xs transition-all duration-300 flex items-center space-x-1 ${
               selectedCategory === null
-                ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-lg'
-                : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 hover:shadow-md'
+                ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-md'
+                : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 hover:shadow-sm'
             }`}
           >
             <span>{getTranslation(language, 'all')}</span>
@@ -902,16 +902,16 @@ export default function Home() {
                   setSelectedCategory(category.id)
                   router.push(`/category/${category.id}`)
                 }}
-                className={`px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 ${
+                className={`px-3 py-1.5 rounded-lg font-medium text-[10px] md:text-xs transition-all duration-300 flex items-center space-x-1 ${
                   selectedCategory === category.id
-                    ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-lg'
-                    : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 hover:shadow-md'
+                    ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-md'
+                    : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 hover:shadow-sm'
                 }`}
               >
-                <span className="flex-shrink-0 text-xl">
+                <span className="flex-shrink-0 text-xs">
                   {getCategoryIcon(category.icon)}
                 </span>
-                <span>{category.name}</span>
+                <span className="line-clamp-1">{category.name}</span>
               </button>
             )
           })}
@@ -919,18 +919,18 @@ export default function Home() {
       </section>
  {/* Top Journalists Section */}
  {topBloggers.length > 0 && (
-        <section className="bg-gray-200 dark:bg-gray-800 py-16">
+        <section className="bg-gray-200 dark:bg-gray-800 py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-lg md:text-xl font-medium text-[#004e6c] dark:text-gray-200 mb-2">
                 {getTranslation(language, 'topJournalists')}
               </h2>
-              <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="text-xs md:text-sm text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
                 {getTranslation(language, 'topJournalistsDescription')}
               </p>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {topBloggers.slice(0, 12).map((journalist: any) => {
                 const getAvatarUrl = () => {
                   if (journalist.avatar) return journalist.avatar
@@ -970,41 +970,41 @@ export default function Home() {
                   <div
                     key={journalist.userId || journalist.id}
                     onClick={() => router.push(`/journalist/${journalist.userId || journalist.id}`)}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-1 hover:shadow-xl cursor-pointer group"
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-0.5 hover:shadow-lg cursor-pointer group"
                   >
-                    <div className="p-4 text-center">
-                      <div className="relative inline-block mb-3">
+                    <div className="p-3 text-center">
+                      <div className="relative inline-block mb-2">
                         <img
                           src={getAvatarUrl()}
                           alt={journalist.name || journalist.username || 'Journalist'}
-                          className="w-16 h-16 rounded-full border-2 border-[#004e6c] dark:border-[#006b8f] shadow-md group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
+                          className="w-12 h-12 rounded-full border border-[#004e6c] dark:border-[#006b8f] shadow-sm group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
                           onError={(e) => {
                             const seed = journalist.name || journalist.username || journalist.userId || 'default'
                             ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                           }}
                         />
                         {/* Membership Badge in corner */}
-                        <div className={`absolute -bottom-1 -right-1 ${badgeColor} text-[8px] font-bold px-1 py-0.5 rounded-full shadow-md border-2 border-white dark:border-gray-800 z-20 uppercase`}>
+                        <div className={`absolute -bottom-0.5 -right-0.5 ${badgeColor} text-[7px] font-medium px-1 py-0.5 rounded-full shadow-sm border border-white dark:border-gray-800 z-20 uppercase`}>
                           {membershipName}
                         </div>
                       </div>
-                      <h3 className="text-base font-bold text-[#004e6c] dark:text-gray-200 mb-1 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors line-clamp-1">
+                      <h3 className="text-xs font-medium text-[#004e6c] dark:text-gray-200 mb-0.5 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors line-clamp-1">
                         {journalist.name || journalist.username || 'Unknown'}
                       </h3>
                       {journalist.username && (
-                        <p className="text-xs text-[#004e6c]/60 dark:text-gray-400 mb-2 line-clamp-1">
+                        <p className="text-[10px] text-[#004e6c]/60 dark:text-gray-400 mb-1.5 line-clamp-1">
                           {journalist.username.startsWith('@') ? journalist.username : `@${journalist.username}`}
                         </p>
                       )}
                       
-                      <div className="space-y-1.5 mb-3">
-                        <div className="flex items-center justify-center space-x-1.5">
-                          <span className="text-yellow-400 text-xs">⭐</span>
-                          <span className="text-xs font-semibold text-[#004e6c] dark:text-gray-200">
+                      <div className="space-y-1 mb-2">
+                        <div className="flex items-center justify-center space-x-1">
+                          <span className="text-yellow-400 text-[10px]">⭐</span>
+                          <span className="text-[10px] font-medium text-[#004e6c] dark:text-gray-200">
                             {typeof journalist.rating === 'number' ? journalist.rating.toFixed(1) : parseFloat(journalist.rating ?? 0).toFixed(1)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center space-x-2 text-xs text-[#004e6c]/70 dark:text-gray-400">
+                        <div className="flex items-center justify-center space-x-1.5 text-[10px] text-[#004e6c]/70 dark:text-gray-400">
                           <span className="flex items-center space-x-0.5">
                             <span>👥</span>
                             <span>
@@ -1029,7 +1029,7 @@ export default function Home() {
                           e.stopPropagation()
                           router.push(`/journalist/${journalist.userId || journalist.id}`)
                         }}
-                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-1.5 rounded-lg text-xs font-semibold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-1 rounded-md text-[10px] font-medium hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                       >
                         {getTranslation(language, 'viewProfile')}
                       </button>
@@ -1123,7 +1123,7 @@ export default function Home() {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-3xl lg:text-4xl font-bold text-white dark:text-gray-200 mb-6">
+          <h2 className="text-base font-semibold text-white dark:text-gray-200 mb-6">
             {getTranslation(language, 'whyTitle')}
           </h2>
           <p className="text-xl md:text-1xl text-white/90 dark:text-gray-300 mb-10 max-w-1xl mx-auto font-medium">
@@ -1133,7 +1133,7 @@ export default function Home() {
           {isJournalist ? (
             <button 
               onClick={() => router.push('/account/journalist')}
-              className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+              className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-3 rounded-2xl text-sm font-semibold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
             >
               {getTranslation(language, 'joinForFree')}
             </button>
@@ -1173,7 +1173,7 @@ export default function Home() {
                   // If not authenticated, show auth modal
                   setShowAuthModal(true)
                 }}
-                className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
+                className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-3 rounded-2xl text-sm font-semibold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
               >
                 {getTranslation(language, 'joinForFree')}
               </button>
@@ -1410,7 +1410,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header */}
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+              <h2 className="text-sm md:text-base text-[#004e6c] dark:text-gray-200 mb-4">
                 {getTranslation(language, 'membershipPlans') || 'Membership Plans'}
               </h2>
               <p className="text-xl text-[#004e6c]/70 dark:text-gray-400 max-w-3xl mx-auto">
@@ -1425,7 +1425,7 @@ export default function Home() {
               
               <div className="relative z-10">
                 <div className="text-center mb-8">
-                  <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                  <h3 className="text-base font-semibold mb-4">
                     Subscription-ийн үнэ цэнэ
                   </h3>
                   <p className="text-xl opacity-90 max-w-2xl mx-auto">
@@ -1436,8 +1436,8 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                   {/* Advantages */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                    <div className="text-4xl mb-4">🎯</div>
-                    <h4 className="text-xl font-bold mb-3">Ямар давуу талтай вэ?</h4>
+                    <div className="text-xl mb-4">🎯</div>
+                    <h4 className="text-sm font-semibold mb-3">Ямар давуу талтай вэ?</h4>
                     <ul className="space-y-2 text-sm opacity-90">
                       <li className="flex items-start gap-2">
                         <span className="font-bold">✓</span>
@@ -1460,8 +1460,8 @@ export default function Home() {
 
                   {/* Opportunities */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                    <div className="text-4xl mb-4">🚀</div>
-                    <h4 className="text-xl font-bold mb-3">Ямар боломж нээгдэх вэ?</h4>
+                    <div className="text-xl mb-4">🚀</div>
+                    <h4 className="text-sm font-semibold mb-3">Ямар боломж нээгдэх вэ?</h4>
                     <ul className="space-y-2 text-sm opacity-90">
                       <li className="flex items-start gap-2">
                         <span className="font-bold">✓</span>
@@ -1484,17 +1484,17 @@ export default function Home() {
 
                   {/* Savings Calculator */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                    <div className="text-4xl mb-4">💰</div>
-                    <h4 className="text-xl font-bold mb-3">Хэмнэлтийн тооцоо</h4>
+                    <div className="text-xl mb-4">💰</div>
+                    <h4 className="text-sm font-semibold mb-3">Хэмнэлтийн тооцоо</h4>
                     <div className="space-y-3 text-sm">
                       <div className="bg-white/10 rounded-lg p-3">
                         <div className="opacity-75 mb-1">Нэг удаагийн худалдаа:</div>
-                        <div className="text-lg font-bold">~50,000₮</div>
+                        <div className="text-sm font-semibold">~50,000₮</div>
                         <div className="text-xs opacity-75 mt-1">(жишээ: 10 бүтээгдэхүүн)</div>
                       </div>
                       <div className="bg-white/20 rounded-lg p-3 border-2 border-white/30">
                         <div className="opacity-90 mb-1">Subscription:</div>
-                        <div className="text-2xl font-bold">~30,000₮</div>
+                        <div className="text-base font-semibold">~30,000₮</div>
                         <div className="text-xs opacity-90 mt-1 font-semibold">40% хэмнэлт! 🎉</div>
                       </div>
                     </div>
@@ -1514,7 +1514,7 @@ export default function Home() {
                       }
                     }}
                     disabled={isCreatingInvoice}
-                    className="bg-white text-[#004e6c] dark:text-[#006b8f] px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 dark:hover:bg-gray-200 transition-all shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-white text-[#004e6c] dark:text-[#006b8f] px-8 py-3 rounded-xl font-semibold text-sm hover:bg-gray-100 dark:hover:bg-gray-200 transition-all shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Subscription авах'}
                   </button>
@@ -1544,8 +1544,8 @@ export default function Home() {
                     }`}>
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
                       <div className="relative z-10">
-                        <h3 className="text-xl font-bold mb-2">{membership.name}</h3>
-                        <div className="text-3xl font-bold mb-2">
+                        <h3 className="text-sm font-semibold mb-2">{membership.name}</h3>
+                        <div className="text-base font-semibold mb-2">
                           {formatPrice(membership.price)}
                         </div>
                         {!isFree && (
@@ -1705,7 +1705,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Header */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="text-sm md:text-base text-white mb-4">
               Tbarimt - Албан ёсны, найдвартай систем
             </h2>
             <p className="text-xl text-white/90 max-w-3xl mx-auto">

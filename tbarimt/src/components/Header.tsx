@@ -814,7 +814,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                 type="button"
                 onClick={(e) => {
                   e.preventDefault()
-                  router.push('/faq')
+                  router.push('/products')
                 }}
                 className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >

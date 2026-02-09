@@ -57,7 +57,7 @@ export default function MembershipPage() {
         <section className="bg-gray-200 dark:bg-gray-800 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+              <h2 className="text-sm md:text-base text-[#004e6c] dark:text-gray-200 mb-4">
                 {getTranslation(language, 'membershipPlans') || 'Membership Plans'}
               </h2>
               <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
@@ -140,7 +140,7 @@ export default function MembershipPage() {
         <section className="bg-gray-200 dark:bg-gray-800 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-4">
+              <h2 className="text-sm md:text-base text-[#004e6c] dark:text-gray-200 mb-4">
                 {getTranslation(language, 'membershipPlans') || 'Membership Plans'}
               </h2>
               <p className="text-lg text-[#004e6c]/70 dark:text-gray-400">

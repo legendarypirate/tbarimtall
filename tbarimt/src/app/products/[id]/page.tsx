@@ -768,7 +768,7 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
             Бүтээгдэхүүн олдсонгүй
           </h2>
           <button
@@ -968,7 +968,7 @@ export default function ProductDetail() {
               <span>←</span>
               <span>Буцах</span>
             </button>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-base font-semibold text-gray-900 dark:text-white">
               Контент Дэлгүүр
             </h1>
             <div className="w-20"></div>
@@ -1119,7 +1119,7 @@ export default function ProductDetail() {
                   <span className="text-xl">👁️</span>
                   <span className="text-sm font-medium">Нийт үзсэн</span>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-base font-semibold text-gray-900 dark:text-white">
                   {formatNumber(product.views || 0)}
                 </div>
               </div>
@@ -1128,7 +1128,7 @@ export default function ProductDetail() {
                 <span className="text-xl">🕒</span>
                 <span className="text-sm font-medium">Үүссэн огноо</span>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-base font-semibold text-gray-900 dark:text-white">
                   {formatDate(product.createdAt)}
                 </div>
               </div>
@@ -1137,7 +1137,7 @@ export default function ProductDetail() {
                   <span className="text-xl">⭐</span>
                   <span className="text-sm font-medium">Үнэлгээ</span>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-base font-semibold text-gray-900 dark:text-white">
                   {parseFloat(product.rating) || 0}
                 </div>
               </div>
@@ -1146,7 +1146,7 @@ export default function ProductDetail() {
             {/* Preview Images Horizontal List */}
             {hasPreviewImages() && previewImages && previewImages.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
                   Зургийн цомог
                 </h3>
                 <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-100 dark:scrollbar-track-gray-800">
@@ -1176,7 +1176,7 @@ export default function ProductDetail() {
 
             {/* Description */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
                 Дэлгэрэнгүй мэдээлэл
               </h3>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
@@ -1201,7 +1201,7 @@ export default function ProductDetail() {
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-gray-700 sticky top-24">
               <div className="flex items-start justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex-1 pr-4">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white flex-1 pr-4">
                   {product.title}
                 </h2>
                 <div className="flex-shrink-0">
@@ -1260,7 +1260,7 @@ export default function ProductDetail() {
               <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
                 <div className="flex justify-between items-center mb-4">
                   
-                  <span className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+                  <span className="text-xl font-semibold text-blue-600 dark:text-blue-400">
                     {formatNumber(parseFloat(product.price) || 0)}₮
                   </span>
                 </div>
@@ -1268,7 +1268,7 @@ export default function ProductDetail() {
 
               <button
                 onClick={handlePurchase}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 mb-4"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold text-sm hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 mb-4"
               >
                 🛒 Одоо худалдаж авах
               </button>
@@ -1314,7 +1314,7 @@ export default function ProductDetail() {
 
               {/* Author Info */}
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
                   Зохиогч
                 </h3>
                 <div className="flex flex-col space-y-4">
@@ -1445,7 +1445,7 @@ export default function ProductDetail() {
                     </div>
                     
                     <div className="flex-1">
-                      <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                         {author.fullName || author.username || 'Unknown'}
                       </h4>
                     
@@ -1478,7 +1478,7 @@ export default function ProductDetail() {
       {/* Recommended Products Section */}
       {recommendedProducts.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-12">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-8">
             Санал болгох контентууд
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -1558,7 +1558,7 @@ export default function ProductDetail() {
                       </div>
                     </div>
                     <div className="p-4">
-                      <h4 className={`text-base font-bold mb-3 line-clamp-2 transition-colors min-h-[3rem] ${
+                      <h4 className={`text-sm font-semibold mb-3 line-clamp-2 transition-colors min-h-[3rem] ${
                         isUnique 
                           ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400' 
                           : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
@@ -1576,7 +1576,7 @@ export default function ProductDetail() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                        <span className={`text-xl font-bold transition-colors ${
+                        <span className={`text-base font-semibold transition-colors ${
                           isUnique 
                             ? 'text-green-600 dark:text-green-400' 
                             : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
@@ -1619,7 +1619,7 @@ export default function ProductDetail() {
             {/* Close Button */}
             <button
               onClick={() => setIsImageModalOpen(false)}
-              className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 z-20 bg-black/50 rounded-full w-12 h-12 flex items-center justify-center transition-all hover:bg-black/70"
+              className="absolute top-4 right-4 text-white text-xl hover:text-gray-300 z-20 bg-black/50 rounded-full w-10 h-10 flex items-center justify-center transition-all hover:bg-black/70"
             >
               ×
             </button>
@@ -1722,12 +1722,12 @@ export default function ProductDetail() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                 Төлбөр төлөх
               </h3>
               <button
                 onClick={() => setIsPaymentModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xl"
               >
                 ×
               </button>
@@ -1750,7 +1750,7 @@ export default function ProductDetail() {
                     </div>
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-gray-600 dark:text-gray-400">Нийт дүн:</span>
-                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      <span className="text-base font-semibold text-blue-600 dark:text-blue-400">
                         {formatNumber(parseFloat(product.price) || 0)}₮
                       </span>
                     </div>
@@ -1761,7 +1761,7 @@ export default function ProductDetail() {
                       <button
                         onClick={handleWalletPayment}
                         disabled={isProcessingWalletPayment || userBalance < parseFloat(product.price || 0)}
-                        className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-semibold text-sm transition-all shadow-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed ${
                           userBalance < parseFloat(product.price || 0) 
                             ? 'opacity-50 cursor-not-allowed' 
                             : 'hover:from-purple-700 hover:to-indigo-700'
@@ -1774,7 +1774,7 @@ export default function ProductDetail() {
                           </>
                         ) : (
                           <>
-                            <span className="text-2xl">👛</span>
+                            <span className="text-base">👛</span>
                             <span>Хэтэвчээр худалдаж авах</span>
                           </>
                         )}
@@ -1790,7 +1790,7 @@ export default function ProductDetail() {
                     <button
                       onClick={handleQPayPayment}
                       disabled={isCreatingInvoice}
-                      className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-xl font-semibold text-sm hover:from-green-700 hover:to-green-800 transition-all shadow-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isCreatingInvoice ? (
                         <>
@@ -1799,7 +1799,7 @@ export default function ProductDetail() {
                         </>
                       ) : (
                         <>
-                          <span className="text-2xl">💳</span>
+                          <span className="text-base">💳</span>
                           <span>QPay төлбөр төлөх</span>
                         </>
                       )}
@@ -1843,7 +1843,7 @@ export default function ProductDetail() {
                   {(qrCode || qrText) && !paymentError && (
                     <>
                       <div className="text-center">
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                           QPay QR код уншуулах
                         </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -1996,8 +1996,8 @@ export default function ProductDetail() {
             {isDownloaded ? (
               // Thank you message after download
               <div className="text-center py-8">
-                <div className="text-6xl mb-4">🙏</div>
-                <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                <div className="text-2xl mb-4">🙏</div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
                   Баярлалаа!
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -2018,7 +2018,7 @@ export default function ProductDetail() {
               // Download modal with token
               <>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                     ✅ Төлбөр амжилттай!
                   </h3>
                   <button
@@ -2026,7 +2026,7 @@ export default function ProductDetail() {
                       setIsDownloadModalOpen(false)
                       setDownloadToken(null)
                     }}
-                    className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                    className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xl"
                   >
                     ×
                   </button>
@@ -2059,9 +2059,9 @@ export default function ProductDetail() {
                   <div className="space-y-3">
                     <button
                       onClick={handleDownload}
-                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg flex items-center justify-center space-x-3"
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold text-sm hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg flex items-center justify-center space-x-3"
                     >
-                      <span className="text-2xl">⬇️</span>
+                      <span className="text-base">⬇️</span>
                       <span>Файл татаж авах</span>
                     </button>
                   </div>
@@ -2077,7 +2077,7 @@ export default function ProductDetail() {
               // Loading state while waiting for token
               <div className="text-center py-8">
                 <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
                   ✅ Төлбөр амжилттай!
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -2100,12 +2100,12 @@ export default function ProductDetail() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                 ❓ Түгээмэл асуулт хариулт
               </h3>
               <button
                 onClick={() => setIsFaqModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xl"
               >
                 ×
               </button>
@@ -2113,7 +2113,7 @@ export default function ProductDetail() {
 
             <div className="space-y-4">
               <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Бүтээгдэхүүнийг хэрхэн худалдаж авах вэ?
                 </h4>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -2122,7 +2122,7 @@ export default function ProductDetail() {
               </div>
 
               <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Төлбөр төлсний дараа файлыг хэр удаан татаж авах боломжтой вэ?
                 </h4>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -2131,7 +2131,7 @@ export default function ProductDetail() {
               </div>
 
               <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Хэрэв файлыг татаж авах боломжгүй болсон бол яах вэ?
                 </h4>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -2140,7 +2140,7 @@ export default function ProductDetail() {
               </div>
 
               <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Бүтээгдэхүүнийг буцаах боломжтой юу?
                 </h4>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -2149,7 +2149,7 @@ export default function ProductDetail() {
               </div>
 
               <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Ямар төлбөрийн арга хэрэглэж болох вэ?
                 </h4>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -2158,7 +2158,7 @@ export default function ProductDetail() {
               </div>
 
               <div className="pb-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                   Бүтээгдэхүүний чанар хэрхэн баталгаажсан вэ?
                 </h4>
                 <p className="text-gray-600 dark:text-gray-400">
@@ -2197,7 +2197,7 @@ export default function ProductDetail() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                 📋 Ижил төстэй файл захиалах
               </h3>
               <button
@@ -2209,7 +2209,7 @@ export default function ProductDetail() {
                     setSimilarFileRequestSuccess(false)
                   }
                 }}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xl"
                 disabled={isSubmittingSimilarFileRequest}
               >
                 ×
@@ -2218,8 +2218,8 @@ export default function ProductDetail() {
 
             {similarFileRequestSuccess ? (
               <div className="text-center py-8">
-                <div className="text-6xl mb-4">✅</div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                <div className="text-2xl mb-4">✅</div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
                   Хүсэлт илгээгдлээ
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -2337,7 +2337,7 @@ export default function ProductDetail() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                 ⚠️ Зохиогчийн эрхийн мэдэгдэл
               </h3>
               <button
@@ -2350,7 +2350,7 @@ export default function ProductDetail() {
                     setReportSuccess(false)
                   }
                 }}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xl"
                 disabled={isSubmittingReport}
               >
                 ×
@@ -2359,8 +2359,8 @@ export default function ProductDetail() {
 
             {reportSuccess ? (
               <div className="text-center py-8">
-                <div className="text-6xl mb-4">✅</div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                <div className="text-2xl mb-4">✅</div>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
                   Мэдэгдэл илгээгдлээ
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
