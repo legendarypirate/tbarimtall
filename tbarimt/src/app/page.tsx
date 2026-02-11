@@ -674,74 +674,72 @@ export default function Home() {
       */}
 
       {/* Stats Section */}
-      {/* Note: this used to overlap the hero section via `-mt-12`, but the hero is currently disabled.
-          Keeping the negative margin causes the stats cards to overlap the header/nav and intercept clicks. */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-0 relative z-20">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Users Stat */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center shadow-soft hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
+          {/* Users Stat - Dark Blue Icon */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-darkBlue-500 dark:bg-darkBlue-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                10,742
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                10.7k
               </div>
               <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'users') || 'Нийт хэрэглэгчид'}
+                {getTranslation(language, 'users') || 'нийт хэрэглэгч'}
               </div>
             </div>
           </div>
 
-          {/* Creators Stat */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center shadow-soft hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
+          {/* Creators Stat - Orange Icon */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                1,204
-              </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'creators') || 'Идэвхтэй нийтлэгчид'}
-              </div>
-            </div>
-          </div>
-
-          {/* Contents Stat */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center shadow-soft hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-orange-500 dark:bg-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                9,300
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                1,204
               </div>
               <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'contents') || 'Дижитал контент'}
+                {getTranslation(language, 'creators') || 'идэвхтэй нийтлэгч'}
               </div>
             </div>
           </div>
 
-          {/* Earned Stat */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center shadow-soft hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
+          {/* Contents Stat - Teal Icon */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div className="w-16 h-16 bg-teal-500 dark:bg-teal-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                ₮ 120,1M
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                9,300
               </div>
               <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'earned') || 'Нийт борлуулалт'}
+                {getTranslation(language, 'contents') || 'дижитал контент'}
+              </div>
+            </div>
+          </div>
+
+          {/* Earned Stat - Dark Blue Icon */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-darkBlue-500 dark:bg-darkBlue-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                ₮ 120.1M
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'earned') || 'нийт борлуулалт'}
               </div>
             </div>
           </div>
@@ -750,19 +748,21 @@ export default function Home() {
 
       {/* Trending / Best Seller Section */}
       {bestSellingProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gradient-to-br from-orange-50 via-red-50 to-orange-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              <span className="text-base animate-pulse">🔥</span>
-              <h2 className="text-base font-semibold text-[#004e6c] dark:text-gray-200">
-                Trending / Best Seller
+        <section className="w-full px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-6">
+              <div className="inline-block mb-3">
+                <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
+                  TRENDING MARKETPLACE
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
+                Эрэлттэй бүтээлүүд
               </h2>
-              <span className="text-2xl animate-pulse">🔥</span>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Платформ дээрх хамгийн их хандалттай, чанартай дижитал контентууд.
+              </p>
             </div>
-            <p className="text-lg text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
-              Хамгийн их зарагдсан контентууд - бусад хүмүүс юу авч байна вэ?
-            </p>
-          </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {bestSellingProducts.map((product, index) => {
@@ -863,33 +863,44 @@ export default function Home() {
               );
             })}
           </div>
+          
+          {/* View All Products Button */}
+          <div className="text-center mt-12">
+            <button
+              onClick={() => router.push('/products')}
+              className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
+            >
+              <span>Бүх бүтээлийг үзэх</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
         </section>
       )}
 
       {/* All Categories Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white dark:bg-gray-900">
+        <div className="mb-6">
+          <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
             {getTranslation(language, 'allCategories') || 'Ангилалууд'}
           </h3>
-          <button
-            onClick={() => router.push('/products')}
-            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm transition-colors"
-          >
-            Бүгдийг үзэх →
-          </button>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            Хайх бүх чиглэлээс сонгон шууд үзэхүү
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {/* All Categories Button */}
+        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+          {/* All Categories Button - Dark Blue Active */}
           <button
             onClick={() => {
               setSelectedCategory(null)
               setSearchQuery('')
             }}
-            className={`px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-1 whitespace-nowrap ${
+            className={`px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 whitespace-nowrap flex-shrink-0 ${
               selectedCategory === null
-                ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md hover:bg-primary-700 dark:hover:bg-primary-600'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                ? 'bg-darkBlue-500 dark:bg-darkBlue-600 text-white shadow-md hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-darkBlue-500 dark:hover:border-darkBlue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
             <span>{getTranslation(language, 'all') || 'Бүгд'}</span>
@@ -904,31 +915,42 @@ export default function Home() {
                   setSelectedCategory(category.id)
                   router.push(`/category/${category.id}`)
                 }}
-                className={`px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 whitespace-nowrap ${
+                className={`px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 whitespace-nowrap flex-shrink-0 ${
                   selectedCategory === category.id
-                    ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md hover:bg-primary-700 dark:hover:bg-primary-600'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    ? 'bg-darkBlue-500 dark:bg-darkBlue-600 text-white shadow-md hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-darkBlue-500 dark:hover:border-darkBlue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
-                <span className="flex-shrink-0 text-sm">
+                <span className="flex-shrink-0 text-base">
                   {getCategoryIcon(category.icon)}
                 </span>
                 <span className="line-clamp-1">{category.name}</span>
               </button>
             )
           })}
+          
+          {/* View All Link */}
+          <button
+            onClick={() => router.push('/products')}
+            className="text-darkBlue-500 dark:text-darkBlue-400 hover:text-darkBlue-600 dark:hover:text-darkBlue-300 font-semibold text-sm transition-colors flex items-center space-x-1 whitespace-nowrap flex-shrink-0 ml-2"
+          >
+            <span>Бүгдийг үзэх</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       </section>
- {/* Top Journalists Section */}
+ {/* Top Publishers Section */}
  {topBloggers.length > 0 && (
-        <section className="bg-gray-200 dark:bg-gray-800 py-10">
+        <section className="bg-white dark:bg-gray-900 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <h2 className="text-lg md:text-xl font-medium text-[#004e6c] dark:text-gray-200 mb-2">
-                {getTranslation(language, 'topJournalists')}
+            <div className="mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
+                Шилдэг нийтлэгчид
               </h2>
-              <p className="text-xs md:text-sm text-[#004e6c]/70 dark:text-gray-400 max-w-2xl mx-auto">
-                {getTranslation(language, 'topJournalistsDescription')}
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Платформын нүүр царай болон контент бүтээгчид
               </p>
             </div>
             
@@ -1021,7 +1043,7 @@ export default function Home() {
                           </span>
                           <span className="flex items-center space-x-0.5">
                             <span>📝</span>
-                            <span>{journalist.posts ?? 0}</span>
+                            <span>{journalist.posts ?? 0} Контент</span>
                           </span>
                         </div>
                       </div>
@@ -1031,9 +1053,9 @@ export default function Home() {
                           e.stopPropagation()
                           router.push(`/journalist/${journalist.userId || journalist.id}`)
                         }}
-                        className="w-full bg-[#004e6c] dark:bg-[#006b8f] text-white py-1 rounded-md text-[10px] font-medium hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                        className="w-full bg-darkBlue-500 dark:bg-darkBlue-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                       >
-                        {getTranslation(language, 'viewProfile')}
+                        Профайл
                       </button>
                     </div>
                   </div>
@@ -1116,88 +1138,126 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Banner Section */}
-      <section className="relative w-full py-24 overflow-hidden bg-[#004e6c] dark:bg-gray-800">
-        {/* Abstract background graphics */}
-        <div className="absolute inset-0 overflow-hidden opacity-20">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 dark:bg-gray-600/10 rounded-full blur-3xl"></div>
-        </div>
+      {/* Earn Money by Uploading Content Section */}
+      <section className="relative w-full py-20 overflow-hidden bg-darkBlue-500 dark:bg-gray-800">
+        <div className="absolute inset-0 bg-gradient-to-br from-darkBlue-600 to-darkBlue-500 dark:from-gray-900 dark:to-gray-800"></div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-base font-semibold text-white dark:text-gray-200 mb-6">
-            {getTranslation(language, 'whyTitle')}
-          </h2>
-          <p className="text-xl md:text-1xl text-white/90 dark:text-gray-300 mb-10 max-w-1xl mx-auto font-medium">
-            {getTranslation(language, 'whyDescription')}
-          </p>
-
-          {isJournalist ? (
-            <button 
-              onClick={() => router.push('/account/journalist')}
-              className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-3 rounded-2xl text-sm font-semibold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
-            >
-              {getTranslation(language, 'joinForFree')}
-            </button>
-          ) : (
-            <>
-              <button 
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  // Clear any stale OAuth flags before opening modal
-                  if (sessionStorage.getItem('oauth_flow_started')) {
-                    sessionStorage.removeItem('oauth_flow_started')
-                    sessionStorage.removeItem('oauth_flow_timestamp')
-                  }
-                  
-                  // Check if user is authenticated
-                  const token = localStorage.getItem('token')
-                  const storedUser = localStorage.getItem('user')
-                  
-                  if (token && storedUser) {
-                    try {
-                      const user = JSON.parse(storedUser)
-                      // Check if user has accepted terms
-                      if (!user.termsAccepted) {
-                        // User is authenticated but hasn't accepted terms - show terms modal
-                        setShowTermsModal(true)
-                        return
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Text Content */}
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Контентоо оруулаад мөнгө олж эхэл!
+              </h2>
+              <p className="text-lg text-white/90 dark:text-gray-300 mb-8 leading-relaxed">
+                Мянга мянган хэрэглэгчид өдөр бүр хэрэгтэй материалаа эндээс хайж байна. Та өөрийн бүтээлээ үнэлэх боломжтой.
+              </p>
+              
+              {/* Feature Points */}
+              <div className="flex flex-wrap gap-6 mb-8">
+                <div className="flex items-center space-x-2">
+                  <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <span className="text-white font-medium">Аюулгүй</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <span className="text-white font-medium">Өндөр өгөөж</span>
+                </div>
+              </div>
+              
+              {isJournalist ? (
+                <button 
+                  onClick={() => router.push('/account/journalist')}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl text-base font-semibold transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                >
+                  {getTranslation(language, 'joinForFree') || 'Үнэгүй нэгдэх'}
+                </button>
+              ) : (
+                <>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (sessionStorage.getItem('oauth_flow_started')) {
+                        sessionStorage.removeItem('oauth_flow_started')
+                        sessionStorage.removeItem('oauth_flow_timestamp')
                       }
-                      // User is authenticated and has accepted terms - navigate to journalist page
-                      router.push('/account/journalist')
-                      return
-                    } catch (e) {
-                      // If parsing fails, continue to show auth modal
-                    }
-                  }
-                  
-                  // If not authenticated, show auth modal
-                  setShowAuthModal(true)
-                }}
-                className="bg-[#ff6b35] dark:bg-[#ff8555] text-white px-12 py-3 rounded-2xl text-sm font-semibold hover:bg-[#ff8555] dark:hover:bg-[#ff6b35] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1"
-              >
-                {getTranslation(language, 'joinForFree')}
-              </button>
-              <AuthModal
-                isOpen={showAuthModal}
-                onClose={() => {
-                  setShowAuthModal(false)
-                  // Clear OAuth flag when modal is closed
-                  if (sessionStorage.getItem('oauth_flow_started')) {
-                    sessionStorage.removeItem('oauth_flow_started')
-                    sessionStorage.removeItem('oauth_flow_timestamp')
-                  }
-                }}
-                onSelectGoogle={() => {
-                  setShowAuthModal(false)
-                }}
-                onSelectFacebook={() => {
-                  setShowAuthModal(false)
-                }}
-              />
-            </>
-          )}
+                      
+                      const token = localStorage.getItem('token')
+                      const storedUser = localStorage.getItem('user')
+                      
+                      if (token && storedUser) {
+                        try {
+                          const user = JSON.parse(storedUser)
+                          if (!user.termsAccepted) {
+                            setShowTermsModal(true)
+                            return
+                          }
+                          router.push('/account/journalist')
+                          return
+                        } catch (e) {
+                        }
+                      }
+                      
+                      setShowAuthModal(true)
+                    }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl text-base font-semibold transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  >
+                    {getTranslation(language, 'joinForFree') || 'Үнэгүй нэгдэх'}
+                  </button>
+                  <AuthModal
+                    isOpen={showAuthModal}
+                    onClose={() => {
+                      setShowAuthModal(false)
+                      if (sessionStorage.getItem('oauth_flow_started')) {
+                        sessionStorage.removeItem('oauth_flow_started')
+                        sessionStorage.removeItem('oauth_flow_timestamp')
+                      }
+                    }}
+                    onSelectGoogle={() => {
+                      setShowAuthModal(false)
+                    }}
+                    onSelectFacebook={() => {
+                      setShowAuthModal(false)
+                    }}
+                  />
+                </>
+              )}
+            </div>
+            
+            {/* Right Side - Graphic */}
+            <div className="relative">
+              <div className="bg-teal-500/20 backdrop-blur-sm rounded-2xl p-8 border border-teal-400/30">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-teal-500/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div className="text-4xl font-bold text-white mb-2">+45%</div>
+                  <div className="text-white/80 text-sm">Өсөлт</div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-white">50k+</div>
+                    <div className="text-white/70 text-xs">хэрэглэгч</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">12k+</div>
+                    <div className="text-white/70 text-xs">контент</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1231,7 +1291,7 @@ export default function Home() {
 
       {/* Featured Products Section */}
       <section className="bg-gray-200 dark:bg-gray-800 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-12">
           <h3 className="text-xl md:text-2xl font-medium text-[#004e6c] dark:text-gray-200">
             {getTranslation(language, 'featuredProducts')}
@@ -1421,85 +1481,81 @@ export default function Home() {
             </div>
 
             {/* Subscription Value Proposition Section */}
-            <div className="bg-gradient-to-r from-[#004e6c] to-[#ff6b35] dark:from-[#006b8f] dark:to-[#ff8555] rounded-3xl shadow-2xl p-8 md:p-12 mb-16 text-white relative overflow-hidden">
+            <div className="bg-gradient-to-r from-darkBlue-500 via-orange-500 to-darkBlue-500 dark:from-gray-800 dark:via-orange-600 dark:to-gray-800 rounded-3xl shadow-2xl p-8 md:p-12 mb-16 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-48 -mt-48"></div>
               <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -ml-48 -mb-48"></div>
               
               <div className="relative z-10">
                 <div className="text-center mb-8">
-                  <h3 className="text-base font-semibold mb-4">
+                  <h3 className="text-3xl md:text-4xl font-bold mb-4">
                     Subscription-ийн үнэ цэнэ
                   </h3>
-                  <p className="text-xl opacity-90 max-w-2xl mx-auto">
-                    Нэг удаагийн худалдааны оронд subscription авах нь илүү хэмнэлттэй, тохиромжтой
+                  <p className="text-lg opacity-90 max-w-2xl mx-auto">
+                    Нэг удаагийн худалдан авалтаас илүү ашигтай, илүү хэмнэлттэй сонголтыг санал болгож байна.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   {/* Advantages */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                    <div className="text-xl mb-4">🎯</div>
-                    <h4 className="text-sm font-semibold mb-3">Ямар давуу талтай вэ?</h4>
-                    <ul className="space-y-2 text-sm opacity-90">
+                    <h4 className="text-lg font-semibold mb-4">Давуу талууд</h4>
+                    <ul className="space-y-3 text-sm opacity-90">
                       <li className="flex items-start gap-2">
-                        <span className="font-bold">✓</span>
-                        <span>Хязгааргүй нийтлэх боломж</span>
+                        <span className="font-bold text-orange-300">✓</span>
+                        <span>Хязгааргүй нэвтрэх</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="font-bold">✓</span>
+                        <span className="font-bold text-orange-300">✓</span>
                         <span>Өндөр комиссын хувь</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="font-bold">✓</span>
+                        <span className="font-bold text-orange-300">✓</span>
                         <span>Онцгой тэмдэглэгээ</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="font-bold">✓</span>
-                        <span>Тогтмол орлого олох</span>
                       </li>
                     </ul>
                   </div>
 
                   {/* Opportunities */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                    <div className="text-xl mb-4">🚀</div>
-                    <h4 className="text-sm font-semibold mb-3">Ямар боломж нээгдэх вэ?</h4>
-                    <ul className="space-y-2 text-sm opacity-90">
+                    <h4 className="text-lg font-semibold mb-4">Боломжууд</h4>
+                    <ul className="space-y-3 text-sm opacity-90">
                       <li className="flex items-start gap-2">
-                        <span className="font-bold">✓</span>
-                        <span>Илүү олон бүтээгдэхүүн борлуулах</span>
+                        <span className="font-bold text-orange-300">✓</span>
+                        <span>Олон бүтээгдэхүүн</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="font-bold">✓</span>
-                        <span>Илүү их орлого олох</span>
+                        <span className="font-bold text-orange-300">✓</span>
+                        <span>Илүү их өгөөж</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="font-bold">✓</span>
-                        <span>Брендээ бэхжүүлэх</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="font-bold">✓</span>
-                        <span>Тогтвортой бизнес хөгжүүлэх</span>
+                        <span className="font-bold text-orange-300">✓</span>
+                        <span>Брэндээ бэхжүүлэх</span>
                       </li>
                     </ul>
                   </div>
+                </div>
 
-                  {/* Savings Calculator */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                    <div className="text-xl mb-4">💰</div>
-                    <h4 className="text-sm font-semibold mb-3">Хэмнэлтийн тооцоо</h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="bg-white/10 rounded-lg p-3">
-                        <div className="opacity-75 mb-1">Нэг удаагийн худалдаа:</div>
-                        <div className="text-sm font-semibold">~50,000₮</div>
-                        <div className="text-xs opacity-75 mt-1">(жишээ: 10 бүтээгдэхүүн)</div>
-                      </div>
-                      <div className="bg-white/20 rounded-lg p-3 border-2 border-white/30">
-                        <div className="opacity-90 mb-1">Subscription:</div>
-                        <div className="text-base font-semibold">~30,000₮</div>
-                        <div className="text-xs opacity-90 mt-1 font-semibold">40% хэмнэлт! 🎉</div>
-                      </div>
-                    </div>
+                {/* Savings Calculator */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 mb-8 max-w-md mx-auto">
+                  <h4 className="text-lg font-semibold mb-4 text-center">Хэмнэлтийн тооцоо</h4>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold mb-2">~ 50,000 ₮</div>
+                    <button
+                      onClick={() => {
+                        const paidMembership = memberships.find((m: any) => {
+                          const price = typeof m.price === 'number' ? m.price : parseFloat(String(m.price))
+                          return price > 0
+                        })
+                        if (paidMembership) {
+                          handleMembershipSelect(paidMembership)
+                        }
+                      }}
+                      disabled={isCreatingInvoice}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-4 rounded-xl font-bold text-base transition-all shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : '30,000 ₮ / Сар'}
+                    </button>
+                    <div className="text-xs opacity-75 mt-2">SUBSCRIPTION</div>
                   </div>
                 </div>
 
@@ -1516,7 +1572,7 @@ export default function Home() {
                       }
                     }}
                     disabled={isCreatingInvoice}
-                    className="bg-white text-[#004e6c] dark:text-[#006b8f] px-8 py-3 rounded-xl font-semibold text-sm hover:bg-gray-100 dark:hover:bg-gray-200 transition-all shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-white text-darkBlue-500 dark:text-darkBlue-600 px-8 py-4 rounded-xl font-semibold text-base hover:bg-gray-100 dark:hover:bg-gray-200 transition-all shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Subscription авах'}
                   </button>
@@ -1810,7 +1866,7 @@ export default function Home() {
       {/* Сүүлд нэмэгдсэн контент Section - Right above Footer */}
       {recentProducts.length >= 1 && (
         <section className="bg-white dark:bg-gray-900 py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-12">
               <div className="flex items-center space-x-3">
                 <h3 className="text-xl md:text-2xl font-medium text-[#004e6c] dark:text-gray-200">
