@@ -956,34 +956,47 @@ export default function ProductDetail() {
         }
       `}</style>
       
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <button
               onClick={() => router.push('/')}
               className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              <span>←</span>
-              <span>Буцах</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="text-sm font-medium">Буцах</span>
             </button>
-            <h1 className="text-base font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
               Контент Дэлгүүр
             </h1>
-            <div className="w-20"></div>
+            <div className="flex items-center space-x-3">
+              <button className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+              <button className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Images and Preview */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {/* Banner Slider */}
             {banners.length > 0 && (
-              <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-                <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+              <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+                <div className="relative aspect-video">
                   {banners.map((banner, index) => (
                     <div
                       key={banner.id}
@@ -1029,10 +1042,10 @@ export default function ProductDetail() {
                         <button
                           key={index}
                           onClick={() => setCurrentBannerIndex(index)}
-                          className={`w-2 h-2 rounded-full transition-all ${
+                          className={`h-1.5 rounded-full transition-all ${
                             index === currentBannerIndex
                               ? 'bg-white w-8'
-                              : 'bg-white/50 hover:bg-white/75'
+                              : 'bg-white/50 hover:bg-white/75 w-1.5'
                           }`}
                           aria-label={`Go to banner ${index + 1}`}
                         />
@@ -1045,19 +1058,19 @@ export default function ProductDetail() {
                     <>
                       <button
                         onClick={() => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length)}
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 text-gray-900 dark:text-white p-2 rounded-full shadow-lg transition-all z-10"
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-900 dark:text-white p-2 rounded-full shadow-md transition-all z-10"
                         aria-label="Previous banner"
                       >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                       </button>
                       <button
                         onClick={() => setCurrentBannerIndex((prev) => (prev + 1) % banners.length)}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 text-gray-900 dark:text-white p-2 rounded-full shadow-lg transition-all z-10"
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-900 dark:text-white p-2 rounded-full shadow-md transition-all z-10"
                         aria-label="Next banner"
                       >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
@@ -1067,33 +1080,9 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Share Buttons - Above Image */}
-            <div className="flex items-center justify-end space-x-2 mb-2">
-              <button
-                onClick={handleShareFacebook}
-                className="w-10 h-10 flex items-center justify-center bg-[#1877F2] text-white rounded-full shadow-lg hover:bg-[#166FE5] transition-all hover:scale-110"
-                aria-label="Facebook дээр хуваалцах"
-                title="Facebook дээр хуваалцах"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </button>
-              <button
-                onClick={handleShareX}
-                className="w-10 h-10 flex items-center justify-center bg-black dark:bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 dark:hover:bg-gray-800 transition-all hover:scale-110"
-                aria-label="X (Twitter) дээр хуваалцах"
-                title="X (Twitter) дээр хуваалцах"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-              </button>
-            </div>
-
-            {/* Main Image */}
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-              <div className="relative aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+            {/* Main Image with Share Buttons Overlay */}
+            <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div className="relative aspect-[8/3] bg-gray-100 dark:bg-gray-700">
                 <img
                   src={product.image || '/placeholder.png'}
                   alt={product.title}
@@ -1101,43 +1090,70 @@ export default function ProductDetail() {
                   onClick={() => setIsImageModalOpen(true)}
                 />
                 {product.isDiploma && (
-                  <div className="absolute top-4 left-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-lg font-bold shadow-lg z-10">
+                  <div className="absolute top-4 left-4 bg-yellow-400 text-yellow-900 px-3 py-1.5 rounded-lg text-xs font-bold shadow-md z-10">
                     🎓 Дипломын ажил
                   </div>
                 )}
-                <div className="absolute top-4 right-4 flex items-center space-x-1 bg-white/90 dark:bg-gray-800/90 px-3 py-1.5 rounded-full shadow-lg z-10">
-                  <span className="text-yellow-400 text-lg">⭐</span>
-                  <span className="font-bold text-gray-900 dark:text-white">{parseFloat(product.rating) || 0}</span>
+                
+                {/* Share Buttons - Top Right Corner */}
+                <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
+                  <button
+                    onClick={handleShareFacebook}
+                    className="w-10 h-10 flex items-center justify-center bg-[#1877F2] text-white rounded-full shadow-lg hover:bg-[#166FE5] transition-all hover:scale-105"
+                    aria-label="Facebook дээр хуваалцах"
+                    title="Facebook дээр хуваалцах"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleShareX}
+                    className="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-full shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all hover:scale-105"
+                    aria-label="X (Twitter) дээр хуваалцах"
+                    title="X (Twitter) дээр хуваалцах"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <span className="text-xl">👁️</span>
-                  <span className="text-sm font-medium">Нийт үзсэн</span>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span className="text-xs font-medium">Нийт үзсэн</span>
                 </div>
-                <div className="text-base font-semibold text-gray-900 dark:text-white">
+                <div className="text-lg font-semibold text-gray-900 dark:text-white">
                   {formatNumber(product.views || 0)}
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                <span className="text-xl">🕒</span>
-                <span className="text-sm font-medium">Үүссэн огноо</span>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-xs font-medium">Үүссэн огноо</span>
                 </div>
-                <div className="text-base font-semibold text-gray-900 dark:text-white">
+                <div className="text-lg font-semibold text-gray-900 dark:text-white">
                   {formatDate(product.createdAt)}
                 </div>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-1">
-                  <span className="text-xl">⭐</span>
-                  <span className="text-sm font-medium">Үнэлгээ</span>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-2">
+                  <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <span className="text-xs font-medium">Үнэлгээ</span>
                 </div>
-                <div className="text-base font-semibold text-gray-900 dark:text-white">
+                <div className="text-lg font-semibold text-gray-900 dark:text-white">
                   {parseFloat(product.rating) || 0}
                 </div>
               </div>
@@ -1157,7 +1173,7 @@ export default function ProductDetail() {
                         setSelectedImageIndex(index)
                         setIsImageModalOpen(true)
                       }}
-                      className={`flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden border-2 transition-all cursor-pointer hover:scale-105 ${
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer hover:scale-105 ${
                         selectedImageIndex === index
                           ? 'border-blue-600 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800'
                           : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
@@ -1175,33 +1191,35 @@ export default function ProductDetail() {
             )}
 
             {/* Description */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
                 Дэлгэрэнгүй мэдээлэл
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {product.description || 'Тайлбар байхгүй байна.'}
               </p>
               
               {/* Tags */}
-              <div className="flex flex-wrap gap-2 mt-4">
-                {(product.tags || []).map((tag: string, index: number) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
+              {(product.tags || []).length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {(product.tags || []).map((tag: string, index: number) => (
+                    <span
+                      key={index}
+                      className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-md text-xs font-medium"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Right Column - Purchase Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 border border-gray-200 dark:border-gray-700 sticky top-24">
-              <div className="flex items-start justify-between mb-6">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white flex-1 pr-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 border border-gray-200 dark:border-gray-700 sticky top-24">
+              <div className="flex items-start justify-between mb-5">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white flex-1 pr-3 leading-tight">
                   {product.title}
                 </h2>
                 <div className="flex-shrink-0">
@@ -1212,10 +1230,10 @@ export default function ProductDetail() {
                 </div>
               </div>
               
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 mb-5 pb-5 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Ангилал:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Ангилал:</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     {typeof product.category === 'object' && product.category?.name
                       ? product.category.name
                       : typeof product.category === 'string'
@@ -1225,59 +1243,58 @@ export default function ProductDetail() {
                 </div>
                 {product.pages && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Хуудас:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Хуудас:</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {product.pages} хуудас
                     </span>
                   </div>
                 )}
                 {product.size && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Хэмжээ:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Хэмжээ:</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {product.fileSize}
                     </span>
                   </div>
                 )}
                 {product.fileType && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Файлын төрөл:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Файлын төрөл:</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {formatFileType(product.fileType)}
                     </span>
                   </div>
                 )}
                 {product.createdAt && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Огноо:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Огноо:</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {new Date(product.createdAt).toLocaleDateString('mn-MN')}
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  
-                  <span className="text-xl font-semibold text-blue-600 dark:text-blue-400">
-                    {formatNumber(parseFloat(product.price) || 0)}₮
-                  </span>
+              <div className="mb-5">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatNumber(parseFloat(product.price) || 0)}₮
                 </div>
               </div>
 
               <button
                 onClick={handlePurchase}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold text-sm hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 mb-4"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm hover:shadow-md mb-3 flex items-center justify-center space-x-2"
               >
-                🛒 Одоо худалдаж авах
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Одоо худалдаж авах</span>
               </button>
 
               <button
                 onClick={() => {
                   if (!isAuthenticated) {
                     try {
-                      // Remember where the user was so we can bring them back after OAuth login
                       sessionStorage.setItem('post_login_redirect', `/products/${productId}`)
                     } catch {
                       // ignore storage errors
@@ -1290,171 +1307,66 @@ export default function ProductDetail() {
                   setSimilarFileRequestError(null)
                   setSimilarFileRequestSuccess(false)
                 }}
-                className="w-full flex items-center justify-center bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all shadow-md hover:shadow-lg mb-4"
+                className="w-full flex items-center justify-center bg-purple-600 text-white py-3 rounded-lg font-semibold text-sm hover:bg-purple-700 transition-all shadow-sm hover:shadow-md mb-3 space-x-2"
               >
-                <span className="mr-2">📋</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
                 <span>Ижил төстэй файл захиалах</span>
               </button>
            
               <button
                 onClick={() => {
                   setIsCopyrightReportModalOpen(true)
-                  // Pre-fill phone if user is authenticated and has phone
                   if (isAuthenticated && userPhone) {
                     setCopyrightReportPhone(userPhone)
                   } else {
                     setCopyrightReportPhone('')
                   }
                 }}
-                className="w-full flex items-center justify-center border-2 border-red-600 text-red-600 dark:text-red-400 py-3 rounded-xl font-semibold hover:bg-red-50 dark:hover:bg-gray-700 transition-all"
+                className="w-full flex items-center justify-center border-2 border-red-600 text-red-600 dark:text-red-400 py-3 rounded-lg font-semibold text-sm hover:bg-red-50 dark:hover:bg-gray-700 transition-all space-x-2"
               >
-                <span className="mr-2">⚠️</span>
-                <span>Зохиогчийн эрхийн мэдэгдэл</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Зохиогчийн эрхийн мэдгдэл</span>
               </button>
 
               {/* Author Info */}
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mt-6">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-                  Зохиогч
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700 mt-5">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase">
+                  ЗОХИОГЧ
                 </h3>
                 <div className="flex flex-col space-y-4">
-                  <div className="flex items-center space-x-4">
-                    {/* Animated Avatar with Membership Decoration */}
-                    <div className="relative" style={{ width: '80px', height: '80px' }}>
-                      {/* Outer animated ring with gradient */}
-                      <div 
-                        className="absolute inset-0 rounded-full"
-                        style={{
-                          background: `conic-gradient(from 0deg, transparent, ${membershipDeco.glowColor}, transparent, ${membershipDeco.glowColor}, transparent)`,
-                          padding: '2px',
-                          width: 'calc(100% + 6px)',
-                          height: 'calc(100% + 6px)',
-                          top: '-3px',
-                          left: '-3px',
-                          animation: 'spin-slow 3s linear infinite',
-                        }}
-                      >
-                        <div className="w-full h-full rounded-full bg-white dark:bg-gray-800"></div>
-                      </div>
-                      
-                      {/* Animated stars around the border */}
-                      {[...Array(8)].map((_, i) => {
-                        const angle = (i * 360) / 8;
-                        const radius = 38;
-                        const x = Math.cos((angle * Math.PI) / 180) * radius;
-                        const y = Math.sin((angle * Math.PI) / 180) * radius;
-                        return (
-                          <div
-                            key={`star-${i}`}
-                            className="absolute text-yellow-400"
-                            style={{
-                              left: `calc(50% + ${x}px)`,
-                              top: `calc(50% + ${y}px)`,
-                              transform: 'translate(-50%, -50%)',
-                              fontSize: '12px',
-                              animation: `star-rotate 4s linear infinite`,
-                              animationDelay: `${i * 0.2}s`,
-                              filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.8))',
-                            }}
-                          >
-                            ⭐
-                          </div>
-                        );
-                      })}
-                      
-                      {/* Middle pulsing ring with enhanced glow */}
-                      <div 
-                        className={`absolute inset-0 rounded-full ${membershipDeco.ringColor}`}
-                        style={{
-                          width: 'calc(100% + 4px)',
-                          height: 'calc(100% + 4px)',
-                          top: '-2px',
-                          left: '-2px',
-                          border: `2px solid ${membershipDeco.glowColor}`,
-                          boxShadow: `0 0 15px ${membershipDeco.glowColor}, 0 0 30px ${membershipDeco.glowColor}`,
-                          animation: 'border-pulse 2s ease-in-out infinite',
+                  <div className="flex items-center space-x-3">
+                    {/* Avatar with Membership Badge */}
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={getAvatarUrl()}
+                        alt={author.fullName || author.username || 'Author'}
+                        className="w-16 h-16 rounded-full border-2 border-gray-200 dark:border-gray-700"
+                        onError={(e) => {
+                          const seed = author.fullName || author.email || author.username || author.id || 'default';
+                          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
                         }}
                       />
-                      
-                      {/* Sparkle effects */}
-                      {[...Array(6)].map((_, i) => {
-                        const angle = (i * 360) / 6;
-                        const radius = 32;
-                        const x = Math.cos((angle * Math.PI) / 180) * radius;
-                        const y = Math.sin((angle * Math.PI) / 180) * radius;
-                        return (
-                          <div
-                            key={`sparkle-${i}`}
-                            className="absolute"
-                            style={{
-                              left: `calc(50% + ${x}px)`,
-                              top: `calc(50% + ${y}px)`,
-                              transform: 'translate(-50%, -50%)',
-                              width: '6px',
-                              height: '6px',
-                              background: membershipDeco.glowColor,
-                              borderRadius: '50%',
-                              boxShadow: `0 0 8px ${membershipDeco.glowColor}`,
-                              animation: `sparkle 2s ease-in-out infinite`,
-                              animationDelay: `${i * 0.3}s`,
-                            }}
-                          />
-                        );
-                      })}
-                      
-                      {/* Avatar image */}
-                      <div className="relative z-10">
-                        <img
-                          src={getAvatarUrl()}
-                          alt={author.fullName || author.username || 'Author'}
-                          className="w-16 h-16 rounded-full border-2 border-white dark:border-gray-800 relative z-10"
-                          style={{
-                            boxShadow: `0 0 20px ${membershipDeco.glowColor}, 0 0 40px ${membershipDeco.glowColor}, inset 0 0 15px ${membershipDeco.glowColor}`,
-                            animation: 'pulse-glow 3s ease-in-out infinite',
-                          }}
-                          onError={(e) => {
-                            // Fallback to DiceBear if image fails to load
-                            const seed = author.fullName || author.email || author.username || author.id || 'default';
-                            (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`;
-                          }}
-                        />
-                        {/* Membership Badge in corner */}
-                        <div className={`absolute -bottom-1 -right-1 ${membershipDeco.badgeColor} text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg border-2 border-white dark:border-gray-800 z-20 uppercase`}>
-                          {membershipName}
-                        </div>
-                      </div>
-                      
-                      {/* Floating particles effect */}
-                      <div className="absolute inset-0 overflow-visible rounded-full pointer-events-none">
-                        {[...Array(8)].map((_, i) => (
-                          <div
-                            key={i}
-                            className={`absolute ${membershipDeco.pulseColor} rounded-full`}
-                            style={{
-                              width: '5px',
-                              height: '5px',
-                              left: `${20 + (i * 10)}%`,
-                              top: `${20 + (i * 8)}%`,
-                              animation: `float-particle 3s ease-in-out infinite`,
-                              animationDelay: `${i * 0.3}s`,
-                              boxShadow: `0 0 6px ${membershipDeco.glowColor}`,
-                            }}
-                          />
-                        ))}
+                      {/* Membership Badge */}
+                      <div className={`absolute -bottom-1 -right-1 ${membershipDeco.badgeColor} text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-md border-2 border-white dark:border-gray-800 uppercase`}>
+                        {membershipName}
                       </div>
                     </div>
                     
-                    <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                         {author.fullName || author.username || 'Unknown'}
                       </h4>
-                    
-                     
                       {author.journalist && (
                         <div className="flex items-center space-x-1 mt-1">
-                          <span className="text-yellow-400">⭐</span>
-                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                            {parseFloat(author.journalist.rating) || 0}
+                          <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {parseFloat(author.journalist.rating) || 0} үнэлгээ
                           </span>
                         </div>
                       )}
@@ -1463,7 +1375,7 @@ export default function ProductDetail() {
                   {author.id && (
                     <button 
                       onClick={() => router.push(`/journalist/${author.id}`)}
-                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-md"
+                      className="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm font-medium"
                     >
                       Профайл үзэх
                     </button>
@@ -1608,6 +1520,13 @@ export default function ProductDetail() {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-12 border-t border-gray-200 dark:border-gray-700">
+        <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+          © 2024 Дижитал Контент Дэлгүүр. Бүх эрх хуулиар хамгаалагдсан.
+        </div>
+      </footer>
 
       {/* Image Modal - Gallery Viewer */}
       {isImageModalOpen && (

@@ -749,20 +749,19 @@ export default function Home() {
       {/* Trending / Best Seller Section */}
       {bestSellingProducts.length > 0 && (
         <section className="w-full px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-6">
-              <div className="inline-block mb-3">
-                <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
-                  TRENDING MARKETPLACE
-                </span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
-                Эрэлттэй бүтээлүүд
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Платформ дээрх хамгийн их хандалттай, чанартай дижитал контентууд.
-              </p>
+          <div className="mb-6">
+            <div className="inline-block mb-3">
+              <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
+                TRENDING MARKETPLACE
+              </span>
             </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
+              Эрэлттэй бүтээлүүд
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Платформ дээрх хамгийн их хандалттай, чанартай дижитал контентууд.
+            </p>
+          </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {bestSellingProducts.map((product, index) => {
@@ -876,7 +875,6 @@ export default function Home() {
               </svg>
             </button>
           </div>
-        </div>
         </section>
       )}
 
