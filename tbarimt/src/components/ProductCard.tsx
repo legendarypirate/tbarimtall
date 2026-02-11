@@ -45,7 +45,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           'overflow-hidden group cursor-pointer',
           viewMode === 'list' && 'flex',
           isUnique && 'bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/20 dark:to-emerald-900/20',
-          !isUnique && 'border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30'
+          !isUnique && 'border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 bg-white dark:bg-gray-800'
         )}
         onClick={handleClick}
         style={isUnique ? {
@@ -99,7 +99,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Category Badge */}
           <div className={cn('absolute', isUnique ? 'top-12 left-3' : 'top-3 left-3')}>
-            <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
+            <span className="text-xs font-bold text-white bg-primary-600 dark:bg-primary-500 px-3 py-1.5 rounded-full shadow-lg group-hover:bg-primary-700 dark:group-hover:bg-primary-600 transition-colors">
               {getCategoryName(product)}
             </span>
           </div>
@@ -110,9 +110,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <h4
             className={cn(
               'text-lg font-semibold mb-3 line-clamp-2 transition-colors',
-              isUnique
-                ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'
-                : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
+                isUnique
+                  ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'
+                  : 'text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400'
             )}
           >
             {product.title}
@@ -133,7 +133,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <span
               className={cn(
                 'text-lg font-bold',
-                isUnique ? 'text-green-600 dark:text-green-400' : 'text-[#004e6c] dark:text-gray-200'
+                isUnique ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'
               )}
             >
               {formatNumber(parseFloat(String(product.price)) || 0)}₮
@@ -147,7 +147,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 'px-3 py-1.5 rounded-xl transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105',
                 isUnique
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-                  : 'bg-gradient-to-r from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] text-white hover:from-[#ff6b35] hover:to-[#ff8555] dark:hover:from-[#ff8555] dark:hover:to-[#ff6b35]'
+                  : 'bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-500 dark:to-primary-600 text-white hover:from-primary-700 hover:to-primary-600 dark:hover:from-primary-600 dark:hover:to-primary-700'
               )}
             >
               Дэлгэрэнгүй

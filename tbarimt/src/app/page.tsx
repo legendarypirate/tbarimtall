@@ -676,76 +676,72 @@ export default function Home() {
       {/* Stats Section */}
       {/* Note: this used to overlap the hero section via `-mt-12`, but the hero is currently disabled.
           Keeping the negative margin causes the stats cards to overlap the header/nav and intercept clicks. */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mt-0 relative z-20">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-0 relative z-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Users Stat */}
-          <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center shadow-soft hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <div className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 10,742
               </div>
-              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'users')}
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'users') || 'Нийт хэрэглэгчид'}
               </div>
             </div>
           </div>
 
           {/* Creators Stat */}
-          <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center shadow-soft hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <div className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 1,204
               </div>
-              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'creators')}
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'creators') || 'Идэвхтэй нийтлэгчид'}
               </div>
             </div>
           </div>
 
           {/* Contents Stat */}
-          <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center shadow-soft hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <div className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 9,300
               </div>
-              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'contents')}
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'contents') || 'Дижитал контент'}
               </div>
             </div>
           </div>
 
           {/* Earned Stat */}
-          <div className="bg-white dark:bg-gray-800 border border-[#004e6c]/15 dark:border-gray-700 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff6b35]/50 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6b35]/8 dark:bg-[#ff6b35]/15 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-[#ff6b35]/15 dark:group-hover:bg-[#ff6b35]/25 transition-all"></div>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-center shadow-soft hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:from-[#ff6b35] group-hover:to-[#ff8555] group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <div className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2 group-hover:text-[#ff6b35] transition-colors">
-                ₮ 120,116,400
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                ₮ 120,1M
               </div>
-              <div className="text-[#004e6c]/60 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'earned')}
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'earned') || 'Нийт борлуулалт'}
               </div>
             </div>
           </div>
@@ -872,25 +868,31 @@ export default function Home() {
 
       {/* All Categories Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-base md:text-lg font-medium text-[#004e6c] dark:text-gray-200">
-            {getTranslation(language, 'allCategories')}
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+            {getTranslation(language, 'allCategories') || 'Ангилалууд'}
           </h3>
+          <button
+            onClick={() => router.push('/products')}
+            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium text-sm transition-colors"
+          >
+            Бүгдийг үзэх →
+          </button>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {/* All Categories Button */}
           <button
             onClick={() => {
               setSelectedCategory(null)
               setSearchQuery('')
             }}
-            className={`px-3 py-1.5 rounded-lg font-medium text-[10px] md:text-xs transition-all duration-300 flex items-center space-x-1 ${
+            className={`px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-1 whitespace-nowrap ${
               selectedCategory === null
-                ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-md'
-                : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 hover:shadow-sm'
+                ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md hover:bg-primary-700 dark:hover:bg-primary-600'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >
-            <span>{getTranslation(language, 'all')}</span>
+            <span>{getTranslation(language, 'all') || 'Бүгд'}</span>
           </button>
           
           {/* Category Buttons */}
@@ -902,13 +904,13 @@ export default function Home() {
                   setSelectedCategory(category.id)
                   router.push(`/category/${category.id}`)
                 }}
-                className={`px-3 py-1.5 rounded-lg font-medium text-[10px] md:text-xs transition-all duration-300 flex items-center space-x-1 ${
+                className={`px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 whitespace-nowrap ${
                   selectedCategory === category.id
-                    ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-md'
-                    : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 hover:shadow-sm'
+                    ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md hover:bg-primary-700 dark:hover:bg-primary-600'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
-                <span className="flex-shrink-0 text-xs">
+                <span className="flex-shrink-0 text-sm">
                   {getCategoryIcon(category.icon)}
                 </span>
                 <span className="line-clamp-1">{category.name}</span>

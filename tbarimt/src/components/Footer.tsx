@@ -43,7 +43,7 @@ export default function Footer() {
   }, [])
 
   return (
-    <footer className="bg-[#004e6c] dark:bg-gray-900 mt-20">
+    <footer className="bg-gray-900 dark:bg-gray-950 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Column 1: Logo & Description */}
@@ -53,8 +53,8 @@ export default function Footer() {
                 <img src="/lg.png" alt="TBARIMT Logo" className="h-full w-auto object-contain" />
               </div>
             </div>
-            <p className="text-white/70 dark:text-gray-300 text-sm mb-4 leading-relaxed">
-              {getTranslation(language, 'footerDescription')}
+            <p className="text-gray-400 dark:text-gray-400 text-sm mb-4 leading-relaxed">
+              {getTranslation(language, 'footerDescription') || 'Контент Дэлгүүр - Бүх төрлийн контент нэг дороос'}
             </p>
             <a
               href="https://www.facebook.com/TBarimt"
@@ -72,7 +72,7 @@ export default function Footer() {
 
           {/* Column 2: Categories */}
           <div className="flex flex-col">
-            <h6 className="text-white dark:text-gray-200 font-semibold mb-4">Ангилал</h6>
+            <h6 className="text-white dark:text-white font-semibold mb-4 text-base">Ангилал</h6>
             {loadingCategories ? (
               <div className="text-white/50 text-sm">Ачааллаж байна...</div>
             ) : categories.length > 0 ? (
@@ -103,7 +103,7 @@ export default function Footer() {
 
           {/* Column 3: Subscription & Membership */}
           <div className="flex flex-col">
-            <h6 className="text-white dark:text-gray-200 font-semibold mb-4">Бүртгэл</h6>
+            <h6 className="text-white dark:text-white font-semibold mb-4 text-base">Холбоос</h6>
             <div className="space-y-3">
               <p className="text-white/70 dark:text-gray-300 text-sm leading-relaxed mb-3">
                 Зохиогчид бүртгэлд бүртгүүлж, бүтээлээ худалдаж авах боломжтой. Бүртгэл нь үнэгүй бөгөөд танд дараах давуу талуудыг санал болгоно:
@@ -133,7 +133,7 @@ export default function Footer() {
 
           {/* Column 4: Resources & FAQ */}
           <div className="flex flex-col">
-            <h6 className="text-white dark:text-gray-200 font-semibold mb-4">Тусламж</h6>
+            <h6 className="text-white dark:text-white font-semibold mb-4 text-base">Тусламж</h6>
             <ul className="space-y-3">
               <li>
                 <button 
@@ -183,7 +183,7 @@ export default function Footer() {
 
           {/* Column 5: Contact Info */}
           <div className="flex flex-col">
-            <h6 className="text-white dark:text-gray-200 font-semibold mb-4">{getTranslation(language, 'contact')}</h6>
+            <h6 className="text-white dark:text-white font-semibold mb-4 text-base">{getTranslation(language, 'contact') || 'Холбоо барих'}</h6>
             <ul className="space-y-3">
               <li className="flex items-start space-x-3">
                 <svg className="w-5 h-5 text-white/70 dark:text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,9 +231,9 @@ export default function Footer() {
         </div>
 
         {/* Bottom Border */}
-        <div className="mt-12 pt-8 border-t border-white/20 dark:border-gray-700">
-          <p className="text-white/60 dark:text-gray-500 text-sm text-center">
-            {formatTranslation(language, 'allRightsReserved', { year: String(new Date().getFullYear()) })}
+        <div className="mt-12 pt-8 border-t border-gray-800 dark:border-gray-800">
+          <p className="text-gray-400 dark:text-gray-500 text-sm text-center">
+            {formatTranslation(language, 'allRightsReserved', { year: String(new Date().getFullYear()) }) || `© ${new Date().getFullYear()} TBARIMT. Бүх эрх хуулиар хамгаалагдсан.`}
           </p>
         </div>
       </div>

@@ -271,7 +271,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
   return (
     <>
       {/* Top Header - Logo, Search, Upload/Dipbard */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-[#004e6c]/10 dark:border-gray-700/50 shadow-sm relative overflow-hidden">
+      <header className="sticky top-0 z-50 bg-white/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-soft relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 relative z-10">
           {/* Mobile Layout */}
           <div className="flex lg:hidden items-center justify-between py-3">
@@ -343,8 +343,8 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
-                  placeholder={getTranslation(language, 'search')}
-                  className="block w-full pl-12 pr-4 py-3 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 placeholder-[#004e6c]/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 focus:border-[#004e6c] dark:focus:border-[#ff6b35] text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                  placeholder={getTranslation(language, 'search') || 'Хэрэгтэй контентоо хайх'}
+                  className="block w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:focus:ring-primary-400/30 focus:border-primary-500 dark:focus:border-primary-400 text-sm font-medium transition-all shadow-sm hover:shadow-md"
                 />
               </div>
             </div>
@@ -377,7 +377,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value as 'mn' | 'en')}
-                  className="px-3 py-2 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 text-sm font-semibold cursor-pointer transition-all"
+                  className="px-4 py-2 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:focus:ring-primary-400/30 text-sm font-semibold cursor-pointer transition-all"
                 >
                   <option value="mn">🇲🇳 Мон</option>
                   <option value="en">🇬🇧 Eng</option>
@@ -391,7 +391,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   toggleDarkMode()
                 }}
-                className="p-2.5 rounded-xl text-[#004e6c] dark:text-gray-200 hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 transition-all duration-200"
+                className="p-2.5 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
                 aria-label="Toggle dark mode"
               >
                 {isDark ? (
@@ -425,7 +425,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                       e.preventDefault()
                       router.push('/account/journalist')
                     }}
-                    className="relative bg-gradient-to-r from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#0080a8] text-white px-5 py-2.5 rounded-xl hover:from-[#ff6b35] hover:to-[#ff8555] dark:hover:from-[#ff8555] dark:hover:to-[#ff9f75] transition-all duration-300 font-semibold flex items-center space-x-2 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105 active:scale-95 overflow-visible"
+                    className="relative bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-500 dark:to-primary-600 text-white px-6 py-3 rounded-full hover:from-primary-700 hover:to-primary-600 dark:hover:from-primary-600 dark:hover:to-primary-700 transition-all duration-300 font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-95 overflow-visible"
                   >
                     {/* Animated star icon */}
                     <svg className="w-5 h-5 animate-star-rotate text-yellow-300 drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
@@ -464,7 +464,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                         e.preventDefault()
                         setShowAuthModal(true)
                       }}
-                      className="relative bg-gradient-to-r from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#0080a8] text-white px-5 py-2.5 rounded-xl hover:from-[#ff6b35] hover:to-[#ff8555] dark:hover:from-[#ff8555] dark:hover:to-[#ff9f75] transition-all duration-300 font-semibold shadow-lg hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center space-x-2 overflow-visible"
+                      className="relative bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-500 dark:to-primary-600 text-white px-6 py-3 rounded-full hover:from-primary-700 hover:to-primary-600 dark:hover:from-primary-600 dark:hover:to-primary-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-95 flex items-center space-x-2 overflow-visible"
                     >
                       {/* Animated star icon */}
                       <svg className="w-5 h-5 animate-star-rotate text-yellow-300 drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
