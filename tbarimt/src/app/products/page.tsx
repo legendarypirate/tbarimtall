@@ -174,6 +174,9 @@ export default function ProductsPage() {
   const [allProducts, setAllProducts] = useState(defaultProducts)
   const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState<CategoryItem[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pagination, setPagination] = useState<{ total: number; totalPages: number; limit: number }>({ total: 0, totalPages: 0, limit: 100 })
+  const PER_PAGE = 100
 
   // Fetch categories from API (same logic as home page: parent categories with productsCount)
   useEffect(() => {
@@ -202,16 +205,31 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true)
-        const response = await getProducts({
-          page: 1,
-          limit: 100,
+        const params: any = {
+          page: currentPage,
+          limit: PER_PAGE,
           sortBy
-        })
+        }
+        if (selectedCategoryId != null) params.categoryId = selectedCategoryId
+        if (searchQuery?.trim()) params.search = searchQuery.trim()
+        if (minPrice > 0) params.minPrice = minPrice
+        if (maxPrice < 100000) params.maxPrice = maxPrice
+        if (minRating > 0) params.minRating = minRating
+        const response = await getProducts(params)
         if (response.products) {
           setAllProducts(response.products)
-          const maxPrice = Math.max(...response.products.map((p: any) => parseFloat(p.price) || 0))
-          if (maxPrice > 0) {
-            setMaxPrice(maxPrice)
+          if (response.pagination) {
+            setPagination({
+              total: response.pagination.total,
+              totalPages: response.pagination.totalPages || 1,
+              limit: response.pagination.limit || PER_PAGE
+            })
+          } else {
+            setPagination({ total: response.products.length, totalPages: 1, limit: PER_PAGE })
+          }
+          if (currentPage === 1 && response.products.length > 0) {
+            const maxP = Math.max(...response.products.map((p: any) => parseFloat(p.price) || 0))
+            if (maxP > 0) setMaxPrice(maxP)
           }
         }
       } catch (error) {
@@ -222,63 +240,18 @@ export default function ProductsPage() {
     }
 
     fetchProducts()
-  }, [sortBy])
+  }, [currentPage, sortBy, selectedCategoryId, searchQuery, minPrice, maxPrice, minRating])
 
-  // Get max price from products
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedCategoryId, searchQuery, sortBy, minPrice, maxPrice, minRating])
+
+  // Get max price from products (for filter slider; keep previous max when paginated)
   const maxProductPrice = Math.max(...allProducts.map((p: any) => parseFloat(p.price) || 0), 100000)
 
-  // Filter and sort products
-  const filteredProducts = useMemo(() => {
-    let filtered = [...allProducts]
-
-    // Filter out inactive products
-    filtered = filtered.filter((p: any) => p.isActive !== false)
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter((p: any) => 
-        p.title?.toLowerCase().includes(query) ||
-        p.category?.name?.toLowerCase().includes(query)
-      )
-    }
-
-    // Category filter (by category id)
-    if (selectedCategoryId !== null) {
-      filtered = filtered.filter((p: any) => (p.category?.id === selectedCategoryId || p.categoryId === selectedCategoryId))
-    }
-
-    // Price filter
-    filtered = filtered.filter((p: any) => {
-      const price = parseFloat(p.price) || 0
-      return price >= minPrice && price <= maxPrice
-    })
-
-    // Rating filter
-    filtered = filtered.filter((p: any) => parseFloat(p.rating) >= minRating)
-
-    // Sort
-    filtered.sort((a: any, b: any) => {
-      switch (sortBy) {
-        case 'newest':
-          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-        case 'oldest':
-          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
-        case 'price-low':
-          return (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0)
-        case 'price-high':
-          return (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0)
-        case 'rating':
-          return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0)
-        case 'downloads':
-          return (b.downloads || 0) - (a.downloads || 0)
-        default:
-          return 0
-      }
-    })
-
-    return filtered
-  }, [searchQuery, selectedCategoryId, minPrice, maxPrice, minRating, sortBy, allProducts])
+  // Products shown = current page from API (filtering/sorting done server-side)
+  const displayedProducts = allProducts
 
   const formatNumber = (num: number) => {
     return num.toLocaleString('mn-MN')
@@ -477,6 +450,7 @@ export default function ProductsPage() {
                   setMaxPrice(maxProductPrice)
                   setMinRating(0)
                   setSortBy('newest')
+                  setCurrentPage(1)
                 }}
                 className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
               >
@@ -489,18 +463,21 @@ export default function ProductsPage() {
          
           {/* Results Count */}
           <div className="text-sm text-[#004e6c]/70 dark:text-gray-400 font-medium">
-            <span className="font-bold text-[#004e6c] dark:text-gray-200">{filteredProducts.length}</span> бүтээгдэхүүн олдлоо
+            <span className="font-bold text-[#004e6c] dark:text-gray-200">{pagination.total}</span> бүтээгдэхүүн олдлоо
+            {pagination.totalPages > 1 && (
+              <span className="ml-2">(Хуудас {currentPage} / {pagination.totalPages})</span>
+            )}
           </div>
         </div>
 
         {/* Products Grid/List */}
-        {filteredProducts.length > 0 ? (
+        {displayedProducts.length > 0 ? (
           <div className={
             viewMode === 'grid'
               ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6'
               : 'space-y-4'
           }>
-            {filteredProducts.map((product) => {
+            {displayedProducts.map((product) => {
               const isUnique = (product as any).isUnique === true;
               return (
               <div
@@ -624,7 +601,32 @@ export default function ProductsPage() {
             );
             })}
           </div>
-        ) : (
+        ) : null}
+
+        {/* Pagination - 100 per page */}
+        {pagination.totalPages > 1 && displayedProducts.length > 0 && (
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="px-4 py-2 rounded-xl border-2 border-[#004e6c]/20 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 font-semibold hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Өмнөх
+            </button>
+            <span className="px-4 py-2 text-sm font-medium text-[#004e6c]/80 dark:text-gray-400">
+              {((currentPage - 1) * PER_PAGE) + 1}–{Math.min(currentPage * PER_PAGE, pagination.total)} / {pagination.total}
+            </span>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
+              disabled={currentPage >= pagination.totalPages}
+              className="px-4 py-2 rounded-xl border-2 border-[#004e6c]/20 dark:border-gray-700 bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 font-semibold hover:bg-[#004e6c]/10 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Дараах
+            </button>
+          </div>
+        )}
+
+        {displayedProducts.length === 0 && !loading && (
           <div className="text-center py-16">
             <div className="text-2xl mb-4">🔍</div>
             <h3 className="text-base font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
@@ -641,6 +643,7 @@ export default function ProductsPage() {
                 setMaxPrice(maxProductPrice)
                 setMinRating(0)
                 setSortBy('newest')
+                setCurrentPage(1)
               }}
               className="px-6 py-3 bg-[#004e6c] dark:bg-[#006b8f] text-white rounded-xl hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
