@@ -97,13 +97,15 @@ npm start
 
 ## Production – QPay "getaddrinfo EAI_AGAIN merchant.qpay.mn"
 
-If invoice creation works locally but fails in production with `QPay authentication failed: getaddrinfo EAI_AGAIN merchant.qpay.mn`, the production server cannot resolve or reach `merchant.qpay.mn` (DNS/network).
+If invoice creation works locally but fails in production with `QPay authentication failed: getaddrinfo EAI_AGAIN merchant.qpay.mn`, the production server cannot resolve `merchant.qpay.mn`.
 
-1. **Check DNS from the production host:**  
+1. **DoH fallback (default on):** The backend will retry with a **DNS-over-HTTPS** fallback: it resolves `merchant.qpay.mn` via Cloudflare DoH (`cloudflare-dns.com`) and then connects to QPay by IP. Ensure the server can reach `https://cloudflare-dns.com` (outbound HTTPS). To disable this fallback set `QPAY_USE_DOH_FALLBACK=0`.
+
+2. **Check DNS from the production host:**  
    `nslookup merchant.qpay.mn` or `curl -v https://merchant.qpay.mn/v2/auth/token`  
-   If this fails, fix DNS or outbound access (e.g. add DNS servers 8.8.8.8 in the container/VPS, or open firewall to allow HTTPS to merchant.qpay.mn).
+   If this fails, fix DNS (e.g. add 8.8.8.8 in the container/VPS) or rely on the DoH fallback above.
 
-2. **Retries:** The backend retries QPay auth up to 3 times with a 2s delay. Transient DNS blips may be fixed by a later attempt.
+3. **Retries:** QPay auth is retried up to 3 times with a 2s delay before the DoH fallback runs.
 
-3. **Override URL (only if you use a proxy):** Set `QPAY_BASE_URL` in production to your proxy URL that forwards to `https://merchant.qpay.mn/v2`.
+4. **Override URL (only if you use a proxy):** Set `QPAY_BASE_URL` in production to your proxy URL that forwards to `https://merchant.qpay.mn/v2`.
 

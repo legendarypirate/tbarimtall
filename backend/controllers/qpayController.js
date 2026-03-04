@@ -1,5 +1,7 @@
 const { Order, User, Product, DownloadToken, Membership } = require('../models');
 const axios = require('axios');
+const https = require('https');
+const { URL } = require('url');
 
 // QPay credentials - should be in environment variables
 const QPAY_LOGIN = process.env.QPAY_LOGIN || 'KONO';
@@ -10,6 +12,65 @@ const QPAY_BASE_URL = process.env.QPAY_BASE_URL || 'https://merchant.qpay.mn/v2'
 const QPAY_REQUEST_TIMEOUT = parseInt(process.env.QPAY_REQUEST_TIMEOUT || '15000', 10);
 const QPAY_RETRY_ATTEMPTS = parseInt(process.env.QPAY_RETRY_ATTEMPTS || '3', 10);
 const QPAY_RETRY_DELAY_MS = parseInt(process.env.QPAY_RETRY_DELAY_MS || '2000', 10);
+const QPAY_USE_DOH_FALLBACK = process.env.QPAY_USE_DOH_FALLBACK !== '0'; // default true: use DoH when DNS fails
+
+// Parse base URL into hostname and path (e.g. merchant.qpay.mn, /v2)
+function getQPayHostAndPath() {
+  const u = new URL(QPAY_BASE_URL);
+  return { hostname: u.hostname, path: u.pathname.replace(/\/$/, '') || '', protocol: u.protocol };
+}
+
+// When DoH fallback is used, we connect to QPay by IP. Cache so invoice/check calls use the same.
+let qpayResolvedConnection = null;
+
+function getQPayAxiosConfig() {
+  if (qpayResolvedConnection) {
+    return {
+      baseUrl: qpayResolvedConnection.baseUrl,
+      httpsAgent: qpayResolvedConnection.agent,
+      hostHeader: qpayResolvedConnection.hostname
+    };
+  }
+  return { baseUrl: QPAY_BASE_URL, httpsAgent: undefined, hostHeader: undefined };
+}
+
+// Resolve hostname to IPv4 using DNS-over-HTTPS (Cloudflare). Use when server DNS fails (EAI_AGAIN).
+async function resolveHostViaDoH(hostname) {
+  const dohUrl = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=A`;
+  const res = await axios.get(dohUrl, {
+    timeout: 10000,
+    headers: { Accept: 'application/dns-json' },
+    responseType: 'json'
+  });
+  const answers = res.data?.Answer || [];
+  const a = answers.find(r => r.type === 1 && r.data);
+  if (a && a.data) return a.data;
+  throw new Error(`DoH: no A record for ${hostname}`);
+}
+
+// Get QPay access token by connecting to resolved IP (for when server DNS fails). Uses TLS SNI = hostname. Caches connection for later API calls.
+async function getQPayTokenViaDoH() {
+  const { hostname, path, protocol } = getQPayHostAndPath();
+  const ip = await resolveHostViaDoH(hostname);
+  const baseUrl = `${protocol}//${ip}${path}`;
+  const agent = new https.Agent({ servername: hostname });
+  qpayResolvedConnection = { baseUrl, agent, hostname };
+  const response = await axios.post(
+    `${baseUrl}/auth/token`,
+    {},
+    {
+      timeout: QPAY_REQUEST_TIMEOUT,
+      httpsAgent: agent,
+      headers: {
+        'Content-Type': 'application/json',
+        'Host': hostname,
+        'Authorization': `Basic ${Buffer.from(`${QPAY_LOGIN}:${QPAY_PASSWORD}`).toString('base64')}`
+      }
+    }
+  );
+  if (response.data && response.data.access_token) return response.data.access_token;
+  throw new Error('Failed to get QPay token');
+}
 
 // Retry a promise (handles transient DNS/network errors like EAI_AGAIN in production)
 async function withRetry(fn, label = 'QPay request') {
@@ -32,31 +93,43 @@ async function withRetry(fn, label = 'QPay request') {
   throw lastError;
 }
 
-// Get QPay access token
+// Get QPay access token. On DNS failure (EAI_AGAIN/ENOTFOUND), fallback to DoH resolve + IP request.
 async function getQPayToken() {
-  return withRetry(async () => {
-    try {
-      const response = await axios.post(
-        `${QPAY_BASE_URL}/auth/token`,
-        {},
-        {
-          timeout: QPAY_REQUEST_TIMEOUT,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${Buffer.from(`${QPAY_LOGIN}:${QPAY_PASSWORD}`).toString('base64')}`
-          }
-        }
-      );
+  const isDnsError = (msg) => typeof msg === 'string' && (msg.includes('EAI_AGAIN') || msg.includes('ENOTFOUND'));
 
-      if (response.data && response.data.access_token) {
-        return response.data.access_token;
+  try {
+    return await withRetry(async () => {
+      try {
+        const response = await axios.post(
+          `${QPAY_BASE_URL}/auth/token`,
+          {},
+          {
+            timeout: QPAY_REQUEST_TIMEOUT,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Basic ${Buffer.from(`${QPAY_LOGIN}:${QPAY_PASSWORD}`).toString('base64')}`
+            }
+          }
+        );
+        if (response.data && response.data.access_token) return response.data.access_token;
+        throw new Error('Failed to get QPay token');
+      } catch (error) {
+        console.error('QPay token error:', error.response?.data || error.message);
+        throw new Error(`QPay authentication failed: ${error.response?.data?.message || error.message}`);
       }
-      throw new Error('Failed to get QPay token');
-    } catch (error) {
-      console.error('QPay token error:', error.response?.data || error.message);
-      throw new Error(`QPay authentication failed: ${error.response?.data?.message || error.message}`);
+    }, 'QPay auth');
+  } catch (err) {
+    if (QPAY_USE_DOH_FALLBACK && isDnsError(err.message)) {
+      console.warn('QPay: DNS failed, trying DoH resolve + direct IP...');
+      try {
+        return await getQPayTokenViaDoH();
+      } catch (dohErr) {
+        console.error('QPay DoH fallback error:', dohErr.message);
+        throw err;
+      }
     }
-  }, 'QPay auth');
+    throw err;
+  }
 }
 
 // Helper function to format QR image with data URL prefix if needed
@@ -198,9 +271,20 @@ exports.createInvoice = async (req, res) => {
     const invoiceCode = process.env.QPAY_INVOICE_CODE || 'KONO_INVOICE';
     const invoiceReceiverCode = process.env.QPAY_RECEIVER_CODE || 'DEFAULT_COM_ID';
 
-    // Create invoice in QPay
+    // Create invoice in QPay (use resolved IP when DoH fallback was used)
+    const qpayCfg = getQPayAxiosConfig();
+    const invoiceOpts = {
+      timeout: QPAY_REQUEST_TIMEOUT,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    };
+    if (qpayCfg.httpsAgent) invoiceOpts.httpsAgent = qpayCfg.httpsAgent;
+    if (qpayCfg.hostHeader) invoiceOpts.headers.Host = qpayCfg.hostHeader;
     const invoiceResponse = await axios.post(
-      `${QPAY_BASE_URL}/invoice`,
+      `${qpayCfg.baseUrl}/invoice`,
       {
         invoice_code: invoiceCode,
         sender_invoice_no: senderInvoiceNo,
@@ -208,13 +292,7 @@ exports.createInvoice = async (req, res) => {
         invoice_description: description || `Tbarimt.mn захиалга - ${senderInvoiceNo}`,
         amount: parseFloat(amount)
       },
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      }
+      invoiceOpts
     );
 
     if (!invoiceResponse.data || !invoiceResponse.data.invoice_id) {
@@ -315,9 +393,20 @@ exports.checkPaymentStatus = async (req, res) => {
     // Get QPay token
     const token = await getQPayToken();
 
-    // Check payment status in QPay
+    // Check payment status in QPay (use resolved IP when DoH fallback was used)
+    const qpayCfg = getQPayAxiosConfig();
+    const checkOpts = {
+      timeout: QPAY_REQUEST_TIMEOUT,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    };
+    if (qpayCfg.httpsAgent) checkOpts.httpsAgent = qpayCfg.httpsAgent;
+    if (qpayCfg.hostHeader) checkOpts.headers.Host = qpayCfg.hostHeader;
     const checkResponse = await axios.post(
-      `${QPAY_BASE_URL}/payment/check`,
+      `${qpayCfg.baseUrl}/payment/check`,
       {
         object_type: 'INVOICE',
         object_id: invoiceId,
@@ -326,13 +415,7 @@ exports.checkPaymentStatus = async (req, res) => {
           page_limit: 100
         }
       },
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
+      checkOpts
     );
 
     const paymentData = checkResponse.data;
@@ -767,9 +850,20 @@ exports.createWalletRechargeInvoice = async (req, res) => {
     const invoiceCode = process.env.QPAY_INVOICE_CODE || 'KONO_INVOICE';
     const invoiceReceiverCode = process.env.QPAY_RECEIVER_CODE || 'DEFAULT_COM_ID';
 
-    // Create invoice in QPay
+    // Create invoice in QPay (use resolved IP when DoH fallback was used)
+    const qpayCfgWallet = getQPayAxiosConfig();
+    const walletInvoiceOpts = {
+      timeout: QPAY_REQUEST_TIMEOUT,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    };
+    if (qpayCfgWallet.httpsAgent) walletInvoiceOpts.httpsAgent = qpayCfgWallet.httpsAgent;
+    if (qpayCfgWallet.hostHeader) walletInvoiceOpts.headers.Host = qpayCfgWallet.hostHeader;
     const invoiceResponse = await axios.post(
-      `${QPAY_BASE_URL}/invoice`,
+      `${qpayCfgWallet.baseUrl}/invoice`,
       {
         invoice_code: invoiceCode,
         sender_invoice_no: senderInvoiceNo,
@@ -777,13 +871,7 @@ exports.createWalletRechargeInvoice = async (req, res) => {
         invoice_description: `Данс цэнэглэх - ${parseFloat(amount).toLocaleString()}₮`,
         amount: parseFloat(amount)
       },
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      }
+      walletInvoiceOpts
     );
 
     if (!invoiceResponse.data || !invoiceResponse.data.invoice_id) {
@@ -871,9 +959,20 @@ exports.createMembershipInvoice = async (req, res) => {
       ? `Гишүүнчлэл сунгах - ${membershipName}`
       : `Гишүүнчлэл сонгох - ${membershipName}`;
 
-    // Create invoice in QPay
+    // Create invoice in QPay (use resolved IP when DoH fallback was used)
+    const qpayCfgMem = getQPayAxiosConfig();
+    const memInvoiceOpts = {
+      timeout: QPAY_REQUEST_TIMEOUT,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    };
+    if (qpayCfgMem.httpsAgent) memInvoiceOpts.httpsAgent = qpayCfgMem.httpsAgent;
+    if (qpayCfgMem.hostHeader) memInvoiceOpts.headers.Host = qpayCfgMem.hostHeader;
     const invoiceResponse = await axios.post(
-      `${QPAY_BASE_URL}/invoice`,
+      `${qpayCfgMem.baseUrl}/invoice`,
       {
         invoice_code: invoiceCode,
         sender_invoice_no: senderInvoiceNo,
@@ -881,13 +980,7 @@ exports.createMembershipInvoice = async (req, res) => {
         invoice_description: description,
         amount: amount
       },
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      }
+      memInvoiceOpts
     );
 
     if (!invoiceResponse.data || !invoiceResponse.data.invoice_id) {
@@ -958,9 +1051,20 @@ exports.checkMembershipPaymentStatus = async (req, res) => {
     // Get QPay token
     const token = await getQPayToken();
 
-    // Check payment status in QPay
+    // Check payment status in QPay (use resolved IP when DoH fallback was used)
+    const qpayCfg = getQPayAxiosConfig();
+    const checkOpts = {
+      timeout: QPAY_REQUEST_TIMEOUT,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    };
+    if (qpayCfg.httpsAgent) checkOpts.httpsAgent = qpayCfg.httpsAgent;
+    if (qpayCfg.hostHeader) checkOpts.headers.Host = qpayCfg.hostHeader;
     const checkResponse = await axios.post(
-      `${QPAY_BASE_URL}/payment/check`,
+      `${qpayCfg.baseUrl}/payment/check`,
       {
         object_type: 'INVOICE',
         object_id: invoiceId,
@@ -969,13 +1073,7 @@ exports.checkMembershipPaymentStatus = async (req, res) => {
           page_limit: 100
         }
       },
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
+      checkOpts
     );
 
     const paymentData = checkResponse.data;
@@ -1238,9 +1336,20 @@ exports.checkWalletRechargeStatus = async (req, res) => {
     // Get QPay token
     const token = await getQPayToken();
 
-    // Check payment status in QPay
+    // Check payment status in QPay (use resolved IP when DoH fallback was used)
+    const qpayCfgWalletCheck = getQPayAxiosConfig();
+    const walletCheckOpts = {
+      timeout: QPAY_REQUEST_TIMEOUT,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    };
+    if (qpayCfgWalletCheck.httpsAgent) walletCheckOpts.httpsAgent = qpayCfgWalletCheck.httpsAgent;
+    if (qpayCfgWalletCheck.hostHeader) walletCheckOpts.headers.Host = qpayCfgWalletCheck.hostHeader;
     const checkResponse = await axios.post(
-      `${QPAY_BASE_URL}/payment/check`,
+      `${qpayCfgWalletCheck.baseUrl}/payment/check`,
       {
         object_type: 'INVOICE',
         object_id: invoiceId,
@@ -1249,13 +1358,7 @@ exports.checkWalletRechargeStatus = async (req, res) => {
           page_limit: 100
         }
       },
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
+      walletCheckOpts
     );
 
     const paymentData = checkResponse.data;
