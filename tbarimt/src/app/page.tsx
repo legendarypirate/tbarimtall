@@ -404,7 +404,7 @@ export default function Home() {
         setLoading(true)
         const [categoriesRes, productsRes, journalistsRes, membershipsRes, slidersRes, bestSellingRes, recentRes, statsRes] = await Promise.all([
           getCategories().catch(() => ({ categories: defaultCategories })),
-          getFeaturedProducts(8).catch(() => ({ products: defaultFeaturedProducts })),
+          getFeaturedProducts(12).catch(() => ({ products: defaultFeaturedProducts })),
           getTopJournalists(12).catch(() => ({ journalists: [] })),
           getActiveMemberships().catch(() => ({ memberships: [] })),
           getHeroSliders().catch(() => ({ sliders: [] })),

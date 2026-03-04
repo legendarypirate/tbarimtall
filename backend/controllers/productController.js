@@ -287,7 +287,7 @@ exports.getProductById = async (req, res) => {
 
 exports.getFeaturedProducts = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 8;
+    const limit = parseInt(req.query.limit) || 12;
 
     const products = await Product.findAll({
       where: { 

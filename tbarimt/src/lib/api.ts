@@ -80,7 +80,7 @@ export async function getProductById(id: string | number) {
   return fetchAPI(`/products/${id}`);
 }
 
-export async function getFeaturedProducts(limit: number = 8) {
+export async function getFeaturedProducts(limit: number = 12) {
   return fetchAPI(`/products/featured?limit=${limit}`);
 }
 
