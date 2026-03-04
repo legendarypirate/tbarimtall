@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { getProducts, getCategories } from '@/lib/api'
+import { getCategoryIcon } from '@/lib/categoryIcon'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import WishlistHeartIcon from '@/components/WishlistHeartIcon'
@@ -146,18 +147,8 @@ const defaultProducts = [
   }
 ]
 
-// Default categories (fallback)
-const defaultCategories = [
-  'Бүгд',
-  'Реферат',
-  'Дипломын ажил',
-  'Курсын ажил',
-  'Тоглоом (EXE)',
-  'Программ хангамж',
-  'График дизайн',
-  'Дуу Хөгжим',
-  'Баримт бичиг'
-]
+// Category type (matches API: id, name, icon?, productsCount?)
+type CategoryItem = { id: number; name: string; icon?: string; productsCount?: number }
 
 const sortOptions = [
   { value: 'newest', label: 'Шинэ эхэнд' },
@@ -173,7 +164,7 @@ export default function ProductsPage() {
   const { isDark, toggle: toggleDarkMode } = useDarkMode()
   
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('Бүгд')
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
   const [minPrice, setMinPrice] = useState(0)
   const [maxPrice, setMaxPrice] = useState(100000)
   const [minRating, setMinRating] = useState(0)
@@ -182,39 +173,28 @@ export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [allProducts, setAllProducts] = useState(defaultProducts)
   const [loading, setLoading] = useState(true)
-  const [categories, setCategories] = useState<string[]>(defaultCategories)
+  const [categories, setCategories] = useState<CategoryItem[]>([])
 
-  // Fetch categories from API
+  // Fetch categories from API (same logic as home page: parent categories with productsCount)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await getCategories()
         if (response.categories && Array.isArray(response.categories)) {
-          // Extract only parent category names (excluding subcategories and generic "Category X" names)
-          const categoryNames: string[] = ['Бүгд'] // Always include "All" first
-          
-          response.categories.forEach((cat: any) => {
-            // Skip categories with generic names like "Category 37", "Category 40", etc.
-            // These are likely subcategories that were incorrectly stored as categories
-            const isGenericCategory = /^Category\s+\d+$/i.test(cat.name)
-            
-            // Only add meaningful parent category names
-            if (cat.name && !isGenericCategory) {
-              categoryNames.push(cat.name)
-            }
+          const filtered = response.categories.filter((cat: any) => {
+            const isGeneric = /^Category\s+\d+$/i.test(cat.name)
+            if (isGeneric) return false
+            const hasSubs = cat.subcategories && Array.isArray(cat.subcategories) && cat.subcategories.length > 0
+            return !!(cat.name && (hasSubs || [1, 2, 3, 4, 5, 6, 7, 8].includes(cat.id)))
           })
-          
-          // If we got categories from API, use them; otherwise keep defaults
-          if (categoryNames.length > 1) {
-            setCategories(categoryNames)
+          if (filtered.length > 0) {
+            setCategories(filtered.map((c: any) => ({ id: c.id, name: c.name, icon: c.icon, productsCount: c.productsCount })))
           }
         }
       } catch (error) {
         console.error('Error fetching categories:', error)
-        // Keep default categories on error
       }
     }
-
     fetchCategories()
   }, [])
 
@@ -263,9 +243,9 @@ export default function ProductsPage() {
       )
     }
 
-    // Category filter
-    if (selectedCategory !== 'Бүгд') {
-      filtered = filtered.filter((p: any) => p.category?.name === selectedCategory)
+    // Category filter (by category id)
+    if (selectedCategoryId !== null) {
+      filtered = filtered.filter((p: any) => (p.category?.id === selectedCategoryId || p.categoryId === selectedCategoryId))
     }
 
     // Price filter
@@ -298,7 +278,7 @@ export default function ProductsPage() {
     })
 
     return filtered
-  }, [searchQuery, selectedCategory, minPrice, maxPrice, minRating, sortBy, allProducts])
+  }, [searchQuery, selectedCategoryId, minPrice, maxPrice, minRating, sortBy, allProducts])
 
   const formatNumber = (num: number) => {
     return num.toLocaleString('mn-MN')
@@ -319,7 +299,7 @@ export default function ProductsPage() {
     <main className="min-h-screen bg-white dark:bg-gray-900">
       <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-8">
         {/* Search and Top Controls */}
         <div className="mb-6 space-y-4">
           {/* Filter Section */}
@@ -381,24 +361,44 @@ export default function ProductsPage() {
             </div>
           </div>
 
-          {/* Category Filter - Full Width */}
-          <div className="w-full">
-            <div className="flex flex-wrap gap-2 w-full">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white shadow-lg hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
-                      : 'bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#ff6b35]/50 dark:hover:border-[#ff8555]/50 hover:text-[#ff6b35] dark:hover:text-[#ff8555]'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+          {/* Category strip - same as home page */}
+          <section className="w-full py-5 -mx-3 sm:-mx-4 lg:mx-0 bg-gray-50 dark:bg-gray-800/40 border-y border-gray-200 dark:border-gray-700/50 rounded-xl">
+            <div className="w-full px-3 sm:px-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => setSelectedCategoryId(null)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      selectedCategoryId === null
+                        ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white border border-[#004e6c] dark:border-[#006b8f]'
+                        : 'bg-[#004e6c]/10 dark:bg-gray-700/50 text-[#004e6c] dark:text-gray-300 hover:bg-[#004e6c]/20 dark:hover:bg-gray-600/50 border border-[#004e6c]/20 dark:border-gray-600'
+                    }`}
+                  >
+                    Бүгд
+                  </button>
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategoryId(category.id)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                        selectedCategoryId === category.id
+                          ? 'bg-[#004e6c] dark:bg-[#006b8f] text-white border border-[#004e6c] dark:border-[#006b8f]'
+                          : 'bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-[#004e6c]/10 dark:hover:bg-[#ff6b35]/10 hover:text-[#004e6c] dark:hover:text-[#ff8555] border border-gray-200 dark:border-gray-600 hover:border-[#004e6c]/30 dark:hover:border-[#ff6b35]/30'
+                      }`}
+                    >
+                      <span className="text-sm opacity-80">{getCategoryIcon(category.icon)}</span>
+                      <span className="line-clamp-1 max-w-[8rem]">{category.name}</span>
+                      {typeof category.productsCount === 'number' && (
+                        <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 tabular-nums">
+                          ({category.productsCount})
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
           {showFilters && (
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
               {/* Price Range */}
@@ -472,7 +472,7 @@ export default function ProductsPage() {
               <button
                 onClick={() => {
                   setSearchQuery('')
-                  setSelectedCategory('Бүгд')
+                  setSelectedCategoryId(null)
                   setMinPrice(0)
                   setMaxPrice(maxProductPrice)
                   setMinRating(0)
@@ -497,7 +497,7 @@ export default function ProductsPage() {
         {filteredProducts.length > 0 ? (
           <div className={
             viewMode === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'
+              ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6'
               : 'space-y-4'
           }>
             {filteredProducts.map((product) => {
@@ -526,7 +526,7 @@ export default function ProductsPage() {
               >
                 {/* Product Image */}
                 <div className={`relative overflow-hidden bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700/20 to-[#006b8f]/10 dark:to-gray-600/20 ${
-                  viewMode === 'list' ? 'w-48 h-48 flex-shrink-0' : 'h-48'
+                  viewMode === 'list' ? 'w-40 h-40 flex-shrink-0' : 'h-36'
                 } ${isUnique ? 'bg-gradient-to-br from-green-50 dark:from-green-900/20 to-emerald-50 dark:to-emerald-900/20' : ''}`}>
                   <img
                     src={(product as any).image || '/placeholder.png'}
@@ -576,16 +576,16 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
-                {/* Product Info */}
-                <div className={`p-6 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                  <h4 className={`text-lg font-semibold mb-3 line-clamp-2 transition-colors ${
+                {/* Product Info - same font sizes as home page */}
+                <div className={`p-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+                  <h4 className={`text-sm font-bold mb-1.5 line-clamp-2 transition-colors min-h-[2.5rem] ${
                     isUnique 
                       ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400' 
                       : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
                   }`}>
                     {(product as any).title}
                   </h4>
-                  <div className="flex items-center justify-between text-sm text-[#004e6c]/70 dark:text-gray-400 mb-4 font-medium">
+                  <div className="flex items-center justify-between text-xs text-[#004e6c]/70 dark:text-gray-400 mb-2 font-medium">
                     <span className="flex items-center space-x-1">
                       <span>📄</span>
                       <span>{(product as any).pages ? `${(product as any).pages} хуудас` : (product as any).size || 'N/A'}</span>
@@ -595,8 +595,8 @@ export default function ProductsPage() {
                       <span>{formatNumber((product as any).downloads || 0)}</span>
                     </span>
                   </div>
-                  <div className="flex items-center justify-between pt-4 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                    <span className={`text-base font-semibold ${
+                  <div className="flex items-center justify-between pt-2 border-t border-[#004e6c]/10 dark:border-gray-700 gap-2">
+                    <span className={`text-base font-bold ${
                       isUnique 
                         ? 'text-green-600 dark:text-green-400' 
                         : 'text-[#004e6c] dark:text-gray-200'
@@ -606,15 +606,16 @@ export default function ProductsPage() {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation()
-                        router.push(`/products/${product.id}`)
+                        router.push(`/products/${(product as any).uuid || (product as any).id}`)
                       }}
-                      className={`px-3 py-1.5 rounded-xl transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 ${
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 ${
                         isUnique
                           ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-                          : 'bg-gradient-to-r from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] text-white hover:from-[#ff6b35] hover:to-[#ff8555] dark:hover:from-[#ff8555] dark:hover:to-[#ff6b35]'
+                          : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
                       }`}
+                      aria-label="Дэлгэрэнгүй"
                     >
-                      Дэлгэрэнгүй
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                     </button>
                   </div>
                 </div>
@@ -635,7 +636,7 @@ export default function ProductsPage() {
             <button
               onClick={() => {
                 setSearchQuery('')
-                setSelectedCategory('Бүгд')
+                setSelectedCategoryId(null)
                 setMinPrice(0)
                 setMaxPrice(maxProductPrice)
                 setMinRating(0)

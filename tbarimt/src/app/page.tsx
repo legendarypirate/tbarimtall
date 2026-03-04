@@ -1174,7 +1174,7 @@ export default function Home() {
             {/* Бүх нийтлэгчийг үзэх - below */}
             <div className="text-center mt-8">
               <button
-                onClick={() => router.push('/products')}
+                onClick={() => router.push('/journalists')}
                 className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
               >
                 <span>Бүх нийтлэгчийг үзэх</span>
