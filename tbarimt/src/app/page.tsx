@@ -1802,7 +1802,7 @@ export default function Home() {
             {/* Header - above */}
             <div className="mb-6">
               <div className="flex items-center space-x-3">
-                <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
+                <h3 className="text-2xl md:text-3xl font-bold text-darkBlue-500 dark:text-white mb-2">
                   Сүүлд нэмэгдсэн контент
                 </h3>
                 <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1">
