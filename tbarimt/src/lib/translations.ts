@@ -31,8 +31,8 @@ export const translations = {
     
     // Features
     secureAndVerified: 'Аюулгүй ба Баталгаажсан',
-    earnMoreRevenue: 'Илүү Орлого Олох',
-    bromesCenter: 'Бромес Төв',
+    earnMoreRevenue: 'Илүү Орлого Олох Боломж',
+    bromesCenter: 'Дижитал контентын нэгдсэн платформ',
     diverseContentMarketplace: 'Олон Төрлийн Контентын Зах Зээл',
     
     // CTA
@@ -105,7 +105,7 @@ export const translations = {
     // Features
     secureAndVerified: 'Secure & Verified',
     earnMoreRevenue: 'Earn More Revenue',
-    bromesCenter: 'Bromes Center',
+    bromesCenter: 'Digital content marketplace',
     diverseContentMarketplace: 'Diverse Content Marketplace',
     
     // CTA
