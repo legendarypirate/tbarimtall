@@ -273,8 +273,8 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    // Increment views
-    await product.increment('views');
+    // Increment views in background (don't block response - faster product detail in production)
+    product.increment('views').catch((err) => console.error('Product view increment error:', err));
 
     // Sanitize product and convert image paths to URLs
     const productData = sanitizeProduct(product);

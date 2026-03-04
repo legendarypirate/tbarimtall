@@ -54,23 +54,56 @@ export default function ProductDetail() {
   const [similarFileRequestSuccess, setSimilarFileRequestSuccess] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
 
+  // Load product, recommended, banners, and user in parallel for faster product detail page
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true)
-        const response = await getProductById(productId)
-        if (response.product) {
+    if (!productId) return
+
+    let cancelled = false
+    setLoading(true)
+    setLoadingRecommended(true)
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+
+    const fetchProduct = getProductById(productId)
+      .then((response) => {
+        if (!cancelled && response?.product) {
           setProduct(response.product)
         }
-      } catch (error) {
-        console.error('Error fetching product:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+      })
+      .catch((e) => !cancelled && console.error('Error fetching product:', e))
+      .finally(() => !cancelled && setLoading(false))
 
-    if (productId) {
-      fetchProduct()
+    const fetchRecommended = getRecommendedProducts(productId, 8)
+      .then((response) => {
+        if (!cancelled && response?.products && Array.isArray(response.products)) {
+          setRecommendedProducts(response.products)
+        }
+      })
+      .catch((e) => !cancelled && console.error('Error fetching recommended:', e))
+      .finally(() => !cancelled && setLoadingRecommended(false))
+
+    const fetchBanners = getBanners()
+      .then((response) => {
+        if (!cancelled && response?.banners && Array.isArray(response.banners)) {
+          setBanners(response.banners)
+        }
+      })
+      .catch((e) => !cancelled && console.error('Error fetching banners:', e))
+
+    const fetchUser = token
+      ? getCurrentUser()
+          .then((userResponse) => {
+            if (!cancelled && userResponse?.user) {
+              setIsAuthenticated(true)
+              setUserBalance(parseFloat(userResponse.user.income || 0))
+              setUserPhone(userResponse.user.phone || '')
+            }
+          })
+          .catch(() => !cancelled && (setIsAuthenticated(false), setUserBalance(0), setUserPhone('')))
+      : Promise.resolve()
+
+    return () => {
+      cancelled = true
     }
   }, [productId])
 
@@ -161,52 +194,6 @@ export default function ProductDetail() {
     console.log('Meta tags set:', { title, description, image, url })
   }, [product])
 
-  // Fetch recommended products
-  useEffect(() => {
-    const fetchRecommended = async () => {
-      if (!productId) return
-      
-      try {
-        setLoadingRecommended(true)
-        const response = await getRecommendedProducts(productId, 8)
-        if (response.products && Array.isArray(response.products)) {
-          setRecommendedProducts(response.products)
-        }
-      } catch (error) {
-        console.error('Error fetching recommended products:', error)
-      } finally {
-        setLoadingRecommended(false)
-      }
-    }
-
-    if (productId) {
-      fetchRecommended()
-    }
-  }, [productId])
-
-  // Check authentication and get user balance
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-        if (token) {
-          const userResponse = await getCurrentUser()
-          if (userResponse.user) {
-            setIsAuthenticated(true)
-            setUserBalance(parseFloat(userResponse.user.income || 0))
-            setUserPhone(userResponse.user.phone || '')
-          }
-        }
-      } catch (error) {
-        // User not authenticated or error
-        setIsAuthenticated(false)
-        setUserBalance(0)
-        setUserPhone('')
-      }
-    }
-    checkAuth()
-  }, [])
-
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
@@ -219,21 +206,6 @@ export default function ProductDetail() {
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
-  useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const response = await getBanners()
-        if (response.banners && Array.isArray(response.banners)) {
-          setBanners(response.banners)
-        }
-      } catch (error) {
-        console.error('Error fetching banners:', error)
-      }
-    }
-
-    fetchBanners()
   }, [])
 
   // Auto-rotate banners

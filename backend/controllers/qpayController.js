@@ -10,9 +10,10 @@ const QPAY_PASSWORD = process.env.QPAY_PASSWORD || '8zcSjp5u';
 const QPAY_BASE_URL = process.env.QPAY_BASE_URL || 'https://merchant.qpay.mn/v2';
 
 const QPAY_REQUEST_TIMEOUT = parseInt(process.env.QPAY_REQUEST_TIMEOUT || '15000', 10);
-const QPAY_RETRY_ATTEMPTS = parseInt(process.env.QPAY_RETRY_ATTEMPTS || '3', 10);
-const QPAY_RETRY_DELAY_MS = parseInt(process.env.QPAY_RETRY_DELAY_MS || '2000', 10);
+const QPAY_RETRY_ATTEMPTS = parseInt(process.env.QPAY_RETRY_ATTEMPTS || '2', 10); // fewer retries so DoH runs sooner when DNS fails
+const QPAY_RETRY_DELAY_MS = parseInt(process.env.QPAY_RETRY_DELAY_MS || '500', 10); // shorter delay (was 2000) so invoice creation is faster
 const QPAY_USE_DOH_FALLBACK = process.env.QPAY_USE_DOH_FALLBACK !== '0'; // default true: use DoH when DNS fails
+const QPAY_TOKEN_CACHE_TTL_MS = parseInt(process.env.QPAY_TOKEN_CACHE_TTL_MS || '3300000', 10); // 55 min default (token reused, fewer auth calls)
 
 // Parse base URL into hostname and path (e.g. merchant.qpay.mn, /v2)
 function getQPayHostAndPath() {
@@ -22,6 +23,9 @@ function getQPayHostAndPath() {
 
 // When DoH fallback is used, we connect to QPay by IP. Cache so invoice/check calls use the same.
 let qpayResolvedConnection = null;
+
+// In-memory token cache to avoid calling QPay auth on every invoice (speeds up production).
+let qpayTokenCache = { token: null, expiresAt: 0 };
 
 function getQPayAxiosConfig() {
   if (qpayResolvedConnection) {
@@ -93,12 +97,24 @@ async function withRetry(fn, label = 'QPay request') {
   throw lastError;
 }
 
-// Get QPay access token. On DNS failure (EAI_AGAIN/ENOTFOUND), fallback to DoH resolve + IP request.
+// Get QPay access token. Uses in-memory cache to avoid auth call on every invoice. On DNS failure, fallback to DoH.
 async function getQPayToken() {
+  const now = Date.now();
+  if (qpayTokenCache.token && qpayTokenCache.expiresAt > now) {
+    return qpayTokenCache.token;
+  }
+
   const isDnsError = (msg) => typeof msg === 'string' && (msg.includes('EAI_AGAIN') || msg.includes('ENOTFOUND'));
 
+  const setTokenCache = (token, expiresInSeconds) => {
+    const ttlMs = expiresInSeconds && expiresInSeconds > 0
+      ? Math.min((expiresInSeconds - 300) * 1000, QPAY_TOKEN_CACHE_TTL_MS) // refresh 5 min before expiry
+      : QPAY_TOKEN_CACHE_TTL_MS;
+    qpayTokenCache = { token, expiresAt: now + ttlMs };
+  };
+
   try {
-    return await withRetry(async () => {
+    const token = await withRetry(async () => {
       try {
         const response = await axios.post(
           `${QPAY_BASE_URL}/auth/token`,
@@ -111,18 +127,24 @@ async function getQPayToken() {
             }
           }
         );
-        if (response.data && response.data.access_token) return response.data.access_token;
+        if (response.data && response.data.access_token) {
+          setTokenCache(response.data.access_token, response.data.expires_in);
+          return response.data.access_token;
+        }
         throw new Error('Failed to get QPay token');
       } catch (error) {
         console.error('QPay token error:', error.response?.data || error.message);
         throw new Error(`QPay authentication failed: ${error.response?.data?.message || error.message}`);
       }
     }, 'QPay auth');
+    return token;
   } catch (err) {
     if (QPAY_USE_DOH_FALLBACK && isDnsError(err.message)) {
       console.warn('QPay: DNS failed, trying DoH resolve + direct IP...');
       try {
-        return await getQPayTokenViaDoH();
+        const token = await getQPayTokenViaDoH();
+        setTokenCache(token, 3600); // assume 1h if DoH path doesn't return expires_in
+        return token;
       } catch (dohErr) {
         console.error('QPay DoH fallback error:', dohErr.message);
         throw err;
