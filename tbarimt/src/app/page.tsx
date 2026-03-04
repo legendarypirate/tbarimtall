@@ -703,6 +703,11 @@ export default function Home() {
                 >
                   <span className="text-sm opacity-80">{getCategoryIcon(category.icon)}</span>
                   <span className="line-clamp-1 max-w-[8rem]">{category.name}</span>
+                  {typeof (category as any).productsCount === 'number' && (
+                    <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 tabular-nums">
+                      ({(category as any).productsCount})
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

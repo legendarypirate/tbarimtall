@@ -1,4 +1,4 @@
-const { Category, Subcategory, Product } = require('../models');
+const { Category, Subcategory, Product, sequelize } = require('../models');
 
 exports.getAllCategories = async (req, res) => {
   try {
@@ -14,13 +14,28 @@ exports.getAllCategories = async (req, res) => {
     });
 
     // Filter out generic category names like "Category 37", "Category 40", etc.
-    // These are likely subcategories that were incorrectly stored as categories
     const categories = allCategories.filter(cat => {
       const isGenericCategory = /^Category\s+\d+$/i.test(cat.name);
       return !isGenericCategory;
     });
 
-    res.json({ categories });
+    // Get product count per category (published, active only)
+    const countRows = await Product.findAll({
+      attributes: ['categoryId', [sequelize.fn('COUNT', sequelize.col('Product.id')), 'count']],
+      where: { status: 'published', isActive: true },
+      group: ['categoryId'],
+      raw: true
+    });
+    const countByCategoryId = Object.fromEntries(
+      countRows.map((r) => [r.categoryId, parseInt(r.count, 10)])
+    );
+
+    const categoriesWithCount = categories.map((cat) => ({
+      ...cat.toJSON(),
+      productsCount: countByCategoryId[cat.id] ?? 0
+    }));
+
+    res.json({ categories: categoriesWithCount });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
