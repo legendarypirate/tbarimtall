@@ -1,11 +1,15 @@
 import type { Metadata } from 'next'
-import { Rubik } from 'next/font/google'
+import { Nunito } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import { Toaster } from 'react-hot-toast'
 
-const rubik = Rubik({ subsets: ['latin'] })
+const nunito = Nunito({
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  variable: '--font-nunito',
+})
 
 export const metadata: Metadata = {
   title: 'Контент Дэлгүүр - Бүх төрлийн контент нэг дороос',
@@ -25,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={nunito.variable}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -49,7 +53,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={rubik.className}>
+      <body className={`${nunito.className} font-sans`}>
         <ThemeProvider>
           <LanguageProvider>
             {children}

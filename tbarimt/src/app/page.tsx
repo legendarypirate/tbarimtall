@@ -407,7 +407,7 @@ export default function Home() {
           getTopJournalists(12).catch(() => ({ journalists: [] })),
           getActiveMemberships().catch(() => ({ memberships: [] })),
           getHeroSliders().catch(() => ({ sliders: [] })),
-          getBestSellingProducts(5).catch(() => ({ products: [] })),
+          getBestSellingProducts(6).catch(() => ({ products: [] })),
           getRecentProducts(6).catch(() => ({ products: [] }))
         ])
 
@@ -458,7 +458,7 @@ export default function Home() {
           setHeroSliders(slidersRes.sliders)
         }
         if (bestSellingRes.products && Array.isArray(bestSellingRes.products)) {
-          setBestSellingProducts(bestSellingRes.products.slice(0, 5))
+          setBestSellingProducts(bestSellingRes.products.slice(0, 6))
         }
         if (recentRes.products && Array.isArray(recentRes.products)) {
           setRecentProducts(recentRes.products.slice(0, 6))
@@ -673,8 +673,9 @@ export default function Home() {
       </section>
       */}
 
-      {/* Stats Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-0 relative z-20">
+      {/* Stats Section - 10.7k Хэрэглэгч etc */}
+      <section className="w-full py-12 mt-0 relative z-20 bg-gray-100 dark:bg-gray-800/50">
+        <div className="w-full px-3 py-4 lg:container lg:mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Users Stat - Dark Blue Icon */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
@@ -744,11 +745,14 @@ export default function Home() {
             </div>
           </div>
         </div>
+        </div>
       </section>
 
       {/* Trending / Best Seller Section */}
       {bestSellingProducts.length > 0 && (
-        <section className="w-full px-4 sm:px-6 lg:px-8 py-16 bg-white dark:bg-gray-900">
+        <section className="w-full py-16 bg-white dark:bg-gray-900">
+        <div className="w-full px-3 py-4 lg:container lg:mx-auto">
+          {/* Header - above */}
           <div className="mb-6">
             <div className="inline-block mb-3">
               <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
@@ -762,8 +766,9 @@ export default function Home() {
               Платформ дээрх хамгийн их хандалттай, чанартай дижитал контентууд.
             </p>
           </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+
+          {/* Grid - 6 in a row on lg */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {bestSellingProducts.map((product, index) => {
               const isUnique = (product as any).isUnique === true;
               const isNew = isNewProduct(product);
@@ -862,8 +867,8 @@ export default function Home() {
               );
             })}
           </div>
-          
-          {/* View All Products Button */}
+
+          {/* Бүх бүтээлийг үзэх - below */}
           <div className="text-center mt-12">
             <button
               onClick={() => router.push('/products')}
@@ -875,45 +880,46 @@ export default function Home() {
               </svg>
             </button>
           </div>
+        </div>
         </section>
       )}
 
       {/* All Categories Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white dark:bg-gray-900">
-        <div className="mb-6">
-          <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
-            {getTranslation(language, 'allCategories') || 'Ангилалууд'}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
-            Хайх бүх чиглэлээс сонгон шууд үзэхүү
-          </p>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
-          {/* All Categories Button - Dark Blue Active */}
-          <button
-            onClick={() => {
-              setSelectedCategory(null)
-              setSearchQuery('')
-            }}
-            className={`px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 whitespace-nowrap flex-shrink-0 ${
-              selectedCategory === null
-                ? 'bg-darkBlue-500 dark:bg-darkBlue-600 text-white shadow-md hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-darkBlue-500 dark:hover:border-darkBlue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-            }`}
-          >
-            <span>{getTranslation(language, 'all') || 'Бүгд'}</span>
-          </button>
-          
-          {/* Category Buttons */}
-          {categories.map((category) => {
-            return (
+      <section className="w-full py-12 bg-gray-100 dark:bg-gray-800/50">
+        <div className="w-full px-3 py-4 lg:container lg:mx-auto">
+          {/* Header - above */}
+          <div className="mb-6">
+            <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
+              {getTranslation(language, 'allCategories') || 'Ангилалууд'}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Хайх бүх чиглэлээс сонгон шууд үзэхүү
+            </p>
+          </div>
+
+          {/* Categories - 6 per row on lg */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <button
+              onClick={() => {
+                setSelectedCategory(null)
+                setSearchQuery('')
+              }}
+              className={`px-4 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+                selectedCategory === null
+                  ? 'bg-darkBlue-500 dark:bg-darkBlue-600 text-white shadow-md hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-darkBlue-500 dark:hover:border-darkBlue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+              }`}
+            >
+              <span>{getTranslation(language, 'all') || 'Бүгд'}</span>
+            </button>
+            {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => {
                   setSelectedCategory(category.id)
                   router.push(`/category/${category.id}`)
                 }}
-                className={`px-6 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center space-x-2 whitespace-nowrap flex-shrink-0 ${
+                className={`px-4 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                   selectedCategory === category.id
                     ? 'bg-darkBlue-500 dark:bg-darkBlue-600 text-white shadow-md hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-darkBlue-500 dark:hover:border-darkBlue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -924,26 +930,29 @@ export default function Home() {
                 </span>
                 <span className="line-clamp-1">{category.name}</span>
               </button>
-            )
-          })}
-          
-          {/* View All Link */}
-          <button
-            onClick={() => router.push('/products')}
-            className="text-darkBlue-500 dark:text-darkBlue-400 hover:text-darkBlue-600 dark:hover:text-darkBlue-300 font-semibold text-sm transition-colors flex items-center space-x-1 whitespace-nowrap flex-shrink-0 ml-2"
-          >
-            <span>Бүгдийг үзэх</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+            ))}
+          </div>
+
+          {/* Бүгдийг үзэх - below */}
+          <div className="text-center mt-8">
+            <button
+              onClick={() => router.push('/products')}
+              className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
+            >
+              <span>Бүгдийг үзэх</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
- {/* Top Publishers Section */}
- {topBloggers.length > 0 && (
+      {/* Top Publishers Section - Шилдэг нийтлэгчид */}
+      {topBloggers.length > 0 && (
         <section className="bg-white dark:bg-gray-900 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mb-8">
+          <div className="w-full px-3 py-4 lg:container lg:mx-auto">
+            {/* Header - above */}
+            <div className="mb-6">
               <h2 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
                 Шилдэг нийтлэгчид
               </h2>
@@ -951,8 +960,9 @@ export default function Home() {
                 Платформын нүүр царай болон контент бүтээгчид
               </p>
             </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+
+            {/* Grid - 6 in a row on lg */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {topBloggers.slice(0, 12).map((journalist: any) => {
                 const getAvatarUrl = () => {
                   if (journalist.avatar) return journalist.avatar
@@ -992,41 +1002,40 @@ export default function Home() {
                   <div
                     key={journalist.userId || journalist.id}
                     onClick={() => router.push(`/journalist/${journalist.userId || journalist.id}`)}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-0.5 hover:shadow-lg cursor-pointer group"
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-0.5 hover:shadow-lg cursor-pointer group"
                   >
-                    <div className="p-3 text-center">
-                      <div className="relative inline-block mb-2">
+                    <div className="p-4 text-center">
+                      <div className="relative inline-block mb-3">
                         <img
                           src={getAvatarUrl()}
                           alt={journalist.name || journalist.username || 'Journalist'}
-                          className="w-12 h-12 rounded-full border border-[#004e6c] dark:border-[#006b8f] shadow-sm group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
+                          className="w-16 h-16 rounded-full border-2 border-[#004e6c] dark:border-[#006b8f] shadow-sm group-hover:border-[#ff6b35] dark:group-hover:border-[#ff8555] transition-colors"
                           onError={(e) => {
                             const seed = journalist.name || journalist.username || journalist.userId || 'default'
                             ;(e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
                           }}
                         />
-                        {/* Membership Badge in corner */}
-                        <div className={`absolute -bottom-0.5 -right-0.5 ${badgeColor} text-[7px] font-medium px-1 py-0.5 rounded-full shadow-sm border border-white dark:border-gray-800 z-20 uppercase`}>
+                        <div className={`absolute -bottom-0.5 -right-0.5 ${badgeColor} text-[9px] font-medium px-1.5 py-0.5 rounded-full shadow-sm border border-white dark:border-gray-800 z-20 uppercase`}>
                           {membershipName}
                         </div>
                       </div>
-                      <h3 className="text-xs font-medium text-[#004e6c] dark:text-gray-200 mb-0.5 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors line-clamp-1">
+                      <h3 className="text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-1 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors line-clamp-1">
                         {journalist.name || journalist.username || 'Unknown'}
                       </h3>
                       {journalist.username && (
-                        <p className="text-[10px] text-[#004e6c]/60 dark:text-gray-400 mb-1.5 line-clamp-1">
+                        <p className="text-xs text-[#004e6c]/60 dark:text-gray-400 mb-2 line-clamp-1">
                           {journalist.username.startsWith('@') ? journalist.username : `@${journalist.username}`}
                         </p>
                       )}
                       
-                      <div className="space-y-1 mb-2">
+                      <div className="space-y-1.5 mb-3">
                         <div className="flex items-center justify-center space-x-1">
-                          <span className="text-yellow-400 text-[10px]">⭐</span>
-                          <span className="text-[10px] font-medium text-[#004e6c] dark:text-gray-200">
+                          <span className="text-yellow-400 text-sm">⭐</span>
+                          <span className="text-sm font-medium text-[#004e6c] dark:text-gray-200">
                             {typeof journalist.rating === 'number' ? journalist.rating.toFixed(1) : parseFloat(journalist.rating ?? 0).toFixed(1)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center space-x-1.5 text-[10px] text-[#004e6c]/70 dark:text-gray-400">
+                        <div className="flex items-center justify-center space-x-2 text-xs text-[#004e6c]/70 dark:text-gray-400">
                           <span className="flex items-center space-x-0.5">
                             <span>👥</span>
                             <span>
@@ -1051,7 +1060,7 @@ export default function Home() {
                           e.stopPropagation()
                           router.push(`/journalist/${journalist.userId || journalist.id}`)
                         }}
-                        className="w-full bg-darkBlue-500 dark:bg-darkBlue-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                        className="w-full bg-darkBlue-500 dark:bg-darkBlue-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
                       >
                         Профайл
                       </button>
@@ -1060,12 +1069,25 @@ export default function Home() {
                 )
               })}
             </div>
+
+            {/* Бүх нийтлэгчийг үзэх - below */}
+            <div className="text-center mt-8">
+              <button
+                onClick={() => router.push('/products')}
+                className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
+              >
+                <span>Бүх нийтлэгчийг үзэх</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </section>
       )}
-      {/* Features Section */}
-      <section className="relative w-full py-12 overflow-hidden bg-white">
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Features Section - Аюулгүй ба Баталгаажсан etc */}
+      <section className="relative w-full py-12 overflow-hidden bg-gray-100 dark:bg-gray-800/50">
+        <div className="relative z-10 w-full px-3 py-4 lg:container lg:mx-auto flex items-center gap-2">
           {/* TBARIMT Logo - Centered Above */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center">
@@ -1140,7 +1162,7 @@ export default function Home() {
       <section className="relative w-full py-20 overflow-hidden bg-darkBlue-500 dark:bg-gray-800">
         <div className="absolute inset-0 bg-gradient-to-br from-darkBlue-600 to-darkBlue-500 dark:from-gray-900 dark:to-gray-800"></div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 w-full px-3 py-4 lg:container lg:mx-auto flex items-center gap-2">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Side - Text Content */}
             <div>
@@ -1287,26 +1309,29 @@ export default function Home() {
         showAcceptButton={true}
       />
 
-      {/* Featured Products Section */}
+      {/* Featured Products Section - Онцлох бүтээгдэхүүн */}
       <section className="bg-gray-200 dark:bg-gray-800 py-16">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-12">
-          <h3 className="text-xl md:text-2xl font-medium text-[#004e6c] dark:text-gray-200">
-            {getTranslation(language, 'featuredProducts')}
-          </h3>
-          {(selectedCategory || searchQuery) && (
-            <button
-              onClick={() => {
-                setSelectedCategory(null)
-                setSearchQuery('')
-              }}
-              className="text-[#004e6c] dark:text-gray-300 hover:text-[#ff6b35] dark:hover:text-[#ff8555] font-semibold text-lg underline decoration-2 underline-offset-4 transition-colors"
-            >
-              {getTranslation(language, 'showAll')}
-            </button>
-          )}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="w-full px-3 py-4 lg:container lg:mx-auto">
+          {/* Header - above */}
+          <div className="mb-6">
+            <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
+              {getTranslation(language, 'featuredProducts')}
+            </h3>
+            {(selectedCategory || searchQuery) && (
+              <button
+                onClick={() => {
+                  setSelectedCategory(null)
+                  setSearchQuery('')
+                }}
+                className="text-[#004e6c] dark:text-gray-300 hover:text-[#ff6b35] dark:hover:text-[#ff8555] font-semibold text-sm"
+              >
+                {getTranslation(language, 'showAll')}
+              </button>
+            )}
+          </div>
+
+          {/* Grid - 6 in a row on lg */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {displayedProducts.map((product) => {
             const isUnique = (product as any).isUnique === true;
             const isNew = isNewProduct(product);
@@ -1445,212 +1470,121 @@ export default function Home() {
               </div>
             );
           })}
-        </div>
-        {displayedProducts.length > 0 && (
-          <div className="text-center mt-14">
-            <button
-              onClick={() => router.push('/products')}
-              className="bg-[#004e6c] dark:bg-[#006b8f] text-white px-12 py-5 rounded-2xl text-lg font-bold hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-2xl hover:shadow-[#ff6b35]/50 transform hover:-translate-y-1 inline-flex items-center space-x-3"
-            >
-              <span>{getTranslation(language, 'viewAllContentButton')}</span>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
           </div>
-        )}
+
+          {/* Бүх бүтээлийг үзэх - below */}
+          {displayedProducts.length > 0 && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => router.push('/products')}
+                className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
+              >
+                <span>{getTranslation(language, 'viewAllContentButton')}</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
-     
-
-      {/* Membership Section */}
+      {/* Гишүүнчлэлийн эрх - Membership Section */}
       {memberships.length > 0 && (
-        <section className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-20">
+          <div className="w-full px-3 py-4 lg:container lg:mx-auto">
             {/* Header */}
-            <div className="text-center mb-16">
-              <h2 className="text-sm md:text-base text-[#004e6c] dark:text-gray-200 mb-4">
-                {getTranslation(language, 'membershipPlans') || 'Membership Plans'}
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-3">
+                Гишүүнчлэлийн эрх
               </h2>
-              <p className="text-xl text-[#004e6c]/70 dark:text-gray-400 max-w-3xl mx-auto">
-                {getTranslation(language, 'chooseMembershipPlan') || 'Choose the perfect membership plan for your needs'}
+              <p className="text-lg text-[#004e6c]/80 dark:text-gray-400 max-w-2xl mx-auto">
+                Өөрийн хэрэгцээнд тохирох гишүүнчлэлийн эрхийг сонгоно уу
               </p>
             </div>
 
-            {/* Subscription Value Proposition Section */}
-            <div className="bg-gradient-to-r from-darkBlue-500 via-orange-500 to-darkBlue-500 dark:from-gray-800 dark:via-orange-600 dark:to-gray-800 rounded-3xl shadow-2xl p-8 md:p-12 mb-16 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-48 -mt-48"></div>
-              <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -ml-48 -mb-48"></div>
-              
-              <div className="relative z-10">
-                <div className="text-center mb-8">
-                  <h3 className="text-3xl md:text-4xl font-bold mb-4">
-                    Subscription-ийн үнэ цэнэ
-                  </h3>
-                  <p className="text-lg opacity-90 max-w-2xl mx-auto">
-                    Нэг удаагийн худалдан авалтаас илүү ашигтай, илүү хэмнэлттэй сонголтыг санал болгож байна.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  {/* Advantages */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                    <h4 className="text-lg font-semibold mb-4">Давуу талууд</h4>
-                    <ul className="space-y-3 text-sm opacity-90">
-                      <li className="flex items-start gap-2">
-                        <span className="font-bold text-orange-300">✓</span>
-                        <span>Хязгааргүй нэвтрэх</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="font-bold text-orange-300">✓</span>
-                        <span>Өндөр комиссын хувь</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="font-bold text-orange-300">✓</span>
-                        <span>Онцгой тэмдэглэгээ</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Opportunities */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                    <h4 className="text-lg font-semibold mb-4">Боломжууд</h4>
-                    <ul className="space-y-3 text-sm opacity-90">
-                      <li className="flex items-start gap-2">
-                        <span className="font-bold text-orange-300">✓</span>
-                        <span>Олон бүтээгдэхүүн</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="font-bold text-orange-300">✓</span>
-                        <span>Илүү их өгөөж</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="font-bold text-orange-300">✓</span>
-                        <span>Брэндээ бэхжүүлэх</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Savings Calculator */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 mb-8 max-w-md mx-auto">
-                  <h4 className="text-lg font-semibold mb-4 text-center">Хэмнэлтийн тооцоо</h4>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold mb-2">~ 50,000 ₮</div>
-                    <button
-                      onClick={() => {
-                        const paidMembership = memberships.find((m: any) => {
-                          const price = typeof m.price === 'number' ? m.price : parseFloat(String(m.price))
-                          return price > 0
-                        })
-                        if (paidMembership) {
-                          handleMembershipSelect(paidMembership)
-                        }
-                      }}
-                      disabled={isCreatingInvoice}
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-4 rounded-xl font-bold text-base transition-all shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : '30,000 ₮ / Сар'}
-                    </button>
-                    <div className="text-xs opacity-75 mt-2">SUBSCRIPTION</div>
-                  </div>
-                </div>
-
-                {/* CTA Button */}
-                <div className="text-center">
-                  <button
-                    onClick={() => {
-                      const paidMembership = memberships.find((m: any) => {
-                        const price = typeof m.price === 'number' ? m.price : parseFloat(String(m.price))
-                        return price > 0
-                      })
-                      if (paidMembership) {
-                        handleMembershipSelect(paidMembership)
-                      }
-                    }}
-                    disabled={isCreatingInvoice}
-                    className="bg-white text-darkBlue-500 dark:text-darkBlue-600 px-8 py-4 rounded-xl font-semibold text-base hover:bg-gray-100 dark:hover:bg-gray-200 transition-all shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Subscription авах'}
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Membership Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {memberships.map((membership) => {
+            {/* Membership Cards - 4 tiers, distinct styling */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {memberships.map((membership: any, index: number) => {
                 const isFree = typeof membership.price === 'number' ? membership.price === 0 : parseFloat(String(membership.price)) === 0
                 const formatPrice = (price: number | string) => {
                   const numPrice = typeof price === 'number' ? price : parseFloat(String(price))
                   if (numPrice === 0) return 'Үнэгүй'
                   return new Intl.NumberFormat('mn-MN').format(numPrice) + '₮'
                 }
-                
+                const nameUpper = (membership.name || '').toUpperCase()
+                const tierTheme = (() => {
+                  if (isFree || nameUpper.includes('FREE')) return { bg: 'from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600', accent: 'text-slate-700 dark:text-slate-200', btn: 'bg-slate-500', border: 'border-slate-300 dark:border-slate-600', icon: '🔓', badge: 'bg-slate-500' }
+                  if (nameUpper.includes('BRONZE')) return { bg: 'from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40', accent: 'text-amber-800 dark:text-amber-200', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-300 dark:border-amber-700', icon: '🥉', badge: 'bg-amber-500' }
+                  if (nameUpper.includes('SILVER')) return { bg: 'from-slate-200 to-gray-200 dark:from-slate-600 dark:to-gray-700', accent: 'text-slate-800 dark:text-slate-100', btn: 'bg-slate-500 hover:bg-slate-600', border: 'border-slate-400 dark:border-slate-500', icon: '🥈', badge: 'bg-slate-400' }
+                  if (nameUpper.includes('GOLD')) return { bg: 'from-amber-200 to-yellow-100 dark:from-amber-800/50 dark:to-yellow-900/40', accent: 'text-amber-900 dark:text-amber-100', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-400 dark:border-amber-600', icon: '🥇', badge: 'bg-amber-400' }
+                  if (nameUpper.includes('PLATINUM')) return { bg: 'from-cyan-100 to-teal-100 dark:from-cyan-900/40 dark:to-teal-900/40', accent: 'text-cyan-900 dark:text-cyan-100', btn: 'bg-cyan-500 hover:bg-cyan-600', border: 'border-cyan-400 dark:border-cyan-600', icon: '💎', badge: 'bg-cyan-400' }
+                  const themes = [
+                    { bg: 'from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600', accent: 'text-slate-700 dark:text-slate-200', btn: 'bg-slate-500', border: 'border-slate-300 dark:border-slate-600', icon: '🔓', badge: 'bg-slate-500' },
+                    { bg: 'from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40', accent: 'text-amber-800 dark:text-amber-200', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-300 dark:border-amber-700', icon: '🥉', badge: 'bg-amber-500' },
+                    { bg: 'from-slate-200 to-gray-200 dark:from-slate-600 dark:to-gray-700', accent: 'text-slate-800 dark:text-slate-100', btn: 'bg-slate-500 hover:bg-slate-600', border: 'border-slate-400 dark:border-slate-500', icon: '🥈', badge: 'bg-slate-400' },
+                    { bg: 'from-cyan-100 to-teal-100 dark:from-cyan-900/40 dark:to-teal-900/40', accent: 'text-cyan-900 dark:text-cyan-100', btn: 'bg-cyan-500 hover:bg-cyan-600', border: 'border-cyan-400 dark:border-cyan-600', icon: '💎', badge: 'bg-cyan-400' },
+                  ]
+                  return themes[index % themes.length]
+                })()
                 return (
                   <div
                     key={membership.id}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border-2 border-[#004e6c]/10 dark:border-gray-700 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 transition-all transform hover:-translate-y-2 hover:shadow-2xl"
+                    className={`rounded-2xl overflow-hidden border-2 ${tierTheme.border} bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col`}
                   >
-                    <div className={`p-6 relative overflow-hidden ${
-                      isFree 
-                        ? 'bg-gradient-to-br from-gray-100 dark:from-gray-700 to-gray-200 dark:to-gray-600 text-[#004e6c] dark:text-gray-200' 
-                        : 'bg-gradient-to-br from-[#004e6c] to-[#ff6b35] dark:from-[#006b8f] dark:to-[#ff8555] text-white'
-                    }`}>
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                      <div className="relative z-10">
-                        <h3 className="text-sm font-semibold mb-2">{membership.name}</h3>
-                        <div className="text-base font-semibold mb-2">
-                          {formatPrice(membership.price)}
-                        </div>
-                        {!isFree && (
-                          <div className="text-sm opacity-90">/ сар</div>
-                        )}
-                      </div>
+                    {/* Card header */}
+                    <div className={`bg-gradient-to-br ${tierTheme.bg} px-6 py-5 relative`}>
+                      <span className="text-2xl" aria-hidden>{tierTheme.icon}</span>
+                      <h3 className={`text-lg font-bold mt-2 ${tierTheme.accent}`}>
+                        {membership.name}
+                      </h3>
+                      <p className={`text-2xl font-bold mt-1 ${tierTheme.accent}`}>
+                        {formatPrice(membership.price)}
+                      </p>
+                      {!isFree && (
+                        <p className={`text-sm opacity-90 mt-0.5 ${tierTheme.accent}`}>/ сар</p>
+                      )}
                     </div>
 
-                    <div className="p-6">
+                    {/* Card body */}
+                    <div className="p-6 flex-1 flex flex-col">
                       <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Нийтлэх хязгаар:</span>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Нийтлэх хязгаар</span>
                           <span className="font-bold text-[#004e6c] dark:text-gray-200">
                             {membership.maxPosts === 0 ? 'Хязгааргүй' : membership.maxPosts}
                           </span>
                         </div>
                         {membership.description && (
-                          <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mt-2 font-medium">
+                          <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mt-2 leading-relaxed">
                             {membership.description}
                           </p>
                         )}
                       </div>
 
                       {membership.advantages && Array.isArray(membership.advantages) && membership.advantages.length > 0 && (
-                        <div className="mb-4">
-                          <h4 className="font-semibold text-[#004e6c] dark:text-gray-200 mb-2">Давуу талууд:</h4>
-                          <ul className="space-y-1">
-                            {membership.advantages.map((advantage: string, idx: number) => (
-                              <li key={idx} className="text-sm text-[#004e6c]/70 dark:text-gray-400 flex items-start gap-2 font-medium">
-                                <span className="text-[#ff6b35] dark:text-[#ff8555] font-bold">✓</span>
-                                <span>{advantage}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <ul className="space-y-2 mb-6 flex-1">
+                          {membership.advantages.map((advantage: string, idx: number) => (
+                            <li key={idx} className="text-sm text-[#004e6c]/80 dark:text-gray-300 flex items-start gap-2">
+                              <span className="text-green-500 dark:text-green-400 mt-0.5 flex-shrink-0">✓</span>
+                              <span>{advantage}</span>
+                            </li>
+                          ))}
+                        </ul>
                       )}
 
-                      {!isFree && (
+                      {!isFree ? (
                         <button
                           onClick={() => handleMembershipSelect(membership)}
                           disabled={isCreatingInvoice}
-                          className={`w-full py-3 rounded-xl font-semibold transition-all shadow-lg ${
-                            isCreatingInvoice
-                              ? 'bg-[#004e6c]/50 dark:bg-[#006b8f]/50 text-white cursor-wait'
-                              : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] hover:shadow-xl transform hover:-translate-y-0.5'
-                          }`}
+                          className={`w-full py-3.5 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${tierTheme.btn}`}
                         >
-                          {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Subscription авах'}
+                          {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Сонгох'}
                         </button>
+                      ) : (
+                        <div className="w-full py-3.5 rounded-xl font-semibold text-center text-[#004e6c]/60 dark:text-gray-500 border-2 border-dashed border-gray-300 dark:border-gray-600">
+                          Үнэгүй эрх
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1758,7 +1692,7 @@ export default function Home() {
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#ff6b35] rounded-full blur-3xl"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="w-full px-3 py-4 lg:container lg:mx-auto relative z-10 flex items-center gap-2">
           {/* Header */}
           <div className="text-center mb-16">
             <h2 className="text-sm md:text-base text-white mb-4">
@@ -1864,10 +1798,11 @@ export default function Home() {
       {/* Сүүлд нэмэгдсэн контент Section - Right above Footer */}
       {recentProducts.length >= 1 && (
         <section className="bg-white dark:bg-gray-900 py-16">
-          <div className="w-full px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center mb-12">
+          <div className="w-full px-3 py-4 lg:container lg:mx-auto">
+            {/* Header - above */}
+            <div className="mb-6">
               <div className="flex items-center space-x-3">
-                <h3 className="text-xl md:text-2xl font-medium text-[#004e6c] dark:text-gray-200">
+                <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
                   Сүүлд нэмэгдсэн контент
                 </h3>
                 <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1">
@@ -1876,7 +1811,9 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+
+            {/* Grid - 6 in a row on lg */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {recentProducts.map((product) => {
                 return (
                   <div
@@ -1970,6 +1907,19 @@ export default function Home() {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Бүх бүтээлийг үзэх - below */}
+            <div className="text-center mt-8">
+              <button
+                onClick={() => router.push('/products')}
+                className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
+              >
+                <span>Бүх бүтээлийг үзэх</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
         </section>
