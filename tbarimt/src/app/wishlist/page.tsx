@@ -183,7 +183,7 @@ export default function WishlistPage() {
     <main className="min-h-screen bg-white dark:bg-gray-900">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-12">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-[#004e6c] dark:text-gray-200 mb-2">

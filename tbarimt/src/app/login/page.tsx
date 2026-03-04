@@ -44,8 +44,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-900 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
+    <main className="min-h-screen bg-gradient-to-br from-[#004e6c]/5 dark:from-[#004e6c]/10 via-white dark:via-gray-900 to-[#ff6b35]/5 dark:to-[#ff6b35]/10 flex items-center justify-center">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto flex justify-center">
+        <div className="max-w-md w-full">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border-2 border-[#004e6c]/20 dark:border-gray-700">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-2xl mb-4 shadow-lg">
@@ -142,6 +143,7 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Terms and Conditions Modal */}

@@ -340,7 +340,7 @@ export default function PublishPage() {
     <main className="min-h-screen bg-white">
       {/* Top Header - Logo, Search, Upload/Dipbard */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#004e6c]/10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto">
           <div className="flex justify-between items-center py-5">
             {/* Logo */}
             <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => router.push('/')}>
@@ -395,7 +395,7 @@ export default function PublishPage() {
 
       {/* Main Navigation Bar */}
       <nav className="bg-[#004e6c] shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
@@ -433,7 +433,7 @@ export default function PublishPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-12">
         <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-[#004e6c]/20">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-[#004e6c] mb-2">

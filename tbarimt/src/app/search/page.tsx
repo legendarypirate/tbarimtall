@@ -215,7 +215,7 @@ function SearchContent() {
     <main className="min-h-screen bg-white dark:bg-gray-900">
       <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-8">
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative group">

@@ -70,7 +70,7 @@ export default function FAQPage() {
       
 
       {/* FAQ Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900">
+      <section className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-8 bg-white dark:bg-gray-900">
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#004e6c]"></div>

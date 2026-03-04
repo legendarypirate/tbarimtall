@@ -931,7 +931,7 @@ export default function ProductDetail() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto">
           <div className="flex justify-between items-center py-4">
             <button
               onClick={() => router.push('/')}
@@ -961,7 +961,7 @@ export default function ProductDetail() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Images and Preview */}
           <div className="lg:col-span-2 space-y-4">
@@ -1361,7 +1361,7 @@ export default function ProductDetail() {
 
       {/* Recommended Products Section */}
       {recommendedProducts.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-12">
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-12 mt-12">
           <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-8">
             Санал болгох контентууд
           </h2>
@@ -1494,7 +1494,7 @@ export default function ProductDetail() {
       )}
 
       {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-12 border-t border-gray-200 dark:border-gray-700">
+      <footer className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-8 mt-12 border-t border-gray-200 dark:border-gray-700">
         <div className="text-center text-sm text-gray-600 dark:text-gray-400">
           © 2024 Дижитал Контент Дэлгүүр. Бүх эрх хуулиар хамгаалагдсан.
         </div>

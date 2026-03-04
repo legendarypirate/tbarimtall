@@ -260,7 +260,7 @@ export default function CategoryPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto">
           <div className="flex justify-between items-center py-4">
             <button
               onClick={() => router.push('/')}
@@ -277,7 +277,7 @@ export default function CategoryPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-8">
         {/* Category Header */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-4 mb-4">

@@ -260,7 +260,7 @@ export default function MembershipsPage() {
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-[#004e6c]/10 dark:border-gray-700 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto">
           <div className="flex justify-between items-center py-5">
             <button
               onClick={() => router.back()}
@@ -282,7 +282,7 @@ export default function MembershipsPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-8">
         <div className="mb-6">
           <p className="text-[#004e6c]/70 dark:text-gray-400 font-medium">
             Өөрийн хэрэгцээнд тохирох гишүүнчлэл сонгоод илүү олон файл нийтлэх боломжтой болно

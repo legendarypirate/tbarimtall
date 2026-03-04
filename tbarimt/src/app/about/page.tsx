@@ -23,7 +23,7 @@ export default function AboutPage() {
           <div className="absolute bottom-10 right-10 w-64 h-64 bg-[#ff6b35]/15 dark:bg-[#ff6b35]/20 rounded-full blur-3xl"></div>
         </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 w-full px-3 sm:px-4 lg:container lg:mx-auto">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#004e6c] dark:text-gray-200 mb-4 leading-tight tracking-tight">
               Бидний тухай
@@ -36,7 +36,7 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900">
+      <section className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-8 bg-white dark:bg-gray-900">
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:border-[#ff6b35]/30 dark:hover:border-[#ff8555]/30 group">
             <div className="w-12 h-12 bg-gradient-to-br from-[#004e6c] to-[#006b8f] dark:from-[#006b8f] dark:to-[#004e6c] rounded-lg flex items-center justify-center mb-4 shadow-lg group-hover:from-[#ff6b35] group-hover:to-[#ff8555] dark:group-hover:from-[#ff8555] dark:group-hover:to-[#ff6b35] transition-all duration-300">
