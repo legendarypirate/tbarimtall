@@ -272,12 +272,12 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
     <>
       {/* Top Header - Logo, Search, Upload/Dipbard */}
       <header className="sticky top-0 z-50 bg-white/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-soft relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 relative z-10">
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto relative z-10">
           {/* Mobile Layout */}
           <div className="flex lg:hidden items-center justify-between py-3">
             {/* Logo */}
             <div className="flex items-center cursor-pointer group" onClick={() => router.push('/')}>
-              <div className="h-10 sm:h-12 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 overflow-hidden">
+              <div className="h-8 sm:h-[2.4rem] rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 overflow-hidden">
                 <img src="/lg.png" alt="TBARIMT Logo" className="h-full w-auto object-contain" />
               </div>
             </div>
@@ -325,13 +325,13 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
           <div className="hidden lg:flex justify-between items-center py-5">
             {/* Logo */}
             <div className="flex items-center cursor-pointer group" onClick={() => router.push('/')}>
-              <div className="h-16 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 overflow-hidden">
+              <div className="h-[3.2rem] rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105 overflow-hidden">
                 <img src="/lg.png" alt="TBARIMT Logo" className="h-full w-auto object-contain" />
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="flex flex-1 max-w-md mx-4 md:mx-8">
+            {/* Search Bar - grows to use available space */}
+            <div className="flex flex-1 min-w-0 max-w-2xl mx-4 md:mx-6 lg:mx-8">
               <div className="relative w-full">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-[#004e6c]/60 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,14 +373,21 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
               </button>
               
               {/* Language Selector */}
-              <div className="relative">
+              <div className="relative flex items-center gap-2">
+                <img
+                  src={`https://flagcdn.com/w40/${language === 'mn' ? 'mn' : 'gb'}.png`}
+                  alt=""
+                  className="w-6 h-4 rounded object-cover shrink-0"
+                  width={24}
+                  height={16}
+                />
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value as 'mn' | 'en')}
                   className="px-4 py-2 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:focus:ring-primary-400/30 text-sm font-semibold cursor-pointer transition-all"
                 >
-                  <option value="mn">🇲🇳 Мон</option>
-                  <option value="en">🇬🇧 Eng</option>
+                  <option value="mn">Мон</option>
+                  <option value="en">Eng</option>
                 </select>
               </div>
               
@@ -506,7 +513,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
         {/* Mobile Menu Dropdown */}
         {showMobileMenu && (
           <div className="lg:hidden border-t border-[#004e6c]/10 dark:border-gray-700/50 bg-white dark:bg-gray-900 relative z-50">
-            <div className="max-w-7xl mx-auto px-3 py-4 space-y-3">
+            <div className="w-full px-3 py-4 lg:container lg:mx-auto space-y-3">
               {/* Mobile Search */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -592,13 +599,20 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
               {/* Mobile Settings */}
               <div className="flex items-center justify-between pt-3 border-t border-[#004e6c]/10 dark:border-gray-700/50">
                 <div className="flex items-center space-x-2">
+                  <img
+                    src={`https://flagcdn.com/w40/${language === 'mn' ? 'mn' : 'gb'}.png`}
+                    alt=""
+                    className="w-6 h-4 rounded object-cover shrink-0"
+                    width={24}
+                    height={16}
+                  />
                   <select
                     value={language}
                     onChange={(e) => setLanguage(e.target.value as 'mn' | 'en')}
                     className="px-3 py-2 rounded-xl bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 border-2 border-[#004e6c]/20 dark:border-gray-700 text-sm font-semibold"
                   >
-                    <option value="mn">🇲🇳 Мон</option>
-                    <option value="en">🇬🇧 Eng</option>
+                    <option value="mn">Мон</option>
+                    <option value="en">Eng</option>
                   </select>
                   <button
                     type="button"
@@ -714,52 +728,38 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
 
       {/* Main Navigation Bar */}
       <nav className="bg-[#004e6c] dark:bg-gray-800 shadow-lg">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between py-3 lg:py-4 gap-3 lg:gap-0">
-            {/* Weather and Currency Widget - Left Side */}
-            <div className="flex items-center space-x-3 sm:space-x-4 lg:space-x-6 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0">
-              {/* Weather Widget */}
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto">
+          <div className="flex flex-row items-center justify-between py-2 lg:py-2.5 gap-2 min-h-0">
+            {/* Weather and Currency - single row */}
+            <div className="flex items-center flex-wrap gap-2 sm:gap-3 overflow-x-auto shrink-0">
+              {/* Weather - one line */}
               {weather && (
-                <div className="flex items-center space-x-2 bg-white/10 dark:bg-gray-700/30 backdrop-blur-sm px-2 sm:px-3 py-1.5 rounded-lg border border-white/20 dark:border-gray-600/30 hover:bg-white/15 dark:hover:bg-gray-700/40 transition-all group flex-shrink-0">
+                <div className="flex items-center gap-1.5 bg-white/10 dark:bg-gray-700/30 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/20 dark:border-gray-600/30 flex-shrink-0">
                   {loadingWeather ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
                     <>
-                      <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-white/20 dark:bg-gray-600/30 rounded-lg text-base sm:text-lg">
-                        <span>{weather.icon}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs sm:text-sm font-bold text-white leading-tight">{weather.temp}°C</span>
-                        <span className="text-[10px] sm:text-xs text-white/80 capitalize leading-tight hidden sm:block">{weather.description}</span>
-                      </div>
+                      <span className="text-sm">{weather.icon}</span>
+                      <span className="text-xs font-bold text-white">{weather.temp}°C</span>
+                      <span className="text-[10px] text-white/80 capitalize hidden sm:inline">{weather.description}</span>
                     </>
                   )}
                 </div>
               )}
-
-              {/* Currency Widget */}
+              {/* Currency - one line: USD and EUR inline */}
               {currency && (
-                <div className="flex items-center space-x-1.5 sm:space-x-2 bg-white/10 dark:bg-gray-700/30 backdrop-blur-sm px-2 sm:px-3 py-1.5 rounded-lg border border-white/20 dark:border-gray-600/30 flex-shrink-0">
+                <div className="flex items-center gap-2 bg-white/10 dark:bg-gray-700/30 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/20 dark:border-gray-600/30 flex-shrink-0">
                   {loadingCurrency ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
                     <>
-                      {/* USD */}
-                      <div className="flex items-center space-x-1 sm:space-x-1.5 px-1.5 sm:px-2 py-1 bg-white/10 dark:bg-gray-600/20 rounded-lg hover:bg-white/15 dark:hover:bg-gray-600/30 transition-all group">
-                        <span className="text-sm sm:text-base" title="United States">🇺🇸</span>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] sm:text-xs text-white/70 font-medium leading-tight">USD</span>
-                          <span className="text-[10px] sm:text-xs font-bold text-white leading-tight">{currency.usd.toLocaleString('mn-MN')}</span>
-                        </div>
-                      </div>
-                      {/* EUR */}
-                      <div className="flex items-center space-x-1 sm:space-x-1.5 px-1.5 sm:px-2 py-1 bg-white/10 dark:bg-gray-600/20 rounded-lg hover:bg-white/15 dark:hover:bg-gray-600/30 transition-all group">
-                        <span className="text-sm sm:text-base" title="European Union">🇪🇺</span>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] sm:text-xs text-white/70 font-medium leading-tight">EUR</span>
-                          <span className="text-[10px] sm:text-xs font-bold text-white leading-tight">{currency.eur.toLocaleString('mn-MN')}</span>
-                        </div>
-                      </div>
+                      <img src="https://flagcdn.com/w40/us.png" alt="" className="w-4 h-3 rounded-sm object-cover shrink-0" width={16} height={12} title="USD" />
+                      <span className="text-[10px] text-white/70 uppercase font-medium">USD</span>
+                      <span className="text-xs font-bold text-white">{currency.usd.toLocaleString('mn-MN')}</span>
+                      <span className="w-px h-3 bg-white/30" />
+                      <img src="https://flagcdn.com/w40/eu.png" alt="" className="w-4 h-3 rounded-sm object-cover shrink-0" width={16} height={12} title="EUR" />
+                      <span className="text-[10px] text-white/70 uppercase font-medium">EUR</span>
+                      <span className="text-xs font-bold text-white">{currency.eur.toLocaleString('mn-MN')}</span>
                     </>
                   )}
                 </div>
@@ -774,7 +774,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   setShowCategoriesDrawer(true)
                 }}
-                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
+                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-4 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[36px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -788,7 +788,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/howitworks')
                 }}
-                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
+                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-4 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[36px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -802,7 +802,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/membership')
                 }}
-                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
+                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-4 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[36px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -816,7 +816,7 @@ export default function Header({ searchQuery: externalSearchQuery, onSearchChang
                   e.preventDefault()
                   router.push('/products')
                 }}
-                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-6 py-3.5 rounded-xl hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[48px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
+                className="relative z-10 inline-flex items-center gap-2 text-white/90 hover:text-white transition-all font-semibold text-sm group px-4 py-2 rounded-lg hover:bg-white/10 dark:hover:bg-gray-700/30 min-h-[36px] cursor-pointer select-none touch-manipulation pointer-events-auto active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#004e6c]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />

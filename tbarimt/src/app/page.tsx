@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/hooks/useDarkMode'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getTranslation } from '@/lib/translations'
-import { getCategories, getFeaturedProducts, getTopJournalists, getActiveMemberships, getHeroSliders, createMembershipInvoice, checkMembershipPaymentStatus, getBestSellingProducts, getRecentProducts } from '@/lib/api'
+import { getCategories, getFeaturedProducts, getTopJournalists, getActiveMemberships, getHeroSliders, createMembershipInvoice, checkMembershipPaymentStatus, getBestSellingProducts, getRecentProducts, getPublicStats } from '@/lib/api'
 import { getCategoryIcon } from '@/lib/categoryIcon'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -215,6 +215,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [bestSellingProducts, setBestSellingProducts] = useState<Product[]>([])
   const [recentProducts, setRecentProducts] = useState<Product[]>([])
+  const [publicStats, setPublicStats] = useState<{ totalUsers: number; totalJournalists: number; totalProducts: number; totalRevenue: number } | null>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [isJournalist, setIsJournalist] = useState(false)
@@ -401,14 +402,15 @@ export default function Home() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [categoriesRes, productsRes, journalistsRes, membershipsRes, slidersRes, bestSellingRes, recentRes] = await Promise.all([
+        const [categoriesRes, productsRes, journalistsRes, membershipsRes, slidersRes, bestSellingRes, recentRes, statsRes] = await Promise.all([
           getCategories().catch(() => ({ categories: defaultCategories })),
           getFeaturedProducts(8).catch(() => ({ products: defaultFeaturedProducts })),
           getTopJournalists(12).catch(() => ({ journalists: [] })),
           getActiveMemberships().catch(() => ({ memberships: [] })),
           getHeroSliders().catch(() => ({ sliders: [] })),
-          getBestSellingProducts(6).catch(() => ({ products: [] })),
-          getRecentProducts(6).catch(() => ({ products: [] }))
+          getBestSellingProducts(12).catch(() => ({ products: [] })),
+          getRecentProducts(12).catch(() => ({ products: [] })),
+          getPublicStats().catch(() => null)
         ])
 
         if (categoriesRes.categories) {
@@ -458,10 +460,18 @@ export default function Home() {
           setHeroSliders(slidersRes.sliders)
         }
         if (bestSellingRes.products && Array.isArray(bestSellingRes.products)) {
-          setBestSellingProducts(bestSellingRes.products.slice(0, 6))
+          setBestSellingProducts(bestSellingRes.products.slice(0, 12))
         }
         if (recentRes.products && Array.isArray(recentRes.products)) {
-          setRecentProducts(recentRes.products.slice(0, 6))
+          setRecentProducts(recentRes.products.slice(0, 12))
+        }
+        if (statsRes && typeof statsRes.totalUsers === 'number') {
+          setPublicStats({
+            totalUsers: statsRes.totalUsers,
+            totalJournalists: statsRes.totalJournalists,
+            totalProducts: statsRes.totalProducts,
+            totalRevenue: statsRes.totalRevenue
+          })
         }
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -538,8 +548,8 @@ export default function Home() {
     return true
   })
 
-  // Show only first 8 products (2 rows x 4 columns)
-  const displayedProducts = filteredProducts.slice(0, 8)
+  // Show only first 12 products (2 rows x 6 columns)
+  const displayedProducts = filteredProducts.slice(0, 12)
 
   // Helper function to check if product is new (created within last 7 days)
   const isNewProduct = (product: Product) => {
@@ -673,82 +683,137 @@ export default function Home() {
       </section>
       */}
 
-      {/* Stats Section - 10.7k Хэрэглэгч etc */}
-      <section className="w-full py-12 mt-0 relative z-20 bg-gray-100 dark:bg-gray-800/50">
-        <div className="w-full px-3 py-4 lg:container lg:mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Users Stat - Dark Blue Icon */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="w-16 h-16 bg-darkBlue-500 dark:bg-darkBlue-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                10.7k
-              </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'users') || 'нийт хэрэглэгч'}
-              </div>
+      {/* Ангилалууд - compact strip above Эрэлттэй бүтээлүүд */}
+      <section className="w-full py-5 bg-gray-50 dark:bg-gray-800/40 border-y border-gray-200 dark:border-gray-700/50">
+        <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+          
+              <button
+                onClick={() => { setSelectedCategory(null); setSearchQuery(''); router.push('/products'); }}
+                className="px-2.5 py-1 rounded-md text-xs font-medium transition-all bg-[#004e6c]/10 dark:bg-gray-700/50 text-[#004e6c] dark:text-gray-300 hover:bg-[#004e6c]/20 dark:hover:bg-gray-600/50 border border-[#004e6c]/20 dark:border-gray-600"
+              >
+                {getTranslation(language, 'all') || 'Бүгд'}
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => { setSelectedCategory(category.id); router.push(`/category/${category.id}`); }}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-[#004e6c]/10 dark:hover:bg-[#ff6b35]/10 hover:text-[#004e6c] dark:hover:text-[#ff8555] border border-gray-200 dark:border-gray-600 hover:border-[#004e6c]/30 dark:hover:border-[#ff6b35]/30"
+                >
+                  <span className="text-sm opacity-80">{getCategoryIcon(category.icon)}</span>
+                  <span className="line-clamp-1 max-w-[8rem]">{category.name}</span>
+                </button>
+              ))}
             </div>
+            <button
+              onClick={() => router.push('/products')}
+              className="text-xs font-semibold text-[#004e6c] dark:text-[#ff8555] hover:underline shrink-0 flex items-center gap-1"
+            >
+              {language === 'mn' ? 'Бүгдийг үзэх' : 'View all'}
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </button>
           </div>
-
-          {/* Creators Stat - Orange Icon */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="w-16 h-16 bg-orange-500 dark:bg-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                1,204
-              </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'creators') || 'идэвхтэй нийтлэгч'}
-              </div>
-            </div>
-          </div>
-
-          {/* Contents Stat - Teal Icon */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="w-16 h-16 bg-teal-500 dark:bg-teal-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                9,300
-              </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'contents') || 'дижитал контент'}
-              </div>
-            </div>
-          </div>
-
-          {/* Earned Stat - Dark Blue Icon */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="w-16 h-16 bg-darkBlue-500 dark:bg-darkBlue-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                ₮ 120.1M
-              </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
-                {getTranslation(language, 'earned') || 'нийт борлуулалт'}
-              </div>
-            </div>
-          </div>
-        </div>
         </div>
       </section>
 
-      {/* Trending / Best Seller Section */}
+      {/* Featured Products Section - Онцлох бүтээгдэхүүн (above Эрэлттэй бүтээлүүд) */}
+      <section className="bg-gray-200 dark:bg-gray-800 py-16">
+        <div className="w-full px-3 py-4 lg:container lg:mx-auto">
+          <div className="mb-6">
+            <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
+              {getTranslation(language, 'featuredProducts')}
+            </h3>
+            {(selectedCategory || searchQuery) && (
+              <button
+                onClick={() => {
+                  setSelectedCategory(null)
+                  setSearchQuery('')
+                }}
+                className="text-[#004e6c] dark:text-gray-300 hover:text-[#ff6b35] dark:hover:text-[#ff8555] font-semibold text-sm"
+              >
+                {getTranslation(language, 'showAll')}
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {displayedProducts.map((product) => {
+            const isUnique = (product as any).isUnique === true;
+            const isNew = isNewProduct(product);
+            return (
+              <div
+                key={product.id}
+                onClick={() => router.push(`/products/${product.uuid || product.id}`)}
+                className={`group relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ${
+                  isUnique
+                    ? 'border-2 border-green-400 bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/20 dark:to-emerald-900/20'
+                    : 'bg-white dark:bg-gray-800 border-2 border-[#004e6c]/20 dark:border-gray-700 hover:border-[#004e6c]/40 dark:hover:border-gray-600'
+                }`}
+              >
+                <div className="relative h-32 overflow-hidden bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700 to-[#006b8f]/10 dark:to-gray-600">
+                  <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  {isNew && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-full shadow-lg text-xs font-bold animate-pulse">ШИНЭ</div>
+                    </div>
+                  )}
+                  {isUnique && (
+                    <div className={`absolute ${isNew ? 'top-8' : 'top-2'} right-2 z-10`}>
+                      <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-2 py-0.5 rounded-full shadow-lg text-xs font-bold">UNIQUE</div>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2 z-10">
+                    <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-1.5 rounded-full shadow-md">
+                      <WishlistHeartIcon productId={product.uuid || product.id} size="sm" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-bold text-[#004e6c] dark:text-gray-200 mb-1.5 line-clamp-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors min-h-[2.5rem]">
+                    {product.title}
+                  </h3>
+                  <div className="flex items-center space-x-1.5 mb-2 bg-[#004e6c]/5 dark:bg-gray-700/30 px-2.5 py-1.5 rounded-md">
+                    <span className="text-[#004e6c] dark:text-gray-400 font-bold text-sm">🛒</span>
+                    <span className="text-xs font-bold text-[#004e6c]/80 dark:text-gray-400">
+                      {product.downloads || 0} худалдан авалт
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#004e6c]/20 dark:border-gray-700">
+                    <div className="flex flex-col">
+                      <span className="text-base font-bold text-[#ff6b35] dark:text-[#ff8555]">
+                        {product.price.toLocaleString()}₮
+                      </span>
+                      <div className="flex items-center space-x-0.5 mt-0.5">
+                        <span className="text-yellow-400 text-xs">⭐</span>
+                        <span className="text-xs font-semibold text-[#004e6c]/70 dark:text-gray-400">{product.rating || 0}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.uuid || product.id}`); }}
+                      className="w-8 h-8 rounded-lg bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center"
+                      aria-label={getTranslation(language, 'details')}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          </div>
+          {displayedProducts.length > 0 && (
+            <div className="text-center mt-8">
+              <button onClick={() => router.push('/products')} className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2">
+                <span>{getTranslation(language, 'viewAllContentButton')}</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Trending / Best Seller Section - Эрэлттэй бүтээлүүд (min 2 rows × 6) */}
       {bestSellingProducts.length > 0 && (
         <section className="w-full py-16 bg-white dark:bg-gray-900">
         <div className="w-full px-3 py-4 lg:container lg:mx-auto">
@@ -784,9 +849,9 @@ export default function Home() {
                 >
                   {/* Trending Badge - Top Left */}
                   <div className="absolute top-2 left-2 z-10">
-                    <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white px-2 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
-                      <span className="text-xs">🔥</span>
-                      <span className="text-[10px] font-bold">#{index + 1}</span>
+                    <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white px-2.5 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                      <span className="text-sm">🔥</span>
+                      <span className="text-xs font-bold">#{index + 1}</span>
                     </div>
                   </div>
 
@@ -806,7 +871,7 @@ export default function Home() {
                     {/* New Badge - Top Right */}
                     {isNew && (
                       <div className="absolute top-2 right-2 z-10">
-                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-1.5 py-0.5 rounded-full shadow-lg text-[10px] font-bold animate-pulse">
+                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-full shadow-lg text-xs font-bold animate-pulse">
                           ШИНЭ
                         </div>
                       </div>
@@ -815,7 +880,7 @@ export default function Home() {
                     {/* Unique Badge - Below New Badge if both exist */}
                     {isUnique && (
                       <div className={`absolute ${isNew ? 'top-8' : 'top-2'} right-2 z-10`}>
-                        <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-1.5 py-0.5 rounded-full shadow-lg text-[10px] font-bold">
+                        <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-2 py-0.5 rounded-full shadow-lg text-xs font-bold">
                           UNIQUE
                         </div>
                       </div>
@@ -823,15 +888,15 @@ export default function Home() {
                   </div>
 
                   {/* Product Info */}
-                  <div className="p-2.5">
-                    <h3 className="text-xs font-bold text-[#004e6c] dark:text-gray-200 mb-1.5 line-clamp-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors min-h-[2rem]">
+                  <div className="p-3">
+                    <h3 className="text-sm font-bold text-[#004e6c] dark:text-gray-200 mb-1.5 line-clamp-2 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555] transition-colors min-h-[2.5rem]">
                       {product.title}
                     </h3>
                     
                     {/* Purchase Count - Prominent */}
-                    <div className="flex items-center space-x-1 mb-2 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
-                      <span className="text-orange-600 dark:text-orange-400 font-bold text-xs">🛒</span>
-                      <span className="text-[10px] font-bold text-orange-700 dark:text-orange-300">
+                    <div className="flex items-center space-x-1.5 mb-2 bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1.5 rounded-md">
+                      <span className="text-orange-600 dark:text-orange-400 font-bold text-sm">🛒</span>
+                      <span className="text-xs font-bold text-orange-700 dark:text-orange-300">
                         {product.downloads || 0} худалдан авалт
                       </span>
                     </div>
@@ -839,12 +904,12 @@ export default function Home() {
                     {/* Price and Rating */}
                     <div className="flex items-center justify-between pt-2 border-t border-orange-200 dark:border-orange-800/30">
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-[#ff6b35] dark:text-[#ff8555]">
+                        <span className="text-base font-bold text-[#ff6b35] dark:text-[#ff8555]">
                           {product.price.toLocaleString()}₮
                         </span>
                         <div className="flex items-center space-x-0.5 mt-0.5">
-                          <span className="text-yellow-400 text-[10px]">⭐</span>
-                          <span className="text-[10px] font-semibold text-[#004e6c]/70 dark:text-gray-400">
+                          <span className="text-yellow-400 text-xs">⭐</span>
+                          <span className="text-xs font-semibold text-[#004e6c]/70 dark:text-gray-400">
                             {product.rating || 0}
                           </span>
                         </div>
@@ -884,69 +949,100 @@ export default function Home() {
         </section>
       )}
 
-      {/* All Categories Section */}
-      <section className="w-full py-12 bg-gray-100 dark:bg-gray-800/50">
+      {/* Stats Section - real data from backend */}
+      {(() => {
+        const formatCount = (n: number) => {
+          if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'
+          if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k'
+          return n.toLocaleString()
+        }
+        const formatRevenue = (n: number) => {
+          if (n >= 1e9) return '₮ ' + (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B'
+          if (n >= 1e6) return '₮ ' + (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'
+          if (n >= 1e3) return '₮ ' + (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k'
+          return '₮ ' + Math.round(n).toLocaleString()
+        }
+        const users = publicStats?.totalUsers ?? 0
+        const journalists = publicStats?.totalJournalists ?? 0
+        const content = publicStats?.totalProducts ?? 0
+        const revenue = publicStats?.totalRevenue ?? 0
+        return (
+      <section className="w-full py-12 mt-0 relative z-20 bg-gray-100 dark:bg-gray-800/50">
         <div className="w-full px-3 py-4 lg:container lg:mx-auto">
-          {/* Header - above */}
-          <div className="mb-6">
-            <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
-              {getTranslation(language, 'allCategories') || 'Ангилалууд'}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Хайх бүх чиглэлээс сонгон шууд үзэхүү
-            </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Users Stat - Dark Blue Icon */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-darkBlue-500 dark:bg-darkBlue-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {formatCount(users)}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'users') || 'нийт хэрэглэгч'}
+              </div>
+            </div>
           </div>
 
-          {/* Categories - 6 per row on lg */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <button
-              onClick={() => {
-                setSelectedCategory(null)
-                setSearchQuery('')
-              }}
-              className={`px-4 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-                selectedCategory === null
-                  ? 'bg-darkBlue-500 dark:bg-darkBlue-600 text-white shadow-md hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-darkBlue-500 dark:hover:border-darkBlue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-              }`}
-            >
-              <span>{getTranslation(language, 'all') || 'Бүгд'}</span>
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => {
-                  setSelectedCategory(category.id)
-                  router.push(`/category/${category.id}`)
-                }}
-                className={`px-4 py-3 rounded-full font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-                  selectedCategory === category.id
-                    ? 'bg-darkBlue-500 dark:bg-darkBlue-600 text-white shadow-md hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 hover:border-darkBlue-500 dark:hover:border-darkBlue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-              >
-                <span className="flex-shrink-0 text-base">
-                  {getCategoryIcon(category.icon)}
-                </span>
-                <span className="line-clamp-1">{category.name}</span>
-              </button>
-            ))}
+          {/* Creators Stat - Orange Icon */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-orange-500 dark:bg-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {journalists >= 1000 ? formatCount(journalists) : journalists.toLocaleString()}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'creators') || 'идэвхтэй нийтлэгч'}
+              </div>
+            </div>
           </div>
 
-          {/* Бүгдийг үзэх - below */}
-          <div className="text-center mt-8">
-            <button
-              onClick={() => router.push('/products')}
-              className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
-            >
-              <span>Бүгдийг үзэх</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+          {/* Contents Stat - Teal Icon */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-teal-500 dark:bg-teal-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {content >= 1000 ? formatCount(content) : content.toLocaleString()}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'contents') || 'дижитал контент'}
+              </div>
+            </div>
+          </div>
+
+          {/* Earned Stat - Dark Blue Icon */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="w-16 h-16 bg-darkBlue-500 dark:bg-darkBlue-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-md group-hover:scale-110 transition-all duration-300">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {formatRevenue(revenue)}
+              </div>
+              <div className="text-gray-600 dark:text-gray-400 font-medium text-sm">
+                {getTranslation(language, 'earned') || 'нийт борлуулалт'}
+              </div>
+            </div>
           </div>
         </div>
+        </div>
       </section>
+        )
+      })()}
+
       {/* Top Publishers Section - Шилдэг нийтлэгчид */}
       {topBloggers.length > 0 && (
         <section className="bg-white dark:bg-gray-900 py-12">
@@ -1085,78 +1181,116 @@ export default function Home() {
           </div>
         </section>
       )}
-      {/* Features Section - Аюулгүй ба Баталгаажсан etc */}
-      <section className="relative w-full py-12 overflow-hidden bg-gray-100 dark:bg-gray-800/50">
-        <div className="relative z-10 w-full px-3 py-4 lg:container lg:mx-auto flex items-center gap-2">
-          {/* TBARIMT Logo - Centered Above */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center">
-              <div className="h-20 rounded-lg flex items-center justify-center overflow-hidden">
-                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
+
+      {/* Сүүлд нэмэгдсэн контент Section - below Top Journalists */}
+      {recentProducts.length >= 1 && (
+        <section className="bg-white dark:bg-gray-900 py-16">
+          <div className="w-full px-3 py-4 lg:container lg:mx-auto">
+            <div className="mb-6">
+              <div className="flex items-center space-x-3">
+                <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
+                  Сүүлд нэмэгдсэн контент
+                </h3>
+                <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1">
+                  <span className="text-xs">✨</span>
+                  <span className="text-xs font-bold">ШИНЭ</span>
+                </div>
               </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {recentProducts.map((product) => {
+                return (
+                  <div
+                    key={product.id}
+                    className="rounded-2xl transition-all duration-300 transform hover:-translate-y-3 border-2 border-[#004e6c]/10 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-[#004e6c]/30 dark:hover:border-gray-600"
+                  >
+                    <div
+                      onClick={() => router.push(`/products/${product.uuid || product.id}`)}
+                      className="rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                    >
+                      <div className="relative h-52 overflow-hidden bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700/20 to-[#006b8f]/10 dark:to-gray-600/20">
+                        <img
+                          src={product.image}
+                          alt={product.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 dark:from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute top-3 left-3 z-10">
+                          <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
+                            <span className="text-xs">✨</span>
+                            <span className="text-xs font-bold">ШИНЭ</span>
+                          </div>
+                        </div>
+                        <div className="absolute top-12 right-4 flex items-center space-x-2">
+                          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 rounded-full shadow-lg">
+                            <WishlistHeartIcon productId={product.uuid || product.id} size="md" />
+                          </div>
+                          <div className="flex items-center space-x-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                            <span className="text-yellow-400 text-sm">⭐</span>
+                            <span className="text-xs font-bold text-[#004e6c] dark:text-gray-200">{product.rating}</span>
+                          </div>
+                        </div>
+                        <div className="absolute top-12 left-4">
+                          <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
+                            {typeof product.category === 'object' && product.category?.name ? product.category.name : typeof product.category === 'string' ? product.category : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <h4 className="text-sm font-bold mb-1.5 line-clamp-2 transition-colors min-h-[2.5rem] text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]">
+                          {product.title}
+                        </h4>
+                        <div className="flex items-center justify-between text-xs text-[#004e6c]/70 dark:text-gray-400 mb-2 font-medium">
+                          <span className="flex items-center space-x-2">
+                            <span>📄</span>
+                            <span>{product.pages ? `${product.pages} ${getTranslation(language, 'pages')}` : product.size}</span>
+                          </span>
+                          <span className="flex items-center space-x-2">
+                            <span>⬇️</span>
+                            <span>{product.downloads}</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-[#004e6c]/10 dark:border-gray-700 gap-3">
+                          <span className="text-base font-bold transition-colors text-[#ff6b35] dark:text-[#ff8555]">
+                            {product.price.toLocaleString()}₮
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/products/${product.uuid || product.id}`)
+                            }}
+                            className="w-8 h-8 rounded-lg bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center group"
+                            aria-label={getTranslation(language, 'details')}
+                          >
+                            <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="text-center mt-8">
+              <button
+                onClick={() => router.push('/products')}
+                className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
+              >
+                <span>Бүх бүтээлийг үзэх</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
-
-          {/* Features Grid - 2x2 Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-            {/* Feature 1: Secure & Verified */}
-            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
-              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
-                  {getTranslation(language, 'secureAndVerified')}
-                </h3>
-              </div>
-            </div>
-
-            {/* Feature 2: Earn More Revenue */}
-            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
-              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
-                  {getTranslation(language, 'earnMoreRevenue')}
-                </h3>
-              </div>
-            </div>
-
-            {/* Feature 3: Bromes Center */}
-            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
-              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
-                  {getTranslation(language, 'bromesCenter')}
-                </h3>
-              </div>
-            </div>
-
-            {/* Feature 4: Diverse Content Marketplace */}
-            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
-              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 002 2 2 2 0 002-2v-1a2 2 0 012-2h2.945M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
-                  {getTranslation(language, 'diverseContentMarketplace')}
-                </h3>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Earn Money by Uploading Content Section */}
       <section className="relative w-full py-20 overflow-hidden bg-darkBlue-500 dark:bg-gray-800">
@@ -1309,291 +1443,68 @@ export default function Home() {
         showAcceptButton={true}
       />
 
-      {/* Featured Products Section - Онцлох бүтээгдэхүүн */}
-      <section className="bg-gray-200 dark:bg-gray-800 py-16">
-        <div className="w-full px-3 py-4 lg:container lg:mx-auto">
-          {/* Header - above */}
-          <div className="mb-6">
-            <h3 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-2">
-              {getTranslation(language, 'featuredProducts')}
-            </h3>
-            {(selectedCategory || searchQuery) && (
-              <button
-                onClick={() => {
-                  setSelectedCategory(null)
-                  setSearchQuery('')
-                }}
-                className="text-[#004e6c] dark:text-gray-300 hover:text-[#ff6b35] dark:hover:text-[#ff8555] font-semibold text-sm"
-              >
-                {getTranslation(language, 'showAll')}
-              </button>
-            )}
-          </div>
-
-          {/* Grid - 6 in a row on lg */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {displayedProducts.map((product) => {
-            const isUnique = (product as any).isUnique === true;
-            const isNew = isNewProduct(product);
-            return (
-              <div
-                key={product.id}
-                className={`rounded-xl transition-all duration-300 transform hover:-translate-y-2 ${
-                  isUnique 
-                    ? 'p-0.5 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 shadow-md hover:shadow-lg' 
-                    : ''
-                }`}
-              >
-                <div
-                  onClick={() => router.push(`/products/${product.uuid || product.id}`)}
-                  className={`rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer ${
-                    isUnique 
-                      ? 'bg-gradient-to-br from-green-50/80 to-emerald-50/80 dark:from-green-900/20 dark:to-emerald-900/20' 
-                      : 'border-2 border-[#004e6c]/10 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-[#004e6c]/30 dark:hover:border-gray-600'
-                  }`}
-                  style={isUnique ? {
-                    boxShadow: '0 10px 25px -5px rgba(34, 197, 94, 0.2), 0 10px 10px -5px rgba(34, 197, 94, 0.05)'
-                  } : {}}
-                >
-                  {/* Product Image */}
-                  <div className={`relative h-36 overflow-hidden ${
-                    isUnique 
-                      ? 'bg-gradient-to-br from-green-50 dark:from-green-900/20 to-emerald-50 dark:to-emerald-900/20' 
-                      : 'bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700/20 to-[#006b8f]/10 dark:to-gray-600/20'
-                  }`}>
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 dark:from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    
-                    {/* New Badge - Top Left */}
-                    {isNew && (
-                      <div className="absolute top-2 left-2 z-10">
-                        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center space-x-0.5 animate-pulse">
-                          <span className="text-[10px]">✨</span>
-                          <span className="text-[10px] font-bold">ШИНЭ</span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Unique Badge - Below New Badge if both exist, otherwise top left */}
-                    {isUnique && (
-                      <div className={`absolute ${isNew ? 'top-8 left-2' : 'top-2 left-2'} z-10`}>
-                        <div className="bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500 text-white px-2 py-0.5 rounded-full shadow-md flex items-center space-x-0.5 animate-pulse">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <span className="text-[10px] font-bold">UNIQUE</span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Star Rating and Wishlist Icon - positioned together on the right */}
-                    <div className={`absolute ${(isUnique || isNew) ? 'top-8 right-2' : 'top-2 right-2'} flex items-center space-x-1.5`}>
-                      {/* Wishlist Heart Icon */}
-                      <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-1.5 rounded-full shadow-md">
-                        <WishlistHeartIcon 
-                          productId={product.uuid || product.id} 
-                          size="sm"
-                        />
-                      </div>
-                      {/* Star Rating */}
-                      <div className="flex items-center space-x-1 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-md">
-                        <span className="text-yellow-400 text-xs">⭐</span>
-                        <span className="text-[10px] font-bold text-[#004e6c] dark:text-gray-200">
-                          {product.rating}
-                        </span>
-                      </div>
-                    </div>
-                    {/* Category Badge - positioned at bottom left */}
-                    <div className={`absolute ${(isUnique || isNew) ? 'top-8 left-2' : 'bottom-2 left-2'}`}>
-                      <span className="text-[10px] font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-2 py-1 rounded-full shadow-md group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
-                        {typeof product.category === 'object' && product.category?.name
-                          ? product.category.name
-                          : typeof product.category === 'string'
-                          ? product.category
-                          : 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <h4 className={`text-sm font-bold mb-2 line-clamp-2 transition-colors min-h-[2.5rem] ${
-                      isUnique 
-                        ? 'text-green-900 dark:text-green-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400' 
-                        : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
-                    }`}>
-                      {product.title}
-                    </h4>
-                    <div className="flex items-center justify-between text-xs text-[#004e6c]/70 dark:text-gray-400 mb-3 font-medium">
-                      <span className="flex items-center space-x-1">
-                        <span>📄</span>
-                        <span>{product.pages ? `${product.pages} ${getTranslation(language, 'pages')}` : product.size}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <span>⬇️</span>
-                        <span>{product.downloads}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between pt-3 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-2">
-                      <span className={`text-lg font-bold transition-colors ${
-                        isUnique 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]'
-                      }`}>
-                        {product.price.toLocaleString()}₮
-                      </span>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          router.push(`/products/${product.id}`)
-                        }}
-                        className={`w-8 h-8 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center group ${
-                          isUnique
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-                            : 'bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555]'
-                        }`}
-                        aria-label={getTranslation(language, 'details')}
-                      >
-                        <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+      {/* Features Section - Аюулгүй ба Баталгаажсан, Илүү Орлого, Бромес Төв, Олон Төрлийн Зах Зээл (in place of Онцлох бүтээл) */}
+      <section className="relative w-full py-12 overflow-hidden bg-gray-100 dark:bg-gray-800/50">
+        <div className="relative z-10 w-full px-3 py-4 lg:container lg:mx-auto flex items-center gap-2">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center">
+              <div className="h-20 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="/lg.png" alt="TBARIMT Logo" className="w-full h-full object-contain" />
               </div>
-            );
-          })}
-          </div>
-
-          {/* Бүх бүтээлийг үзэх - below */}
-          {displayedProducts.length > 0 && (
-            <div className="text-center mt-8">
-              <button
-                onClick={() => router.push('/products')}
-                className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
-              >
-                <span>{getTranslation(language, 'viewAllContentButton')}</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
             </div>
-          )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
+              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
+                  {getTranslation(language, 'secureAndVerified')}
+                </h3>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
+              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
+                  {getTranslation(language, 'earnMoreRevenue')}
+                </h3>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
+              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
+                  {getTranslation(language, 'bromesCenter')}
+                </h3>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3 text-left group p-3 rounded-lg hover:bg-[#004e6c]/5 dark:hover:bg-[#004e6c]/10 transition-all duration-200">
+              <div className="flex-shrink-0 w-10 h-10 bg-[#004e6c] dark:bg-[#006b8f] rounded-lg flex items-center justify-center group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors duration-200">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 002 2 2 2 0 002-2v-1a2 2 0 012-2h2.945M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-base font-medium text-[#004e6c] dark:text-gray-200">
+                  {getTranslation(language, 'diverseContentMarketplace')}
+                </h3>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-
-      {/* Гишүүнчлэлийн эрх - Membership Section */}
-      {memberships.length > 0 && (
-        <section className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-20">
-          <div className="w-full px-3 py-4 lg:container lg:mx-auto">
-            {/* Header */}
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-3">
-                Гишүүнчлэлийн эрх
-              </h2>
-              <p className="text-lg text-[#004e6c]/80 dark:text-gray-400 max-w-2xl mx-auto">
-                Өөрийн хэрэгцээнд тохирох гишүүнчлэлийн эрхийг сонгоно уу
-              </p>
-            </div>
-
-            {/* Membership Cards - 4 tiers, distinct styling */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {memberships.map((membership: any, index: number) => {
-                const isFree = typeof membership.price === 'number' ? membership.price === 0 : parseFloat(String(membership.price)) === 0
-                const formatPrice = (price: number | string) => {
-                  const numPrice = typeof price === 'number' ? price : parseFloat(String(price))
-                  if (numPrice === 0) return 'Үнэгүй'
-                  return new Intl.NumberFormat('mn-MN').format(numPrice) + '₮'
-                }
-                const nameUpper = (membership.name || '').toUpperCase()
-                const tierTheme = (() => {
-                  if (isFree || nameUpper.includes('FREE')) return { bg: 'from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600', accent: 'text-slate-700 dark:text-slate-200', btn: 'bg-slate-500', border: 'border-slate-300 dark:border-slate-600', icon: '🔓', badge: 'bg-slate-500' }
-                  if (nameUpper.includes('BRONZE')) return { bg: 'from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40', accent: 'text-amber-800 dark:text-amber-200', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-300 dark:border-amber-700', icon: '🥉', badge: 'bg-amber-500' }
-                  if (nameUpper.includes('SILVER')) return { bg: 'from-slate-200 to-gray-200 dark:from-slate-600 dark:to-gray-700', accent: 'text-slate-800 dark:text-slate-100', btn: 'bg-slate-500 hover:bg-slate-600', border: 'border-slate-400 dark:border-slate-500', icon: '🥈', badge: 'bg-slate-400' }
-                  if (nameUpper.includes('GOLD')) return { bg: 'from-amber-200 to-yellow-100 dark:from-amber-800/50 dark:to-yellow-900/40', accent: 'text-amber-900 dark:text-amber-100', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-400 dark:border-amber-600', icon: '🥇', badge: 'bg-amber-400' }
-                  if (nameUpper.includes('PLATINUM')) return { bg: 'from-cyan-100 to-teal-100 dark:from-cyan-900/40 dark:to-teal-900/40', accent: 'text-cyan-900 dark:text-cyan-100', btn: 'bg-cyan-500 hover:bg-cyan-600', border: 'border-cyan-400 dark:border-cyan-600', icon: '💎', badge: 'bg-cyan-400' }
-                  const themes = [
-                    { bg: 'from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600', accent: 'text-slate-700 dark:text-slate-200', btn: 'bg-slate-500', border: 'border-slate-300 dark:border-slate-600', icon: '🔓', badge: 'bg-slate-500' },
-                    { bg: 'from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40', accent: 'text-amber-800 dark:text-amber-200', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-300 dark:border-amber-700', icon: '🥉', badge: 'bg-amber-500' },
-                    { bg: 'from-slate-200 to-gray-200 dark:from-slate-600 dark:to-gray-700', accent: 'text-slate-800 dark:text-slate-100', btn: 'bg-slate-500 hover:bg-slate-600', border: 'border-slate-400 dark:border-slate-500', icon: '🥈', badge: 'bg-slate-400' },
-                    { bg: 'from-cyan-100 to-teal-100 dark:from-cyan-900/40 dark:to-teal-900/40', accent: 'text-cyan-900 dark:text-cyan-100', btn: 'bg-cyan-500 hover:bg-cyan-600', border: 'border-cyan-400 dark:border-cyan-600', icon: '💎', badge: 'bg-cyan-400' },
-                  ]
-                  return themes[index % themes.length]
-                })()
-                return (
-                  <div
-                    key={membership.id}
-                    className={`rounded-2xl overflow-hidden border-2 ${tierTheme.border} bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col`}
-                  >
-                    {/* Card header */}
-                    <div className={`bg-gradient-to-br ${tierTheme.bg} px-6 py-5 relative`}>
-                      <span className="text-2xl" aria-hidden>{tierTheme.icon}</span>
-                      <h3 className={`text-lg font-bold mt-2 ${tierTheme.accent}`}>
-                        {membership.name}
-                      </h3>
-                      <p className={`text-2xl font-bold mt-1 ${tierTheme.accent}`}>
-                        {formatPrice(membership.price)}
-                      </p>
-                      {!isFree && (
-                        <p className={`text-sm opacity-90 mt-0.5 ${tierTheme.accent}`}>/ сар</p>
-                      )}
-                    </div>
-
-                    {/* Card body */}
-                    <div className="p-6 flex-1 flex flex-col">
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Нийтлэх хязгаар</span>
-                          <span className="font-bold text-[#004e6c] dark:text-gray-200">
-                            {membership.maxPosts === 0 ? 'Хязгааргүй' : membership.maxPosts}
-                          </span>
-                        </div>
-                        {membership.description && (
-                          <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mt-2 leading-relaxed">
-                            {membership.description}
-                          </p>
-                        )}
-                      </div>
-
-                      {membership.advantages && Array.isArray(membership.advantages) && membership.advantages.length > 0 && (
-                        <ul className="space-y-2 mb-6 flex-1">
-                          {membership.advantages.map((advantage: string, idx: number) => (
-                            <li key={idx} className="text-sm text-[#004e6c]/80 dark:text-gray-300 flex items-start gap-2">
-                              <span className="text-green-500 dark:text-green-400 mt-0.5 flex-shrink-0">✓</span>
-                              <span>{advantage}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-
-                      {!isFree ? (
-                        <button
-                          onClick={() => handleMembershipSelect(membership)}
-                          disabled={isCreatingInvoice}
-                          className={`w-full py-3.5 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${tierTheme.btn}`}
-                        >
-                          {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Сонгох'}
-                        </button>
-                      ) : (
-                        <div className="w-full py-3.5 rounded-xl font-semibold text-center text-[#004e6c]/60 dark:text-gray-500 border-2 border-dashed border-gray-300 dark:border-gray-600">
-                          Үнэгүй эрх
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Payment Modal */}
       {showPaymentModal && (
@@ -1692,22 +1603,12 @@ export default function Home() {
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#ff6b35] rounded-full blur-3xl"></div>
         </div>
 
-        <div className="w-full px-3 py-4 lg:container lg:mx-auto relative z-10 flex items-center gap-2">
-          {/* Header */}
-          <div className="text-center mb-16">
-            <h2 className="text-sm md:text-base text-white mb-4">
-              Tbarimt - Албан ёсны, найдвартай систем
-            </h2>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto">
-              Монгол улсын төрийн, бизнесийн байгууллагуудын сонголт
-            </p>
-          </div>
-
-          {/* Trust Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="w-full px-3 py-4 lg:container lg:mx-auto relative z-10">
+          {/* Trust Features Grid - 4 sections equally placed */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 items-stretch">
             {/* Official System */}
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl">
-              <div className="text-center">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl flex flex-col h-full">
+              <div className="text-center flex-1 flex flex-col justify-center">
                 <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -1723,8 +1624,8 @@ export default function Home() {
             </div>
 
             {/* Government & Business Usage */}
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl">
-              <div className="text-center">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl flex flex-col h-full">
+              <div className="text-center flex-1 flex flex-col justify-center">
                 <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -1740,8 +1641,8 @@ export default function Home() {
             </div>
 
             {/* QPay Secure Payment */}
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl">
-              <div className="text-center">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl flex flex-col h-full">
+              <div className="text-center flex-1 flex flex-col justify-center">
                 <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -1757,8 +1658,8 @@ export default function Home() {
             </div>
 
             {/* Legal & Tax Standards */}
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl">
-              <div className="text-center">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-all duration-300 transform hover:-translate-y-2 shadow-xl flex flex-col h-full">
+              <div className="text-center flex-1 flex flex-col justify-center">
                 <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1773,153 +1674,102 @@ export default function Home() {
               </div>
             </div>
           </div>
-
-          {/* Trust Badge / Certification */}
-          <div className="mt-16 text-center">
-            <div className="inline-flex items-center space-x-4 bg-white/10 backdrop-blur-md rounded-full px-8 py-4 border border-white/20">
-              <div className="flex items-center space-x-2">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-white font-semibold text-lg">Бүртгэлтэй байгууллага</span>
-              </div>
-              <div className="w-px h-8 bg-white/30"></div>
-              <div className="flex items-center space-x-2">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-white font-semibold text-lg">Хууль ёсны үйл ажиллагаа</span>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Сүүлд нэмэгдсэн контент Section - Right above Footer */}
-      {recentProducts.length >= 1 && (
-        <section className="bg-white dark:bg-gray-900 py-16">
+      {/* Гишүүнчлэлийн эрх - Membership Section - above Footer */}
+      {memberships.length > 0 && (
+        <section className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-20">
           <div className="w-full px-3 py-4 lg:container lg:mx-auto">
-            {/* Header - above */}
-            <div className="mb-6">
-              <div className="flex items-center space-x-3">
-                <h3 className="text-2xl md:text-3xl font-bold text-darkBlue-500 dark:text-white mb-2">
-                  Сүүлд нэмэгдсэн контент
-                </h3>
-                <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1">
-                  <span className="text-xs">✨</span>
-                  <span className="text-xs font-bold">ШИНЭ</span>
-                </div>
-              </div>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-darkBlue-500 dark:text-white mb-3">
+                Гишүүнчлэлийн эрх
+              </h2>
+              <p className="text-lg text-[#004e6c]/80 dark:text-gray-400 max-w-2xl mx-auto">
+                Өөрийн хэрэгцээнд тохирох гишүүнчлэлийн эрхийг сонгоно уу
+              </p>
             </div>
-
-            {/* Grid - 6 in a row on lg */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {recentProducts.map((product) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {memberships.map((membership: any, index: number) => {
+                const isFree = typeof membership.price === 'number' ? membership.price === 0 : parseFloat(String(membership.price)) === 0
+                const formatPrice = (price: number | string) => {
+                  const numPrice = typeof price === 'number' ? price : parseFloat(String(price))
+                  if (numPrice === 0) return 'Үнэгүй'
+                  return new Intl.NumberFormat('mn-MN').format(numPrice) + '₮'
+                }
+                const nameUpper = (membership.name || '').toUpperCase()
+                const tierTheme = (() => {
+                  if (isFree || nameUpper.includes('FREE')) return { bg: 'from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600', accent: 'text-slate-700 dark:text-slate-200', btn: 'bg-slate-500', border: 'border-slate-300 dark:border-slate-600', icon: '🔓', badge: 'bg-slate-500' }
+                  if (nameUpper.includes('BRONZE')) return { bg: 'from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40', accent: 'text-amber-800 dark:text-amber-200', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-300 dark:border-amber-700', icon: '🥉', badge: 'bg-amber-500' }
+                  if (nameUpper.includes('SILVER')) return { bg: 'from-slate-200 to-gray-200 dark:from-slate-600 dark:to-gray-700', accent: 'text-slate-800 dark:text-slate-100', btn: 'bg-slate-500 hover:bg-slate-600', border: 'border-slate-400 dark:border-slate-500', icon: '🥈', badge: 'bg-slate-400' }
+                  if (nameUpper.includes('GOLD')) return { bg: 'from-amber-200 to-yellow-100 dark:from-amber-800/50 dark:to-yellow-900/40', accent: 'text-amber-900 dark:text-amber-100', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-400 dark:border-amber-600', icon: '🥇', badge: 'bg-amber-400' }
+                  if (nameUpper.includes('PLATINUM')) return { bg: 'from-cyan-100 to-teal-100 dark:from-cyan-900/40 dark:to-teal-900/40', accent: 'text-cyan-900 dark:text-cyan-100', btn: 'bg-cyan-500 hover:bg-cyan-600', border: 'border-cyan-400 dark:border-cyan-600', icon: '💎', badge: 'bg-cyan-400' }
+                  const themes = [
+                    { bg: 'from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600', accent: 'text-slate-700 dark:text-slate-200', btn: 'bg-slate-500', border: 'border-slate-300 dark:border-slate-600', icon: '🔓', badge: 'bg-slate-500' },
+                    { bg: 'from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40', accent: 'text-amber-800 dark:text-amber-200', btn: 'bg-amber-500 hover:bg-amber-600', border: 'border-amber-300 dark:border-amber-700', icon: '🥉', badge: 'bg-amber-500' },
+                    { bg: 'from-slate-200 to-gray-200 dark:from-slate-600 dark:to-gray-700', accent: 'text-slate-800 dark:text-slate-100', btn: 'bg-slate-500 hover:bg-slate-600', border: 'border-slate-400 dark:border-slate-500', icon: '🥈', badge: 'bg-slate-400' },
+                    { bg: 'from-cyan-100 to-teal-100 dark:from-cyan-900/40 dark:to-teal-900/40', accent: 'text-cyan-900 dark:text-cyan-100', btn: 'bg-cyan-500 hover:bg-cyan-600', border: 'border-cyan-400 dark:border-cyan-600', icon: '💎', badge: 'bg-cyan-400' },
+                  ]
+                  return themes[index % themes.length]
+                })()
                 return (
                   <div
-                    key={product.id}
-                    className="rounded-2xl transition-all duration-300 transform hover:-translate-y-3 border-2 border-[#004e6c]/10 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-[#004e6c]/30 dark:hover:border-gray-600"
+                    key={membership.id}
+                    className={`rounded-2xl overflow-hidden border-2 ${tierTheme.border} bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col`}
                   >
-                    <div
-                      onClick={() => router.push(`/products/${product.uuid || product.id}`)}
-                      className="rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
-                    >
-                      {/* Product Image */}
-                      <div className="relative h-52 overflow-hidden bg-gradient-to-br from-[#004e6c]/10 dark:from-gray-700/20 to-[#006b8f]/10 dark:to-gray-600/20">
-                        <img
-                          src={product.image}
-                          alt={product.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#004e6c]/20 dark:from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        
-                        {/* New Badge - Top Left */}
-                        <div className="absolute top-3 left-3 z-10">
-                          <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-1 animate-pulse">
-                            <span className="text-xs">✨</span>
-                            <span className="text-xs font-bold">ШИНЭ</span>
-                          </div>
-                        </div>
-                        
-                        {/* Star Rating and Wishlist Icon */}
-                        <div className="absolute top-12 right-4 flex items-center space-x-2">
-                          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-2 rounded-full shadow-lg">
-                            <WishlistHeartIcon 
-                              productId={product.uuid || product.id} 
-                              size="md"
-                            />
-                          </div>
-                          <div className="flex items-center space-x-1.5 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-                            <span className="text-yellow-400 text-sm">⭐</span>
-                            <span className="text-xs font-bold text-[#004e6c] dark:text-gray-200">
-                              {product.rating}
-                            </span>
-                          </div>
-                        </div>
-                        {/* Category Badge */}
-                        <div className="absolute top-12 left-4">
-                          <span className="text-xs font-bold text-white bg-[#004e6c] dark:bg-[#006b8f] px-3 py-1.5 rounded-full shadow-lg group-hover:bg-[#ff6b35] dark:group-hover:bg-[#ff8555] transition-colors">
-                            {typeof product.category === 'object' && product.category?.name
-                              ? product.category.name
-                              : typeof product.category === 'string'
-                              ? product.category
-                              : 'N/A'}
+                    <div className={`bg-gradient-to-br ${tierTheme.bg} px-6 py-5 relative`}>
+                      <span className="text-2xl" aria-hidden>{tierTheme.icon}</span>
+                      <h3 className={`text-lg font-bold mt-2 ${tierTheme.accent}`}>
+                        {membership.name}
+                      </h3>
+                      <p className={`text-2xl font-bold mt-1 ${tierTheme.accent}`}>
+                        {formatPrice(membership.price)}
+                      </p>
+                      {!isFree && (
+                        <p className={`text-sm opacity-90 mt-0.5 ${tierTheme.accent}`}>/ сар</p>
+                      )}
+                    </div>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-[#004e6c]/70 dark:text-gray-400 font-medium">Нийтлэх хязгаар</span>
+                          <span className="font-bold text-[#004e6c] dark:text-gray-200">
+                            {membership.maxPosts === 0 ? 'Хязгааргүй' : membership.maxPosts}
                           </span>
                         </div>
+                        {membership.description && (
+                          <p className="text-sm text-[#004e6c]/60 dark:text-gray-400 mt-2 leading-relaxed">
+                            {membership.description}
+                          </p>
+                        )}
                       </div>
-                      <div className="p-6">
-                        <h4 className="text-lg font-bold mb-4 line-clamp-2 transition-colors min-h-[3.5rem] text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]">
-                          {product.title}
-                        </h4>
-                        <div className="flex items-center justify-between text-sm text-[#004e6c]/70 dark:text-gray-400 mb-5 font-medium">
-                          <span className="flex items-center space-x-2">
-                            <span>📄</span>
-                            <span>{product.pages ? `${product.pages} ${getTranslation(language, 'pages')}` : product.size}</span>
-                          </span>
-                          <span className="flex items-center space-x-2">
-                            <span>⬇️</span>
-                            <span>{product.downloads}</span>
-                          </span>
+                      {membership.advantages && Array.isArray(membership.advantages) && membership.advantages.length > 0 && (
+                        <ul className="space-y-2 mb-6 flex-1">
+                          {membership.advantages.map((advantage: string, idx: number) => (
+                            <li key={idx} className="text-sm text-[#004e6c]/80 dark:text-gray-300 flex items-start gap-2">
+                              <span className="text-green-500 dark:text-green-400 mt-0.5 flex-shrink-0">✓</span>
+                              <span>{advantage}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {!isFree ? (
+                        <button
+                          onClick={() => handleMembershipSelect(membership)}
+                          disabled={isCreatingInvoice}
+                          className={`w-full py-3.5 rounded-xl font-semibold text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${tierTheme.btn}`}
+                        >
+                          {isCreatingInvoice ? 'Төлбөрийн хуудас үүсгэж байна...' : 'Сонгох'}
+                        </button>
+                      ) : (
+                        <div className="w-full py-3.5 rounded-xl font-semibold text-center text-[#004e6c]/60 dark:text-gray-500 border-2 border-dashed border-gray-300 dark:border-gray-600">
+                          Үнэгүй эрх
                         </div>
-                        <div className="flex items-center justify-between pt-5 border-t-2 border-[#004e6c]/10 dark:border-gray-700 gap-3">
-                          <span className="text-lg font-bold transition-colors text-[#004e6c] dark:text-gray-200 group-hover:text-[#ff6b35] dark:group-hover:text-[#ff8555]">
-                            {product.price.toLocaleString()}₮
-                          </span>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(`/products/${product.uuid || product.id}`)
-                            }}
-                            className="w-10 h-10 rounded-xl bg-[#004e6c] dark:bg-[#006b8f] text-white hover:bg-[#ff6b35] dark:hover:bg-[#ff8555] transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center group"
-                            aria-label={getTranslation(language, 'details')}
-                          >
-                            <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
-                );
+                )
               })}
-            </div>
-
-            {/* Бүх бүтээлийг үзэх - below */}
-            <div className="text-center mt-8">
-              <button
-                onClick={() => router.push('/products')}
-                className="bg-darkBlue-500 dark:bg-darkBlue-600 text-white px-8 py-4 rounded-xl text-base font-semibold hover:bg-darkBlue-600 dark:hover:bg-darkBlue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center space-x-2"
-              >
-                <span>Бүх бүтээлийг үзэх</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
             </div>
           </div>
         </section>

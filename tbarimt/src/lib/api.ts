@@ -96,6 +96,16 @@ export async function getBestSellingProducts(limit: number = 5) {
   return fetchAPI(`/products?limit=${limit}&sortBy=downloads`);
 }
 
+// Public stats for homepage (users, journalists, content, revenue)
+export async function getPublicStats(): Promise<{
+  totalUsers: number;
+  totalJournalists: number;
+  totalProducts: number;
+  totalRevenue: number;
+}> {
+  return fetchAPI('/stats');
+}
+
 // Categories
 export async function getCategories() {
   return fetchAPI('/categories');

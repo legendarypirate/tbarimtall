@@ -1395,6 +1395,31 @@ exports.getProductPurchaseHistory = async (req, res) => {
   }
 };
 
+// Public stats for homepage (no auth)
+exports.getPublicStats = async (req, res) => {
+  try {
+    const [
+      totalUsers,
+      totalJournalists,
+      publishedProducts,
+      totalRevenue
+    ] = await Promise.all([
+      User.count({ where: { isActive: true } }),
+      User.count({ where: { role: 'journalist', isActive: true } }),
+      Product.count({ where: { status: 'published', isActive: true } }),
+      Order.sum('amount', { where: { status: 'completed' } }) || 0
+    ]);
+    res.json({
+      totalUsers,
+      totalJournalists,
+      totalProducts: publishedProducts,
+      totalRevenue: parseFloat(totalRevenue) || 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Dashboard Stats
 exports.getDashboardStats = async (req, res) => {
   try {

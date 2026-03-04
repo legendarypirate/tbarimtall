@@ -44,12 +44,12 @@ export default function Footer() {
 
   return (
     <footer className="bg-darkBlue-500 dark:bg-gray-950 mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+      <div className="w-full px-3 sm:px-4 lg:container lg:mx-auto py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 text-left">
           {/* Column 1: Logo & Description */}
-          <div className="flex flex-col lg:col-span-1">
+          <div className="flex flex-col">
             <div className="flex items-center mb-4">
-              <div className="h-14 rounded-xl flex items-center justify-center overflow-hidden">
+              <div className="h-[2.8rem] rounded-xl flex items-center justify-center overflow-hidden">
                 <img src="/lg.png" alt="TBARIMT Logo" className="h-full w-auto object-contain" />
               </div>
               <span className="ml-2 text-teal-400 text-xl">✓</span>
@@ -202,22 +202,22 @@ export default function Footer() {
                 href="mailto:info@tbarimt.mn"
                 className="text-white/70 dark:text-gray-400 hover:text-white dark:hover:text-gray-200 transition-colors text-sm block"
               >
-                INFO@TBARIMT.MN
+                tbarimt@gmail.com
               </a>
               <a 
-                href="tel:+97677000000"
+                href="tel:+97693000022"
                 className="text-white/70 dark:text-gray-400 hover:text-white dark:hover:text-gray-200 transition-colors text-sm block"
               >
-                +976 7700 0000
+                +976 9300-0022
               </a>
             </div>
           </div>
         </div>
 
         {/* Bottom Border */}
-        <div className="mt-12 pt-8 border-t border-white/20 dark:border-gray-800">
-          <p className="text-white/70 dark:text-gray-500 text-sm text-center">
-            © 2024 TBARIMT ENTERPRISE. БҮХ ЭРХ ХУУЛИАР ХАМГААЛАГДСАН.
+        <div className="mt-12 pt-8 border-t border-white/20 dark:border-gray-800 text-center">
+          <p className="text-white/70 dark:text-gray-500 text-sm">
+            © 2026 TBARIMT ENTERPRISE. БҮХ ЭРХ ХУУЛИАР ХАМГААЛАГДСАН.
           </p>
         </div>
       </div>

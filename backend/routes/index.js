@@ -16,6 +16,7 @@ const wishlistRoutes = require('./wishlist');
 const copyrightReportRoutes = require('./copyrightReports');
 const heroSliderRoutes = require('./heroSliders');
 const similarFileRequestRoutes = require('./similarFileRequests');
+const statsRoutes = require('./stats');
 
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
@@ -32,6 +33,7 @@ router.use('/wishlist', wishlistRoutes);
 router.use('/copyright-reports', copyrightReportRoutes);
 router.use('/hero-sliders', heroSliderRoutes);
 router.use('/similar-file-requests', similarFileRequestRoutes);
+router.use('/stats', statsRoutes);
 
 module.exports = router;
 
