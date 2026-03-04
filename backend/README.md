@@ -86,3 +86,24 @@ npm start
 - `JWT_SECRET` - JWT secret key
 - `JWT_EXPIRES_IN` - JWT expiration time
 
+### QPay (payments)
+
+- `QPAY_LOGIN` - QPay merchant login
+- `QPAY_PASSWORD` - QPay merchant password
+- `QPAY_BASE_URL` - (optional) Override API base URL, default `https://merchant.qpay.mn/v2`
+- `QPAY_REQUEST_TIMEOUT` - (optional) Request timeout in ms, default 15000
+- `QPAY_RETRY_ATTEMPTS` - (optional) Retries for transient DNS/network errors, default 3
+- `QPAY_RETRY_DELAY_MS` - (optional) Delay between retries in ms, default 2000
+
+## Production – QPay "getaddrinfo EAI_AGAIN merchant.qpay.mn"
+
+If invoice creation works locally but fails in production with `QPay authentication failed: getaddrinfo EAI_AGAIN merchant.qpay.mn`, the production server cannot resolve or reach `merchant.qpay.mn` (DNS/network).
+
+1. **Check DNS from the production host:**  
+   `nslookup merchant.qpay.mn` or `curl -v https://merchant.qpay.mn/v2/auth/token`  
+   If this fails, fix DNS or outbound access (e.g. add DNS servers 8.8.8.8 in the container/VPS, or open firewall to allow HTTPS to merchant.qpay.mn).
+
+2. **Retries:** The backend retries QPay auth up to 3 times with a 2s delay. Transient DNS blips may be fixed by a later attempt.
+
+3. **Override URL (only if you use a proxy):** Set `QPAY_BASE_URL` in production to your proxy URL that forwards to `https://merchant.qpay.mn/v2`.
+

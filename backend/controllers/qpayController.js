@@ -4,30 +4,59 @@ const axios = require('axios');
 // QPay credentials - should be in environment variables
 const QPAY_LOGIN = process.env.QPAY_LOGIN || 'KONO';
 const QPAY_PASSWORD = process.env.QPAY_PASSWORD || '8zcSjp5u';
-const QPAY_BASE_URL = 'https://merchant.qpay.mn/v2';
+// Allow override in production (e.g. if DNS fails for merchant.qpay.mn, use IP or proxy)
+const QPAY_BASE_URL = process.env.QPAY_BASE_URL || 'https://merchant.qpay.mn/v2';
+
+const QPAY_REQUEST_TIMEOUT = parseInt(process.env.QPAY_REQUEST_TIMEOUT || '15000', 10);
+const QPAY_RETRY_ATTEMPTS = parseInt(process.env.QPAY_RETRY_ATTEMPTS || '3', 10);
+const QPAY_RETRY_DELAY_MS = parseInt(process.env.QPAY_RETRY_DELAY_MS || '2000', 10);
+
+// Retry a promise (handles transient DNS/network errors like EAI_AGAIN in production)
+async function withRetry(fn, label = 'QPay request') {
+  let lastError;
+  for (let attempt = 1; attempt <= QPAY_RETRY_ATTEMPTS; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      const msg = err.message || '';
+      const isRetryable = msg.includes('EAI_AGAIN') || msg.includes('ECONNRESET') || msg.includes('ETIMEDOUT') || msg.includes('ENOTFOUND');
+      if (attempt < QPAY_RETRY_ATTEMPTS && isRetryable) {
+        console.warn(`${label} attempt ${attempt} failed (${msg}), retrying in ${QPAY_RETRY_DELAY_MS}ms...`);
+        await new Promise(r => setTimeout(r, QPAY_RETRY_DELAY_MS));
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw lastError;
+}
 
 // Get QPay access token
 async function getQPayToken() {
-  try {
-    const response = await axios.post(
-      `${QPAY_BASE_URL}/auth/token`,
-      {},
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${QPAY_LOGIN}:${QPAY_PASSWORD}`).toString('base64')}`
+  return withRetry(async () => {
+    try {
+      const response = await axios.post(
+        `${QPAY_BASE_URL}/auth/token`,
+        {},
+        {
+          timeout: QPAY_REQUEST_TIMEOUT,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${Buffer.from(`${QPAY_LOGIN}:${QPAY_PASSWORD}`).toString('base64')}`
+          }
         }
-      }
-    );
+      );
 
-    if (response.data && response.data.access_token) {
-      return response.data.access_token;
+      if (response.data && response.data.access_token) {
+        return response.data.access_token;
+      }
+      throw new Error('Failed to get QPay token');
+    } catch (error) {
+      console.error('QPay token error:', error.response?.data || error.message);
+      throw new Error(`QPay authentication failed: ${error.response?.data?.message || error.message}`);
     }
-    throw new Error('Failed to get QPay token');
-  } catch (error) {
-    console.error('QPay token error:', error.response?.data || error.message);
-    throw new Error(`QPay authentication failed: ${error.response?.data?.message || error.message}`);
-  }
+  }, 'QPay auth');
 }
 
 // Helper function to format QR image with data URL prefix if needed
