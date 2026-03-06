@@ -60,6 +60,37 @@ function convertImagePathToUrl(filePath) {
   return `${apiBaseUrl}/api/uploads/${urlPath}`;
 }
 
+// Validate YouTube URL: only youtube.com or youtu.be; reject e.g. google.com (exported for adminController)
+function isValidYouTubeUrl(url) {
+  if (!url || typeof url !== 'string') return true; // empty is allowed
+  const trimmed = url.trim();
+  if (trimmed === '') return true;
+  try {
+    const lower = trimmed.toLowerCase();
+    // Reject obvious non-YouTube (e.g. google.com, facebook.com)
+    if (lower.includes('google.') || lower.includes('facebook.') || lower.includes('twitter.') || lower.includes('instagram.') || lower.includes('tiktok.')) {
+      return false;
+    }
+    // Must be from youtube.com or youtu.be
+    const u = new URL(trimmed);
+    const host = u.hostname.replace(/^www\./, '');
+    if (host !== 'youtube.com' && host !== 'youtu.be' && !host.endsWith('.youtube.com')) {
+      return false;
+    }
+    // For youtube.com expect /watch, /embed, or /v/
+    if (host === 'youtube.com' || host.endsWith('.youtube.com')) {
+      return u.pathname === '/watch' || u.pathname.startsWith('/embed/') || u.pathname.startsWith('/v/') || u.pathname === '/shorts/' || u.pathname.startsWith('/shorts/');
+    }
+    // youtu.be/VIDEO_ID
+    if (host === 'youtu.be') {
+      return u.pathname.length > 1;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Helper function to recursively parse JSON strings until we get an array of URLs
 function parsePreviewImages(value) {
   if (!value) return [];
@@ -677,7 +708,16 @@ exports.createProduct = async (req, res) => {
       productData.status = 'new';
     }
     // Journalist products are not published by default (isActive = false)
-   
+
+    // Validate YouTube URL if provided
+    if (productData.youtubeUrl !== undefined && productData.youtubeUrl !== null && String(productData.youtubeUrl).trim() !== '') {
+      if (!isValidYouTubeUrl(productData.youtubeUrl)) {
+        return res.status(400).json({ error: 'This YouTube URL is not valid. Please use a valid YouTube video link (e.g. youtube.com/watch?v=... or youtu.be/...).' });
+      }
+      productData.youtubeUrl = String(productData.youtubeUrl).trim();
+    } else {
+      productData.youtubeUrl = null;
+    }
 
     const product = await Product.create(productData);
 
@@ -744,8 +784,22 @@ exports.updateProduct = async (req, res) => {
     // Get old status before update
     const oldStatus = product.status;
     const oldIsActive = product.isActive;
-    
-    await product.update(req.body);
+
+    // Validate YouTube URL if provided
+    const updateData = { ...req.body };
+    if (updateData.youtubeUrl !== undefined) {
+      const urlVal = updateData.youtubeUrl;
+      if (urlVal !== null && String(urlVal).trim() !== '') {
+        if (!isValidYouTubeUrl(urlVal)) {
+          return res.status(400).json({ error: 'This YouTube URL is not valid. Please use a valid YouTube video link (e.g. youtube.com/watch?v=... or youtu.be/...).' });
+        }
+        updateData.youtubeUrl = String(urlVal).trim();
+      } else {
+        updateData.youtubeUrl = null;
+      }
+    }
+
+    await product.update(updateData);
 
     const updatedProduct = await Product.findByPk(id, {
       include: [
@@ -1094,3 +1148,4 @@ exports.downloadProduct = async (req, res) => {
   }
 };
 
+exports.isValidYouTubeUrl = isValidYouTubeUrl;

@@ -1,5 +1,6 @@
 const { User, Product, Category, Subcategory, Order, Review, Membership, sequelize } = require('../models');
 const { Op, QueryTypes } = require('sequelize');
+const { isValidYouTubeUrl } = require('./productController');
 
 // Helper function to recursively parse JSON strings until we get an array of URLs
 const parsePreviewImages = (value) => {
@@ -751,6 +752,19 @@ exports.updateProductAdmin = async (req, res) => {
     } else {
       // If previewImages was provided in request body, ensure it's an array
       productData.previewImages = ensurePreviewImagesArray(productData.previewImages);
+    }
+
+    // Validate YouTube URL if provided
+    if (productData.youtubeUrl !== undefined) {
+      const urlVal = productData.youtubeUrl;
+      if (urlVal !== null && String(urlVal).trim() !== '') {
+        if (!isValidYouTubeUrl(urlVal)) {
+          return res.status(400).json({ error: 'This YouTube URL is not valid. Please use a valid YouTube video link (e.g. youtube.com/watch?v=... or youtu.be/...).' });
+        }
+        productData.youtubeUrl = String(urlVal).trim();
+      } else {
+        productData.youtubeUrl = null;
+      }
     }
 
     await product.update(productData);

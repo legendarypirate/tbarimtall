@@ -21,6 +21,11 @@ const Product = sequelize.define('Product', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  youtubeUrl: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: 'YouTube video URL for product preview'
+  },
   categoryId: {
     type: DataTypes.INTEGER,
     allowNull: false,

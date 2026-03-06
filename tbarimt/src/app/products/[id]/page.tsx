@@ -484,6 +484,32 @@ export default function ProductDetail() {
     return num.toLocaleString('mn-MN')
   }
 
+  /** Extract YouTube video ID from URL for embed, or null if not a valid YouTube URL. */
+  const getYouTubeVideoId = (url: string | null | undefined): string | null => {
+    if (!url || typeof url !== 'string') return null
+    const trimmed = url.trim()
+    if (!trimmed) return null
+    try {
+      const u = new URL(trimmed)
+      const host = u.hostname.replace(/^www\./, '')
+      if (host === 'youtu.be') {
+        const id = u.pathname.slice(1).split('/')[0]
+        return id && /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null
+      }
+      if ((host === 'youtube.com' || host.endsWith('.youtube.com')) && u.searchParams.get('v')) {
+        const id = u.searchParams.get('v')
+        return id && /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null
+      }
+      if ((host === 'youtube.com' || host.endsWith('.youtube.com')) && (u.pathname.startsWith('/embed/') || u.pathname.startsWith('/v/') || u.pathname.startsWith('/shorts/'))) {
+        const id = u.pathname.split('/').filter(Boolean).pop()
+        return id && /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
   /** Strip HTML tags and decode entities for plain-text display (e.g. product description). */
   const stripHtml = (html: string | null | undefined): string => {
     if (!html || typeof html !== 'string') return ''
@@ -1178,6 +1204,24 @@ export default function ProductDetail() {
                       />
                     </button>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* YouTube video preview */}
+            {product.youtubeUrl && getYouTubeVideoId(product.youtubeUrl) && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                  Видео
+                </h3>
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-black">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(product.youtubeUrl)}?rel=0`}
+                    title="YouTube video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
                 </div>
               </div>
             )}

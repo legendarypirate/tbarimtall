@@ -18,6 +18,7 @@ type Product = {
   id: string;
   title: string;
   description: string | null;
+  youtubeUrl: string | null;
   categoryId: number;
   subcategoryId: number | null;
   authorId: number;
@@ -77,6 +78,27 @@ type Subcategory = {
 // API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 const API_URL = `${API_BASE_URL}/api`;
+
+// Validate YouTube URL (reject e.g. google.com)
+function isValidYouTubeUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return true;
+  const trimmed = url.trim();
+  if (trimmed === '') return true;
+  try {
+    const lower = trimmed.toLowerCase();
+    if (lower.includes('google.') || lower.includes('facebook.') || lower.includes('twitter.') || lower.includes('instagram.') || lower.includes('tiktok.')) return false;
+    const u = new URL(trimmed);
+    const host = u.hostname.replace(/^www\./, '');
+    if (host !== 'youtube.com' && host !== 'youtu.be' && !host.endsWith('.youtube.com')) return false;
+    if (host === 'youtube.com' || host.endsWith('.youtube.com')) {
+      return u.pathname === '/watch' || u.pathname.startsWith('/embed/') || u.pathname.startsWith('/v/') || u.pathname === '/shorts/' || u.pathname.startsWith('/shorts/');
+    }
+    if (host === 'youtu.be') return u.pathname.length > 1;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
@@ -147,6 +169,7 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
   const [form, setForm] = useState<Partial<Product>>({ ...product });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [youtubeUrlError, setYoutubeUrlError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>(Array.isArray(product.previewImages) ? product.previewImages : []);
   const [newPreviewImages, setNewPreviewImages] = useState<File[]>([]);
@@ -194,6 +217,14 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
   };
 
   const handleSave = async () => {
+    setYoutubeUrlError(null);
+    const urlVal = form.youtubeUrl;
+    if (urlVal !== null && urlVal !== undefined && String(urlVal).trim() !== '') {
+      if (!isValidYouTubeUrl(urlVal)) {
+        setYoutubeUrlError('This YouTube URL is not valid. Please use a valid YouTube video link (e.g. youtube.com/watch?v=... or youtu.be/...).');
+        return;
+      }
+    }
     try {
       setSaving(true);
       setError(null);
@@ -394,6 +425,23 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
           minHeight="160px"
           className="border border-gray-300 dark:border-gray-600"
         />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium block mb-1">YouTube видео холбоос (сонголттой)</label>
+        <Input
+          value={form.youtubeUrl || ''}
+          onChange={(e) => {
+            updateField('youtubeUrl', e.target.value.trim() || null);
+            setYoutubeUrlError(null);
+          }}
+          placeholder="https://www.youtube.com/watch?v=... эсвэл https://youtu.be/..."
+          disabled={saving}
+          className={youtubeUrlError ? 'border-red-500' : ''}
+        />
+        {youtubeUrlError && (
+          <p className="text-sm text-red-600 mt-1">{youtubeUrlError}</p>
+        )}
       </div>
 
       <div>
@@ -1047,9 +1095,10 @@ export default function AdminProductList() {
   };
 
   function addProduct() {
-    const newProduct: Partial<Product> = { 
-      title: "Шинэ бараа", 
+    const newProduct: Partial<Product> = {
+      title: "Шинэ бараа",
       description: null,
+      youtubeUrl: null,
       categoryId: categories[0]?.id || 0,
       subcategoryId: null,
       price: 0,
