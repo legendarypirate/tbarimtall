@@ -46,6 +46,7 @@ export default function JournalistAccount() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    youtubeUrl: '',
     categoryId: '',
     price: '',
     pages: '',
@@ -448,6 +449,26 @@ export default function JournalistAccount() {
     }))
   }
 
+  const isValidYouTubeUrl = (url: string | null | undefined): boolean => {
+    if (!url || typeof url !== 'string') return true
+    const trimmed = url.trim()
+    if (trimmed === '') return true
+    try {
+      const lower = trimmed.toLowerCase()
+      if (lower.includes('google.') || lower.includes('facebook.') || lower.includes('twitter.') || lower.includes('instagram.') || lower.includes('tiktok.')) return false
+      const u = new URL(trimmed)
+      const host = u.hostname.replace(/^www\./, '')
+      if (host !== 'youtube.com' && host !== 'youtu.be' && !host.endsWith('.youtube.com')) return false
+      if (host === 'youtube.com' || host.endsWith('.youtube.com')) {
+        return u.pathname === '/watch' || u.pathname.startsWith('/embed/') || u.pathname.startsWith('/v/') || u.pathname === '/shorts/' || u.pathname.startsWith('/shorts/')
+      }
+      if (host === 'youtu.be') return u.pathname.length > 1
+      return true
+    } catch {
+      return false
+    }
+  }
+
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
 
@@ -471,6 +492,10 @@ export default function JournalistAccount() {
       newErrors.file = 'Файл оруулах шаардлагатай'
     }
 
+    if (formData.youtubeUrl.trim() !== '' && !isValidYouTubeUrl(formData.youtubeUrl)) {
+      newErrors.youtubeUrl = 'YouTube холбоос буруу байна. youtube.com/watch?v=... эсвэл youtu.be/... ашиглана уу.'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -490,6 +515,7 @@ export default function JournalistAccount() {
         await updateProduct(editingProduct.id, {
           title: formData.title,
           description: formData.description,
+          youtubeUrl: formData.youtubeUrl.trim() || null,
           categoryId: parseInt(formData.categoryId),
           price: parseFloat(formData.price),
           pages: formData.pages ? parseInt(formData.pages) : null,
@@ -503,6 +529,7 @@ export default function JournalistAccount() {
         const uploadData = new FormData()
         uploadData.append('title', formData.title)
         uploadData.append('description', formData.description)
+        if (formData.youtubeUrl.trim()) uploadData.append('youtubeUrl', formData.youtubeUrl.trim())
         uploadData.append('categoryId', formData.categoryId)
         uploadData.append('price', formData.price)
         if (formData.pages) uploadData.append('pages', formData.pages)
@@ -525,6 +552,7 @@ export default function JournalistAccount() {
       setFormData({
         title: '',
         description: '',
+        youtubeUrl: '',
         categoryId: '',
         price: '',
         pages: '',
@@ -562,6 +590,7 @@ export default function JournalistAccount() {
       setFormData({
         title: '',
         description: '',
+        youtubeUrl: '',
         categoryId: '',
         price: '',
         pages: '',
@@ -581,6 +610,7 @@ export default function JournalistAccount() {
     setFormData({
       title: product.title,
       description: product.description || '',
+      youtubeUrl: (product as { youtubeUrl?: string }).youtubeUrl || '',
       categoryId: typeof product.category === 'object' ? product.category.id.toString() : '',
       price: product.price.toString(),
       pages: '',
@@ -602,7 +632,10 @@ export default function JournalistAccount() {
     try {
       const fullProduct = await getProductById(product.id)
       if (fullProduct.product) {
-        const prod = fullProduct.product
+        const prod = fullProduct.product as { fileUrl?: string; cloudinaryFileUrl?: string; fileType?: string; youtubeUrl?: string }
+        if (prod.youtubeUrl) {
+          setFormData(prev => ({ ...prev, youtubeUrl: prod.youtubeUrl || '' }))
+        }
         // Set existing file info if available
         if (prod.fileUrl || prod.cloudinaryFileUrl) {
           setExistingFileInfo({
@@ -1682,6 +1715,29 @@ export default function JournalistAccount() {
                 />
                 {errors.description && (
                   <p className="mt-1 text-sm text-red-500 font-medium">{errors.description}</p>
+                )}
+              </div>
+
+              {/* YouTube URL (optional) */}
+              <div>
+                <label htmlFor="youtubeUrl" className="block text-sm font-semibold text-[#004e6c] dark:text-gray-200 mb-2">
+                  YouTube видео холбоос (сонголттой)
+                </label>
+                <input
+                  type="url"
+                  id="youtubeUrl"
+                  name="youtubeUrl"
+                  value={formData.youtubeUrl}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    errors.youtubeUrl
+                      ? 'border-red-500 dark:border-red-500 focus:border-red-500'
+                      : 'border-[#004e6c]/20 dark:border-gray-700 focus:border-[#004e6c] dark:focus:border-[#ff6b35]'
+                  } bg-white dark:bg-gray-800 text-[#004e6c] dark:text-gray-200 placeholder-[#004e6c]/40 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#004e6c]/30 dark:focus:ring-[#ff6b35]/30 transition-colors`}
+                  placeholder="https://www.youtube.com/watch?v=... эсвэл https://youtu.be/..."
+                />
+                {errors.youtubeUrl && (
+                  <p className="mt-1 text-sm text-red-500 font-medium">{errors.youtubeUrl}</p>
                 )}
               </div>
 
