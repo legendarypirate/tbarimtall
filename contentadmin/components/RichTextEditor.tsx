@@ -127,7 +127,7 @@ export function RichTextEditor({
           : `<p>${raw.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
     const current = editor.getHTML();
     if (current !== normalized) {
-      editor.commands.setContent(normalized, false);
+      editor.commands.setContent(normalized, { emitUpdate: false });
     }
   }, [value, editor]);
 
