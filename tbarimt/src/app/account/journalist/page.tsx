@@ -639,7 +639,7 @@ export default function JournalistAccount() {
         // Set existing file info if available
         if (prod.fileUrl || prod.cloudinaryFileUrl) {
           setExistingFileInfo({
-            url: prod.fileUrl || prod.cloudinaryFileUrl,
+            url: prod.fileUrl || prod.cloudinaryFileUrl || '',
             name: prod.fileType === 'zip' ? 'product_files.zip' : 'product_file',
             type: prod.fileType || 'unknown'
           })
