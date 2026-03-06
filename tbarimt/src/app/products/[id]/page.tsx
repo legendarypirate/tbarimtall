@@ -484,6 +484,26 @@ export default function ProductDetail() {
     return num.toLocaleString('mn-MN')
   }
 
+  /** Strip HTML tags and decode entities for plain-text display (e.g. product description). */
+  const stripHtml = (html: string | null | undefined): string => {
+    if (!html || typeof html !== 'string') return ''
+    let text = html
+      .replace(/<\/p>\s*<p>/gi, '\n\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<[^>]*>/g, '')
+    const entities: [RegExp, string][] = [
+      [/&amp;/g, '&'],
+      [/&lt;/g, '<'],
+      [/&gt;/g, '>'],
+      [/&quot;/g, '"'],
+      [/&#39;|&apos;/g, "'"],
+      [/&nbsp;/g, ' '],
+    ]
+    entities.forEach(([re, replacement]) => { text = text.replace(re, replacement) })
+    return text.replace(/\n{3,}/g, '\n\n').trim()
+  }
+
   const formatFileType = (fileType: string | null | undefined): string => {
     if (!fileType) return 'N/A'
     
@@ -1167,8 +1187,8 @@ export default function ProductDetail() {
               <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
                 Дэлгэрэнгүй мэдээлэл
               </h3>
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {product.description || 'Тайлбар байхгүй байна.'}
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                {stripHtml(product.description) || 'Тайлбар байхгүй байна.'}
               </p>
               
               {/* Tags */}
