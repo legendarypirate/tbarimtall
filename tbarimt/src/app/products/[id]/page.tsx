@@ -16,7 +16,7 @@ export default function ProductDetail() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'qpay' | 'bank' | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'qpay' | null>(null)
   const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [banners, setBanners] = useState<any[]>([])
@@ -1694,16 +1694,6 @@ export default function ProductDetail() {
                           <span>QPay төлбөр төлөх</span>
                         </>
                       )}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setPaymentMethod('bank')
-                        alert('Банкны шилжүүлэгт шилжиж байна...')
-                      }}
-                      className="w-full border-2 border-blue-600 text-blue-600 dark:text-blue-400 py-3 rounded-xl font-semibold hover:bg-blue-50 dark:hover:bg-gray-700 transition-all"
-                    >
-                      🏦 Банкны шилжүүлэг
                     </button>
                   </div>
                 </>

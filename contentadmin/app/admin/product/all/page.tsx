@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination } from "@/components/ui/pagination";
+import { RichTextEditor } from "@/components/RichTextEditor";
 
 // Types matching backend Product model
 type Product = {
@@ -385,12 +386,13 @@ function ProductEditForm({ product, onCancel, onSave, isCreating, categories }: 
 
       <div>
         <label className="text-sm font-medium block mb-1">Тайлбар</label>
-        <Textarea 
-          value={form.description || ''} 
-          onChange={(e) => updateField('description', e.target.value || null)} 
-          placeholder="Барааны тайлбар"
-          rows={4}
+        <RichTextEditor
+          value={form.description || ''}
+          onChange={(html) => updateField('description', html || null)}
+          placeholder="Барааны тайлбар (догол мөр, формат хадгалагдана)"
           disabled={saving}
+          minHeight="160px"
+          className="border border-gray-300 dark:border-gray-600"
         />
       </div>
 
